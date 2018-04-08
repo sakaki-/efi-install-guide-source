@@ -1,0 +1,212 @@
+<!-- Page: Creating_and_Booting_the_Minimal-Install_Image_on_USB -->
+
+We can now proceed to download, verify and use the {{Highlight|Gentoo minimal install image}}. This is a bootable, self-contained Linux system [[:Wikipedia:ISO_image|ISO disk image]], updated regularly by Gentoo Release Engineering. As the name suggests, you can boot your target PC with it and, assuming you have internet access, parlay from there to a full Gentoo installation.
+
+This section shadows [[Handbook:AMD64/Installation/Media|Chapter 2]] of the Gentoo handbook.
+
+{{Note|For simplicity, I'll assume you're doing this on your secondary, ''helper'' PC, which is running Linux. I'll denote that machine as {{Highlight|pc2}} in the command prompts.}}
+
+== <span id="download_verify_image">Downloading and Verifying the ISO Image</span> ==
+
+Firstly, identify the name of the current release of the minimal install ISO (we'll refer to it using the generic form {{c|install-amd64-minimal-YYYYMMDDThhmmssZ.iso}} below).  New versions come out multiple times per year. Open the link http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-iso.txt in a browser to determine the current name.
+
+{{Note|The variant part of the name is a ''timestamp'' &mdash; the first component of which is a date, then a 'T' separator, then a time, then finally a 'Z' (to denote UTC, or 'zero hours offset'). So for example, a real filename might be {{c|install-amd64-minimal-20180107T214502Z.iso}}, indicating that it was written at 9:45pm (and 2 seconds), on the 7th of January 2018.}}
+
+{{Note|We'll be using the {{c|amd64}} architecture (processor family) in what follows. The reference to 'amd' is an [[AMD64/FAQ{{!}}historical artefact]]; ''all'' modern 64-bit x86 CPUs (including those from Intel) should use this architecture in Gentoo.}}
+
+Open a terminal window on the helper PC, and download the necessary files (the ISO, a contents list for that ISO, and a signed digest list):
+{{Cmd
+|cd /tmp
+|wget -c http://distfiles.gentoo.org/releases/amd64/autobuilds/YYYYMMDDThhmmssZ/install-amd64-minimal-YYYYMMDDThhmmssZ.iso
+|wget -c http://distfiles.gentoo.org/releases/amd64/autobuilds/YYYYMMDDThhmmssZ/install-amd64-minimal-YYYYMMDDThhmmssZ.iso.CONTENTS
+|wget -c http://distfiles.gentoo.org/releases/amd64/autobuilds/YYYYMMDDThhmmssZ/install-amd64-minimal-YYYYMMDDThhmmssZ.iso.DIGESTS.asc
+|prompt=user@pc2 $}}
+
+{{Note|Of course, substitute the correct release timestamp (which you just looked up) for YYYYMMDDThhmmssZ in the above commands.}}
+
+This may take a little time to complete, depending on the speed of your Internet link.
+
+We next need to check the integrity of the ISO, before using it. The {{c|install-amd64-minimal-YYYYMMDDThhmmssZ.iso.DIGESTS.asc}} file contains cryptographically signed digests (using various hash algorithms) for two other files you have downloaded.
+
+As such, to verify the ISO we must:
+# download the public key used for Gentoo automated weekly releases (if you don't already have this on your helper PC);
+# check the signature of the {{c|install-amd64-minimal-YYYYMMDDThhmmssZ.iso.DIGESTS.asc}} file using this key; and then 
+# check that the hashes (digests) contained in that file agree with values that we compute independently.
+
+{{Note|For a brief primer on digital signatures, see the [[../Configuring_Secure_Boot#digital_signatures_primer{{!}}"Configuring Secure Boot"]] chapter of this tutorial.}}
+
+The fingerprint of the automated weekly release public key may be found on the [https://wiki.gentoo.org/wiki/Project:RelEng Gentoo Release Engineering] page. When requesting the key from a keyserver, you don't need to cite the whole fingerprint, just enough of it to be unambiguous. For example, at the time of writing, the automated release key fingerprint was {{c|13EB BDBE DE7A 1277 5DFD B1BA BB57 2E0E 2D18 2910}}, so to download it (step 1 in the above list), issue:
+
+{{Cmd
+|gpg --keyserver pool.sks-keyservers.net --recv-key 2D182910
+|prompt=user@pc2 $}}
+
+{{Note|If this command fails, ensure you have enabled outbound access on your firewall for port 11371/tcp to allow [[:Wikipedia:Key_server_(cryptographic)|HKP]] communication, along with the usual state-tracking input rule.<br>Alternatively, you can use the following command, to fetch the key over port 80 (which should be open on most firewalls):{{Cmd
+|gpg --keyserver hkp://pool.sks-keyservers.net:80 --recv-key 2D182910
+|prompt=user@pc2 $}}}}
+{{Note|If the above keyserver is unavailable for some reason, you should be able to use any other one, such as {{c|pgp.mit.edu}} for example.}}
+{{Note|If the fingerprint has changed, substitute the correct value for {{c|2D182910}} in the above.}}
+
+You should next verify that the key's ''full'' fingerprint matches that listed on the [[Project:RelEng#Keys|Release Engineering]] page:
+{{Cmd
+|gpg --fingerprint 2D182910
+|prompt=user@pc2 $
+|output=<pre>
+pub   rsa4096 2009-08-25 [SC] [expires: 2019-08-22]
+      13EB BDBE DE7A 1277 5DFD  B1BA BB57 2E0E 2D18 2910
+uid           [ unknown] Gentoo Linux Release Engineering (Automated Weekly Release Key) <releng@gentoo.org>
+</pre>
+}}
+{{Note|Although correct at the time of writing, the key ID you need to enter in the above command may differ from {{c|2D182910}}, as may the fingerprint data shown. Always use the [[Project:RelEng#Keys|Release Engineering]] page data as your primary reference.}}
+
+If all looks good, use the {{c|gpg}} program to verify the digest file (step 2):
+
+{{Cmd
+|gpg --verify install-amd64-minimal-YYYYMMDDThhmmssZ.iso.DIGESTS.asc
+|prompt=user@pc2 $}}
+{{Note|Substitute the correct release timestamp for YYYYMMDDThhmmssZ in the above command.}}
+{{Note|You can ignore {{c|gpg}} output such as:{{GenericCmd|<pre>
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+</pre>}}
+This is normal since you have just imported the public key, and not yet 'trusted' it.<ref>Information Security Stack Exchange: [http://security.stackexchange.com/questions/6841/ways-to-sign-gpg-public-key-so-it-is-trusted "Ways to sign gpg public key so it is trusted?"]</ref>
+}}
+Assuming that worked (the output reports 'Good signature'), next check the digests themselves (step 3); we'll use the SHA512 variants here:
+{{Cmd
+|awk '/SHA512 HASH/{getline;print}' install-amd64-minimal-YYYYMMDDThhmmssZ.iso.DIGESTS.asc {{!}} sha512sum --check
+|prompt=user@pc2 $}}
+{{Note|Substitute the correct release timestamp for YYYYMMDDThhmmssZ in the above command.}}
+
+If this outputs:
+{{GenericCmd|<pre>
+install-amd64-minimal-YYYYMMDDThhmmssZ.iso: OK
+install-amd64-minimal-YYYYMMDDThhmmssZ.iso.CONTENTS: OK
+</pre>}}
+then continue, all is well.
+
+== <span id="burn_minimal_install_iso">Copying the ISO Image to USB</span> ==
+
+Next, we need to copy the ISO onto a USB key (the image is already hybrid<ref>SuperUser Forum: [http://superuser.com/questions/683210/how-do-i-determine-if-an-iso-is-a-hybrid#683232 "How do I determine if an ISO is a hybrid?"]</ref>). 
+
+Just before inserting the USB key (the [[../Installation_Prerequisites#two_usb_keys|larger one]]) into the helper pc, issue:
+{{Cmd
+|lsblk
+|prompt=user@pc2 $}}
+Note the output, then insert the USB key, and issue:
+{{Cmd
+|lsblk
+|prompt=user@pc2 $}}
+again. The change in output will show you the key's device path (note that the initial {{Path|/dev/}} prefix is not shown in the {{c|lsblk}} output). We will refer to this path in these instructions as '''{{Path|/dev/sdX}}''', but in reality on your system it will be something like {{Path|/dev/sdb}}, {{Path|/dev/sdc}} etc.
+
+{{Important|If the device has automounted, and {{c|lsblk}} shows that the device has a non-blank mountpoint for one or more of its partitions, you must unmount these, using {{c|umount}}, before proceeding.
+
+For example, suppose the USB key showed up as {{Path|/dev/sdb}} on your system, and its first partition {{Path|/dev/sdb1}} automounted (at {{Path|/var/run/media/user/myusbkey}} or some similar path). Then you would issue:
+{{Cmd
+|umount --verbose /dev/sdb1
+|prompt=user@pc2 $
+}}
+to unmount it.
+
+If you have problems, you may need to run the {{c|umount}} as the root user.}}
+
+Next, we will write the ISO image to the USB key. This will require root access, so issue:
+
+{{Cmd
+|su --login root
+|prompt=user@pc2 $
+|output=<pre>
+Password: <enter root password (on helper PC)>
+</pre>
+}}
+
+Now you can write the ISO image to the USB key (note, we use a larger than default block size here, for efficiency). Issue: 
+
+{{RootCmd
+|dd if{{=}}/tmp/install-amd64-minimal-YYYYMMDDThhmmssZ.iso of{{=}}/dev/sdX bs{{=}}8192k status{{=}}progress && sync
+|prompt=root@pc2 #
+}}
+Wait for the process to complete before continuing.
+
+{{Warning|This will wipe everything on the USB key. Double check that there is nothing on there you want before proceeding. Make '''sure''' you have the correct device path! Note also that we need to target the device itself, and not a partition within it, so for {{Path|/dev/sdX}} in the above command, use e.g. {{Path|/dev/sdb}} and ''not'' {{Path|/dev/sdb1}}; {{Path|/dev/sdc}} and ''not'' {{Path|/dev/sdc1}}, etc.}}
+{{Note|Substitute the correct release timestamp for YYYYMMDDThhmmssZ in the above command.}}
+{{Note|You can safely omit the {{c|status{{=}}progress}} option, if it not supported in your version of {{c|dd}}.}}
+
+== <span id="boot_minimal_install_iso">Booting the ISO Image</span> ==
+
+Although the minimal install image ''does'' include an EFI directory, the {{c|.efi}} images within it are unusable for booting.<ref>Gentoo Forums: [http://forums.gentoo.org/viewtopic-t-967098-start-0.html#7377910 "Gentoo Minimal ISO EFI Boot?"]</ref> As such, we'll proceed by first booting the USB key we just created using the UEFI's 'legacy' / [[:Wikipedia:Unified_Extensible_Firmware_Interface#CSM_booting|CSM]] mode. (Of course, the kernel we'll ultimately create ''will'' (secure) boot under EFI.)
+
+So, to proceed, take the USB key from the helper PC (where we just {{c|dd}}'d it) and insert it into the target PC. The latter is still running Windows, and you need to reboot it into the BIOS setup GUI. There are two ways to do this; choose the one that suits you:
+; ''Either:'' Use Windows boot options menu.
+: This is the easier method (particularly if your <span id="fast_boot_to_BIOS">target</span> machine is using the 'fast boot' option with Windows).<ref>Hoffman, Chris. [http://www.makeuseof.com/tag/how-to-access-the-bios-on-a-windows-8-computer/ "How To Access The BIOS On A Windows 8 Computer"]</ref> In Windows, hit {{Key|Ctrl}}{{Key|Alt}}{{Key|Delete}}, then click on the power icon at the bottom right of the screen, and then ''while holding down'' {{Key|Shift}}, click 'Restart' from the pop-up menu. This will pass you into the Windows boot options menu. Once this comes up (and asks you to 'Choose an option'), click on the 'Troubleshoot' tile, which brings up the 'Advanced options' panel (in Windows 10, you have to click on the 'Advanced options' tile to show this): from this, click on 'UEFI Firmware Settings', and confirm if prompted. Your machine will then restart into the BIOS GUI directly (no hotkeys required) and you can proceed.
+; ''Or:'' Use the BIOS hotkey.
+: This is a less reliable method, since you are racing the OS loading process. To use it, hit {{Key|Ctrl}}{{Key|Alt}}{{Key|Delete}} from within Windows, then click on the power icon at the bottom right of the screen, and choose 'Restart' from the pop-up menu to perform a regular restart. Then, ''immediately'' the target PC starts to come back up, press the appropriate hotkey to enter the BIOS setup GUI. Unfortunately, the required hotkey varies greatly from machine to machine (as does the BIOS user interface itself). On the Panasonic CF-AX3, press {{Key|F2}} during startup (you may need to press it repeatedly). 
+
+Once you have the BIOS configuration GUI up, you need to <span id="set_csm_boot">perform the following steps</span>:
+# disable EFI boot mode;
+# enable legacy / CSM boot mode;
+# set the machine to look first at any inserted USB keys, when searching for a bootloader.
+
+The precise steps to achieve this will depend on your BIOS. On the CF-AX3, <span id="bios_navigation">use the arrow keys</span> to move to the 'Boot' tab, then, as shown below, 
+navigate down to the 'UEFI Boot' item, and press {{Key|Enter}}. In the popup that appears, select 'Disabled' using the arrow keys, and press {{Key|Enter}}. This switches the system out of UEFI mode and into legacy / CSM boot (steps 1 and 2 in the list above).
+
+Next, move down using the arrow keys to the 'Boot Option #1' item (as shown below). Press {{Key|Enter}} and select 'USB KEY' from the pop-up menu that appears, then press {{Key|Enter}}. This ensures that any inserted USB key will be searched for a bootable system before the internal hard drive (step 3). (If you don't do this, you'll simply be dumped back into Windows when you restart.)
+
+{|style="background:transparent; color:black" 
+|[[File:Bios_disable_uefi.jpg|thumb|none|400px|Switching Back to Legacy Boot...]]
+|[[File:Bios_set_boot_order.jpg|thumb|none|400px|...And Setting Boot Order Under the AMT BIOS]]
+|}
+
+Finally, instruct the BIOS to save these changes and restart (with the USB key still inserted). Again, the method varies from machine to machine; on the Panasonic CF-AX3, hit {{Key|F10}}, and confirm when prompted.
+
+Hopefully, you'll now see <span id="boot_beep">ISOLINUX boot prompt</span> (and the machine will beep at you). Unless you want to enter custom boot options, simply press {{Key|Enter}} to proceed. After a few seconds (and before you are provided with a command prompt), you'll be asked to choose a keymap. It's important, particularly on a machine with non-standard keyboard layout such as the CF-AX3, to get this right, otherwise you may have problems with passwords and so forth. Again, the correct map to choose will obviously depend on your machine but, on the Panasonic CF-AX3, press {{Key|2}}{{Key|2}}{{Key|Enter}} to select the Japanese keymap.
+
+A few seconds later, you should have a Gentoo Linux root command prompt. Now, we'll <span id="first_root_pw_setup">set-up a root password</span> (this is only for use during the install, it will not persist across into the final system).
+
+{{RootCmd
+|passwd root
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+New password: <enter your new password>
+Retype new password: <enter your new password again>
+passwd: password updated successfully
+</pre>
+}}
+
+Make a note of the password, as you will require it shortly.
+
+== <span id="set_date_time">Setting the Date and Time</span> ==
+
+It's important to ensure that you have the correct time and date on your target machine. Check it with:
+{{RootCmd
+|date
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Per <span id="set_date_and_time">the handbook</span>, you should stick with [[:Wikipedia:UTC|UTC]] for now (the real timezone specification will come later in the install). If necessary, set the date and time, in {{Highlight|MMDDhhmmYYYY}} format ('''M'''onth, '''D'''ay, '''h'''our, '''m'''inute, '''y'''ear):
+{{RootCmd
+|date MMDDhhmmYYYY
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Substitute MMDDhhmmYYYY in the above with the correct date/time string. For example, to set the UTC date/time to 5:12pm on February 9th 2017, you would issue
+{{RootCmd
+|date 020917122017
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+}}
+
+== <span id="next_steps">Next Steps</span> ==
+
+Next, we'll setup the network and get an SSH daemon running. [[../Setting_Up_Networking_and_Connecting_via_ssh|Click here]] to go to the next chapter, "Setting Up Networking and Connecting via {{c|ssh}}".
+
+== <span id="notes">Notes</span> ==
+{{reflist}}
+
+{| class="wikitable" style="margin: 1em auto 1em auto;"
+|-
+| [[../Preparing_Windows_for_Dual-Booting|< Previous]]
+| [[../|Home]]
+| [[../Setting_Up_Networking_and_Connecting_via_ssh|Next >]]
+|}
+
+[[Category:Core system]]
+

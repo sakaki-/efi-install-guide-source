@@ -1,0 +1,444 @@
+<!-- Page: Final_Configuration_Steps -->
+
+<span id="final_config_steps">Currently</span>, your target system is using a kernel configuration largely based on that shipped with the Gentoo minimal installation image (with some [[../Configuring_and_Building_the_Kernel#buildkernel_config_changes|necessary changes imposed by {{c|buildkernel}}]], for example to support {{c|systemd}}). Since this configuration is (by design!) lightweight, it leaves many options disabled (including many device drivers). As a result, at this point in the installation a number of features that may be present on your machine (such as Bluetooth, WiFi, touchscreen etc.) may not yet be usable.
+
+In this (penultimate) chapter, we'll address that, by enabling the relevant configuration options and recompiling the kernel (using the {{c|buildkernel}} tool's {{c|--menuconfig}} option).
+
+Unfortunately, it's impossible to be precise about the exact options you'll need to enable, as these vary from machine to machine. Nevertheless, we'll cover a number of the most commonly encountered requirements (and by way of example, provide explicit instructions for WiFi, Bluetooth, touchscreen, audio, and integrated card reader on the CF-AX3).
+
+This section of the tutorial has no precise analogue in the Gentoo manual, although elements of it are reflected in [[Handbook:AMD64/Installation/Kernel|Chapter 7]]. You may also find it useful to refer to the [[Kernel/Gentoo_Kernel_Configuration_Guide|"Gentoo Kernel Configuration Guide"]] on the wiki.
+
+We will also address some additional miscellaneous issues at the end of this chapter, namely:
+* pruning your kernel configuration (to remove unused items and make the kernel image smaller); 
+* getting suspend and hibernate working properly;
+* setting the system default {{c|python}} interpreter; and
+* disabling {{c|sshd}} (as we no longer need it).
+
+Let's get started!
+
+== <span id="general_approach">General Approach</span> ==
+
+{{Important|In what follows, I am assuming that you know how to use the {{c|make menuconfig}} kernel configuration tool (which {{c|buildkernel}} invokes). You can find a short overview of {{c|make menuconfig}} in an [[../Setting_up_the_GNOME_3_Desktop#make_menuconfig_intro{{!}}earlier section]] of this tutorial; if you skipped over it before, you may wish to [[../Setting_up_the_GNOME_3_Desktop#make_menuconfig_intro{{!}}review it now]] (or at least, read the sub-section regarding [[../Setting_up_the_GNOME_3_Desktop#kernel_config_shorthand_note{{!}}"implementing a shorthand configuration fragment in {{c|make menuconfig}}"]]), before proceeding. Greg Kroah-Hartman's ''Linux Kernel in a Nutshell'' is also highly recommended.<ref name{{=}}"kernel_in_nutshell">Kroah-Hartman, Greg. [http://www.kroah.com/lkn/ ''Linux Kernel in a Nutshell'' (ebook)]. O'Reilly, 2006</ref>}}
+
+<span id="resume_after_menuconfig_tutorial">The</span> general approach when looking to enable a feature which is physically supported on your machine (for example, Bluetooth), is as follows:
+* Obviously, check whether the feature already works (it's always possible that your current kernel already has the necessary options enabled or modularized). If it does, great, you're done!
+* Otherwise, ensure your boot USB key is inserted, then invoke (as {{c|root}}) {{c|buildkernel --menuconfig}} in a terminal (which will run the {{c|make menuconfig}} tool).
+* Collect as much information as possible about the physical device (vendor name, model name etc.), using tools such as {{c|hwinfo}}, {{c|lspci}} and {{c|lsusb}} (in a separate terminal window).
+* If the device description should match one given in the specific CF-AX3 instructions below, implement the given kernel configuration shorthand fragment (using the {{c|buildkernel --menuconfig}} interface).
+* Otherwise, search (still via the {{c|menuconfig}} interface; see the [[../Setting_up_the_GNOME_3_Desktop#make_menuconfig_intro|tutorial earlier]]) for a suitable option, and then enable (or modularize) it (and any dependencies). If you can't find anything suitable this way, do a web search based on the information collected. (Unfortunately, there is no automated tool to do this for you).
+* Once you have made all desired changes, exit and save {{c|make menuconfig}}, thereby allowing {{c|buildkernel}} to continue and create a new kernel; and then reboot. With luck, your desired feature should now be operational.
+* If all else fails, invoke {{c|buildkernel --menuconfig}} again, try modularizing ''all'' options under the appropriate sub-menu in the {{c|make menuconfig}} interface, then save and exit, to create a new kernel as before. If, after a reboot, the desired feature is operational, you should then be able to locate its driver using {{c|hwinfo --pci --usb}} (after which you can rerun {{c|buildkernel --menuconfig}} if you like, to turn off all other unneeded items and recompile). This approach (i.e., turn on pretty much everything so that something will work ^-^) is actually the one taken by many Linux distributions (such as Ubuntu) for their 'generic' kernels, so don't feel shy to try it if need be.
+
+Tweaking your kernel configuration to enable machine features is one of the more frustrating tasks you have to do when bringing up a system under Linux. In this tutorial, I've deliberately postponed it till near the end - when you already have all the other elements of a functioning system in place.
+
+To make the process concrete, I'll now lay out the changes necessary to enable the main features of the Panasonic CF-AX3 laptop. You will obviously need to adapt what follows depending on your particular target machine.
+
+== <span id="specific_config_recipes">Specific Configuration Recipes (Using CF-AX3 as an Example)</span> ==
+
+In what follows, we will cover the following (common) features, using the Panasonic CF-AX3 as a (fairly typical) example (it is a reasonably feature-rich [[:Wikipedia:Ultrabook|Ultrabook]], so some of these may apply directly to your system too):
+# WiFi;
+# Bluetooth;
+# Integrated touchscreen;
+# Integrated webcam;
+# Audio;
+# Integrated (SD etc.) card reader;
+# LCD screen backlight.
+
+To reiterate, what follows is simply an example, for a particular PC (the CF-AX3). Where necessary, follow the steps [[#general_approach|above]] to set the necessary options for your particular choice of target machine.
+
+{{Important|If you have decided to [[../Configuring_and_Building_the_Kernel#deblob_or_not{{!}}deblob your kernel]] ('''not''' the default route followed in this tutorial), then it's likely that many hardware features will be unusable no matter what you enable in the kernel, since there'll be no firmware (blobs) present for the drivers to upload to their respective devices.}}
+
+=== <span id="config_prelims">Preliminaries</span> ===
+
+Ensure your boot USB key is inserted in the target machine, and then (at the terminal within the GNOME session that we opened [[../Setting_up_the_GNOME_3_Desktop#open_gnome_terminal|earlier]]), issue:
+{{RootCmd
+|buildkernel --snapshot-backup
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+to create a 'last known good' backup of the current kernel (and configuration) on the boot USB key. Although {{c|buildkernel}} does create a backup of the previous version when it is run, that backup is not persistent, and will be overwritten the ''next'' time buildkernel is executed. Keeping a (timestamped) backup via {{c|--snapshot-backup}} ensures that there's no risk we run {{c|buildkernel}} twice between reboots, thereby losing our reference point.
+
+Next, issue:
+{{RootCmd
+|buildkernel --menuconfig
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Because you have not specified {{c|--ask}} here, but you ''have'' specified {{c|--menuconfig}}, the process will run through by itself (assuming no errors) to the point where you can modify the kernel configuration using the standard {{c|curses}}-based {{c|make menuconfig}} editor GUI. You can now use that interface to enable specific features as specified in the kernel configuration shorthand 'recipes' given below.
+
+Now, because it will be useful to have a second terminal available (for {{c|emerge}} work etc.), open one now within GNOME. Click in the current terminal window (the one showing the {{c|make menuconfig}} interface, then press {{Key|Ctrl}}{{Key|Shift}}{{Key|n}} to spawn a new one. In this fresh window, log in as root:
+
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in previously).
+
+=== <span id="config_wifi">WiFi</span> ===
+
+The CF-AX3 has integrated WiFi, based on an Intel 7260 device. To find out which network controllers you have on ''your'' machine, issue the following in the second terminal (the one ''not'' displaying the {{c|menuconfig}} interface):
+{{RootCmd
+|lspci {{!}} grep -i net
+|lsusb {{!}} grep -i net
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+and observe the output.
+
+In the case of the CF-AX3, this returns:
+{{GenericCmd|<pre>
+00:19.0 Ethernet controller: Intel Corporation Ethernet Connection I218-LM (rev 04)
+02:00.0 Network controller: Intel Corporation Wireless 7260 (rev 6b)
+</pre>
+}}
+(your machine will most likely differ).
+
+On the CF-AX3, the built-in Ethernet adaptor is (obviously!) already working under the current kernel configuration, but the  Intel 7260 wireless card is not.
+{{News|date=Update: Jul 25, 2014|header={{c|CONFIG_IWLMVM}} now Present in Default Configuration|body=
+{{c|CONFIG_IWLMVM}} is now turned on in the Gentoo minimal install image configuration, so WiFi on systems with the 7260 chipset (including the CF-AX3) should now work 'out of the box'. However, I've left this section in place, as the generic instructions regarding network card probing are still useful for those experiencing WiFi driver problems.
+}}
+Now, while the firmware for this 7260 ''is'' already included in {{Package|sys-kernel/linux-firmware}} (which we installed [[../Configuring_and_Building_the_Kernel#install_firmware|earlier]]), using it requires MVM firmware support (which, at the time of writing, the minimal-install kernel configuration has disabled).
+
+Set the following options (within {{c|buildkernel}}) to rectify this, and thereby activate [[:Wikipedia:Wi-Fi|WiFi]]:
+{{KernelBox
+|title=Configuration options for 7260 wireless card (WiFi) on the CF-AX3
+|<pre>
+Device Drivers  --->
+ -*- Network device support  --->
+  [*]   Wireless LAN  --->
+   <M>   Intel Wireless WiFi Next Gen AGN - Wireless-N/Advanced-N/Ultimate-N (iwlwifi)
+   <M>	  Intel Wireless WiFi DVM Firmware support
+   <M>    Intel Wireless WiFi MVM Firmware support
+</pre>
+}}
+{{Note|Most of the time, it's equally fine to either modularize ({{c|M}}) or build in ({{c|*}}) a function, as desired; {{c|buildkernel}} [[../Configuring_and_Building_the_Kernel#copy_all_modules_to_initramfs{{!}}copies all modules]] into the initramfs.}}	
+Incidentally, the 7260 device ''also'' supports [[:Wikipedia:WiMAX|WiMAX]], but as of the time of writing, the ebuilds for {{Package|net-misc/networkmanager}} do not, so I have not detailed its activation here.
+
+{{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), you should be able to see and activate WiFi connections by clicking on the 'network' icon in the top bar (or, by clicking on the 'spanner and screwdriver' icon from the drop-down menu under the rightmost ('power') icon on the top bar).}}
+
+=== <span id="config_bluetooth">Bluetooth</span> ===
+
+Like many modern notebooks, the CF-AX3 has an integrated [[:Wikipedia:Bluetooth|Bluetooth]] modem. To see information about your system's Bluetooth hardware, issue in the second terminal (the one not displaying the {{c|menuconfig}} interface):
+{{RootCmd
+|hwinfo --bluetooth
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+To enable it on the CF-AX3, set the following options (this will work for many other machines too):
+{{KernelBox
+|title=Configuration options for Bluetooth on the CF-AX3
+|<pre>
+-*- Networking support  --->
+ <M>   Bluetooth subsystem support  --->
+  Bluetooth device drivers  --->
+   <M>   HCI USB driver
+</pre>
+}}
+{{Note|There is no need to {{c|emerge}} {{Package|sys-firmware/bluez-firmware}} for this PC.}}
+
+{{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), you should be able to see and activate Bluetooth devices (e.g., wireless mice) using the Bluetooth control panel. Find this by pressing {{Key|Windows Key}} and then typing 'Bluetooth' (or, by clicking on the 'spanner and screwdriver' icon from the drop-down menu under the rightmost ('power') icon on the top bar).}}
+
+You must now ensure that the Bluetooth service will start on boot. To do so, issue:
+{{RootCmd
+|systemctl enable bluetooth
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+=== <span id="config_touchscreen">Touchscreen</span> ===
+
+As is increasingly common, the CF-AX3 has a [[:Wikipedia:Touchscreen|touchscreen]] (an eGalaxTouch device in this case). You can generally find out more information about your touchscreen (and touchpad, if present, although this is likely already supported at this point in the install), by issuing in the second terminal (the one not displaying the {{c|menuconfig}} interface):
+{{RootCmd
+|hwinfo --mouse
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+To enable the eGalaxTouch device (this will also work for many other touchscreen panels), set the following options:
+{{KernelBox
+|title=Configuration options for touchscreen on the CF-AX3
+|<pre>
+Device Drivers  --->
+ HID support  ---> 
+  Special HID drivers  --->
+   <M>   HID Multitouch panels
+</pre>
+}}
+{{Note|When you later restart under your new kernel (see [[#finishing_up_config{{!}}"Finishing Up", below]]) you should be able to make basic touch and drag actions using the screen. However, gesture support is still (as of the time of writing) unimplemented in GNOME.<ref>GNOME wiki: [https://wiki.gnome.org/Design/OS/Gestures "Gestures & Multitouch"]</ref>}}
+
+=== <span id="config_webcam">Webcam</span> ===
+
+The CF-AX3 has an integrated webcam (a common feature on many laptops and netbooks). You can find out more information about your machine's webcam by issuing in the second terminal (the one not displaying the {{c|menuconfig}} interface):
+{{RootCmd
+|hwinfo --pci --usb {{!}} awk '/webcam/' RS{{=}}"" IGNORECASE{{=}}1
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|The {{c|hwinfo}} command will output blank-line-separated records about each device found on the PCI and USB busses (your webcam will almost certainly be on one of those, most likely USB). Then the {{c|awk}} command prints any of these records that contain the text "webcam" (not case sensitive), using a blank line as a record separator.}}
+
+To enable the webcam on the CF-AX3 (this will work for many modern machines, as many webcams are [[:Wikipedia:USB_video_device_class|UVC]] devices), set the following options:
+{{KernelBox
+|title=Configuration options for webcam on the CF-AX3
+|<pre>
+Device Drivers  --->
+ <M> Multimedia support  --->
+  [*]   Cameras/video grabbers support
+  [*]   Media USB Adapters  --->
+   <M>   USB Video Class (UVC)  
+   [*]     UVC input events device support (NEW) 
+</pre>
+}}
+{{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), you should be able to test your webcam using the {{c|Cheese}} application (which is installed with GNOME by default).}}
+{{Note|You may wish to physically cover the webcam's lens (and built-in microphone input apertures) when not in use ^-^}}
+
+=== <span id="config_audio">Audio</span> ===
+
+The CF-AX3 has an integrated Intel HD audio device, accessed on the PCI bus. You can find out more information about your machine's soundcard by issuing in the second terminal (the one not displaying the {{c|menuconfig}} interface):
+{{RootCmd
+|hwinfo --sound
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+As configured, sound works 'out of the box' for the CF-AX3, but the [[:Wikipedia:PulseAudio|{{c|pulseaudio}}]] sound server complains about lack of high resolution timer support, and insufficiently large buffers. To address these problems on the CF-AX3, set the following options
+{{KernelBox
+|title=Configuration options for audio on the CF-AX3
+|<pre>
+General Setup  --->
+ Timers subsystem  --->
+  [*] High Resolution Timer Support
+
+Device Drivers  --->
+ <M> Sound card support  --->
+  <M>   Advanced Linux Sound Architecture  --->
+   [*]   PCI sound devices  --->
+          HD-Audio  --->
+     (2048) Pre-allocated buffer size for HD-audio driver
+</pre>
+}}
+{{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), audio should still be operational; you probably won't notice any difference after making these changes, other than the fewer warnings when emerging sound-related packages.}}
+
+=== <span id="config_card_reader">Card Reader</span> ===
+
+The CF-AX3 has an integrated [[:Wikipedia:Secure_Digital|SD/MMC]] card reader. You can find out more information about your machine's reader by issuing in the second terminal (the one not displaying the {{c|menuconfig}} interface):
+{{RootCmd
+|hwinfo --pci --usb {{!}} awk '/ sd /' RS{{=}}"" IGNORECASE{{=}}1
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Although the necessary kernel options ({{c|MMC_SDHCI}} and {{c|MMC_SDHCI_PCI}}) for this card ''are'' modularized in the minimal install kernel, there is a bug impacting the CF-AX3 (and many other machines) which prevents correct initialization when a card is inserted. To fix this, still in the second terminal, issue:<ref>AdminEmpire: [http://www.adminempire.com/o2-sd-card-reader-fix-linux/ "O2 SD-Card Reader fix Linux"]</ref>
+{{RootCmd
+|echo "options sdhci debug_quirks{{=}}0x40" > /etc/modprobe.d/sd-card-fix.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Note that {{c|buildkernel}} [[../Configuring_and_Building_the_Kernel#copy_static_gpg{{!}}''will'' copy]] the contents of {{Path|/etc/modprobe.d}} into the initramfs for you.}}
+{{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), you should be able to insert an SD card and have it automatically show up in GNOME).}}
+{{Note|If you have a Realtek card reader in your machine, you may need to modularize {{c|MMC_REALTEK_USB}} to get it working properly.<ref>Gentoo Forums: [https://forums.gentoo.org/viewtopic-t-1006246-start-0.html "RTS5129 Card Reader Controller does not work"]</ref>}}
+
+=== <span id="config_others">Others</span> ===
+
+There are a couple of other devices on the CF-AX3 which I have not dealt with here:
+* The CF-AX3 has an i7 processor with Intel's [[:Wikipedia:Intel_Active_Management_Technology#Management_Engine|Management Engine]]; if you really want access to this scarily-out-of-band coprocessor, enable the [http://cateee.net/lkddb/web-lkddb/INTEL_MEI.html {{c|INTEL_MEI}}] setting in the kernel configuration.{{Note|<span id{{=}}"disable_me">If you are comfortable</span> working with hardware &mdash; in particular [http://satxhackers.org/wp/hack-content/uploads/2013/04/rPI_flashrom.pdf BIOS reflashing] &mdash; and wish to ''disable'' the Management Engine on your PC, a mini-guide for this has now been added [[../Disabling_the_Intel_Management_Engine{{!}}here]].}}
+* It also has a number of integrated sensors (geomagnetic, gyroscopic, acceleration etc.); however, these are not generally supported by Linux applications at the moment, so I haven't detailed their setup here.
+
+Of course, as mentioned earlier, your particular target platform will have its own set of devices that may well not have been mentioned here (for example, MemoryStick readers, digital TV receivers etc.), and you should obviously adapt your kernel configuration accordingly.
+
+Lastly, if you find that your early boot splash is being interrupted with the error message "{{c|kvm: already loaded the other module}}", then you should ensure that ''only'' the KVM option (Intel or AMD) appropriate to your processor is set in the configuration. The relevant options are {{c|CONFIG_KVM_INTEL}} and {{c|CONFIG_KVM_AMD}}.
+
+=== <span id="finishing_up_config">Finishing Up</span> ===
+
+When satisfied with your configuration, exit {{c|menuconfig}}, saving changes. Once you have done so, {{c|buildkernel}} will automatically create a new kernel with the newly created configuration, sign it, and copy it over to the boot USB key. Wait for the process to complete (you get the message "{{c|All done!}}"). Then (leaving the boot USB key inserted) restart your target machine (you can do this from within GNOME, by clicking on the 'power' icon (in the top right of the screen), clicking on the 'power' button in the dropdown menu that then appears, and then clicking on the 'Restart' button in the dialog).
+
+The machine should then power cycle (you will be cleanly logged out of GNOME first). When it restarts, as before, you will need to enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]), directly at the target machine keyboard to unlock the LUKS partition. You should then be presented with a GNOME login page (as [[../Setting_up_the_GNOME_3_Desktop#login_to_gnome|previously]]). Directly at the target machine, click on your (regular) user name then, when prompted, type in the (regular user) password you set up [[../Setting_up_the_GNOME_3_Desktop#setup_regular_user|earlier]] (ensure you have the correct keyboard settings, if relevant, as discussed [[../Setting_up_the_GNOME_3_Desktop#input_source_menu|above]]).
+
+You should now be able to use all the features of your machine that you just enabled (such as WiFi etc.).
+
+{{Note|Of course, it's entirely fine to repeat this {{c|"buildkernel --menuconfig"}} process a few times, so if there are other features you need to enable, feel free to do so now. If your machine fails to boot with a given configuration, see these [[../Configuring_systemd_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}earlier instructions]] for how to fall back to the prior kernel on the boot USB key ({{c|buildkernel}} makes a backup of the previous kernel each time it is run).}}
+
+=== <span id="config_lcd_backlight">LCD Screen Backlight (Addressing the i915 Regression)</span> ===
+
+One final note. Like most laptops, the CF-AX3 has a dimmable backlight on its LCD screen. With modern kernels (3.17+) and the i915 graphics driver (as used by many Ultrabooks), you may find that you [https://lkml.org/lkml/2014/9/24/421 cannot change the display brightness] using the standard GNOME controls. This is a regression; if it affects you, first use the process described in [[#config_prelims|"Preliminaries", above]] to get a root terminal, then issue:
+{{RootCmd
+|nano -w /etc/buildkernel.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Locate the line specifying {{c|ADDITIONALKERNELCMDS}}. If it is currently commented out (the line starts with a {{c|#}} character), then uncomment and edit that line so it reads:
+{{FileBox|filename=/etc/buildkernel.conf|title=Specifying additional kernel command line options|lang=bash|1=
+ADDITIONALKERNELCMDS="acpi_backlight=video"
+}}
+Save and exit the {{c|nano}} editor.
+{{Note|If you already have some additional kernel command line options specified using the {{c|ADDITIONALKERNELCMDS}} variable, then simply add the {{c|acpi_backlight{{=}}video}} text to the end of the string (in {{Path|/etc/buildkernel.conf}}), separating it from the existing text with a space.}}
+Now, ensure that you have the boot USB key inserted, and issue:
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+to rebuild the kernel. Wait for the process to finish (you receive the message "{{c|All done!}}"). Then power cycle the machine as described in [[#finishing_up_config|"Finishing Up", above]].
+
+When you log in again to GNOME, you should find that the screen brightness controls now operate correctly.
+
+== <span id="cleaning_kernel_config">Cleaning Up the Kernel Configuration (Optional Step)</span> ==
+
+{{Note|This is an entirely ''optional'' step - if you'd like to skip it, simply [[#suspend_hibernate{{!}}continue to the next section]] now.}}
+
+As your current Linux kernel is largely derived from the minimal-install image configuration, it contains a lot of modularized and enabled features that are irrelevant to your machine (for example, all the specific x86 platform support drivers for vendors other than yours). While this bloat is mostly harmless, there are a few negative side effects of having features you don't need, for example:
+* the kernel image is larger (which makes boot time slightly longer); even even where most features are modularized, since all modules [[../Configuring_and_Building_the_Kernel#copy_static_gpg|are copied]] into the initramfs, which is then [[../Configuring_and_Building_the_Kernel#initramfs_into_kernel|integrated into the kernel itself]]. This can be an important consideration if you choose to migrate your kernel into the (often cramped) Windows EFI system partition (instructions for which are [[../Using_Your_New_Gentoo_System#migrating_off_usb_key|provided later]]);
+* more code must be (uselessly) compiled each time you upgrade your kernel, which costs time; and
+* more features = a larger attack surface exposed to malware.
+
+Accordingly, you may wish to perform another {{c|buildkernel --menuconfig}} run, disabling features that do not apply to you. If so, proceed carefully: deselect some features, complete the build, and reboot; then repeat. This always allows you to fall back to the previous version kernel if something goes wrong, and you find you have chopped out something vital by mistake.
+
+<span id="using_localmodconfig">Several commentators</span> have suggested using {{c|make localmodconfig}} to automate this task,<ref>Debian User Forums: [http://forums.debian.net/viewtopic.php?f=5&t=52025 "Is there an automatic .config generator for kernel 2.6.33.4?"]</ref><ref>Unix & Linux Stack Exchange Forum: [http://unix.stackexchange.com/questions/119876/how-to-build-a-custom-kernel-with-localmodconfig-that-support-hardware-of-multip "How to build a custom kernel with localmodconfig that support hardware of multiple machines"]</ref><ref>Leemhuis, Thorsten [http://www.h-online.com/open/features/Good-and-quick-kernel-configuration-creation-1403046.html "Good and quick kernel configuration creation"]</ref><ref>Reddit: [http://www.reddit.com/r/kernel/comments/1p6bw3/kernel_compiling_tip_use_localmodconfig_to_only/ "Kernel compiling tip: Use localmodconfig to only enable and compile the modules currently in use"]</ref> but that can be dangerous (as any modules not ''currently'' loaded by the kernel will be purged from the configuration, which can result in filesystem drivers, crypto modules, codepages etc. being dropped). Furthermore, there are lots of 'false positive' loaded modules retained as well (e.g. ATA drivers) when you use this method. The best approach remains to work through manually, and do things methodically; nevertheless if you do wish to try out {{c|localmodconfig}} for yourself, proceed as follows:
+
+First, if you don't have a root terminal open already in GNOME, do so now: press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Then in this terminal, issue:
+{{RootCmd
+|buildkernel --snapshot-backup
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+to create a 'last known good' backup of the current kernel (and configuration) on the USB boot key (this ensures that there's no risk we lose our 'safe' version, which might otherwise happen were we to run {{c|buildkernel}} twice in a row between test reboots).
+
+Now switch to the kernel directory, ask {{c|localmodconfig}} to do its magic, then return:
+{{RootCmd
+|pushd /usr/src/linux && make localmodconfig && popd
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Finally, ensure you have the boot USB key inserted, and create a new kernel based on the stripped-down configuration:
+{{RootCmd
+|buildkernel --menuconfig
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+This will allow you to review the proposed configuration for sanity in the {{c|make menuconfig}} tool, and make any necessary changes.
+{{Note|You can find a short overview of {{c|make menuconfig}} in an [[../Setting_up_the_GNOME_3_Desktop#make_menuconfig_intro{{!}}earlier troubleshooting section]] of this tutorial.}}
+
+When satisfied with your configuration, exit {{c|menuconfig}}, saving any changes. Once you have done so, {{c|buildkernel}} will automatically create a new kernel with the newly created configuration, sign it, and copy it over to the boot USB key, as before. Once the process completes (you get the message "{{c|All done!}}"), leave the USB key inserted and reboot in the normal manner. 
+
+{{Note|If your machine fails to boot with a given configuration, see these [[../Configuring_systemd_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}earlier instructions]] for how to fall back to the prior kernel on the boot USB key.}}
+
+This is very much an optional task, so feel free to postpone it for a rainy day (or forever if you like ^-^ !).
+
+{{Note|However, if you would like to migrate your kernel to the Windows EFI partition on the hard drive (instructions for which are provided [[../Using_Your_New_Gentoo_System#migrating_off_usb_key{{!}}later]]), then it may be worth slimming down your configuration somewhat: standard Windows installations (like the CF-AX3) have a 100MB EFI system partition, of which about 20% is used for Windows files: as such, an 'unslimmed' kernel ''will'' fit, but there'll be no room for backups etc.}}
+
+== <span id="suspend_hibernate">Suspend and Hibernate</span> ==
+
+At this point, let's take the time to properly configure power management (suspend and hibernate), as this is a useful feature to have operational on your machine.
+
+The default {{c|systemd}} power management works well for many systems out of the box. The file {{Path|/etc/systemd/logind.conf}} determines (''inter alia'') what behaviour will occur when certain buttons are pressed on the machine, specifically that the 'suspend' key ({{Key|Fn}}{{Key|F7}} on the CF-AX3) will invoke the 'suspend' action (aka 'sleep'), and and that the 'hibernate' key ({{Key|Fn}}{{Key|F10}} on the CF-AX3) will invoke the 'hibernate' action (aka 'suspend to disk').<ref>ArchLinux Wiki: [https://wiki.archlinux.org/index.php/Suspend_and_Hibernate "Suspend and Hibernate"</ref>
+
+{{Note|Your machine may use different buttons for suspend and resume. If it does not have any, you can also add suspend and resume actions to the power menu in GNOME. Use the [https://wiki.gnome.org/action/show/Apps/GnomeTweakTool?action{{=}}show&redirect{{=}}GnomeTweakTool {{c|GNOME Tweak Tool}}] application (installed with GNOME by default), navigate to the "Extensions" tab, then click "Get more extensions" (at the bottom of the list) and turn on the [https://extensions.gnome.org/extension/755/hibernate-status-button/ "Hibernate Status Button"] shell extension.}}
+
+For the CF-AX3, the 'stock' configuration works perfectly for suspend (simply press {{Key|Fn}}{{Key|F7}} and the machine will enter sleep state, with its power button light flashing slowly; slide the power button, and it will resume). However, hibernate requires a little further tweaking (it does work, but the system doesn't fully shutdown after the memory image is written to disk). To get around this, we need to request that {{c|systemd}} writes the string "{{c|shutdown}}" into {{Path|/sys/power/disk}}, rather than "{{c|platform}}" (this may be the case on your system too, but try to see if it works without making any changes first).<ref>kernel.org; Wysocki, Rafael [https://www.kernel.org/doc/Documentation/power/basic-pm-debugging.txt "Debugging hibernation and suspend"]</ref>
+
+To achieve this, we need to use the {{Path|/etc/systemd/sleep.conf}} file (which does not exist by default).<ref>[http://www.freedesktop.org/software/systemd/man/systemd-sleep.conf.html {{c|systemd-sleep.conf}} manpage]</ref> If you don't have a root terminal open already in GNOME, do so now: press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Then in this terminal, issue:
+{{RootCmd
+|nano -w /etc/systemd/sleep.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Put the following text in the file:
+{{FileBox|filename=/etc/systemd/sleep.conf|title=Asking systemd to write shutdown to /sys/power/disk on hibernate|1=
+[Sleep]
+HibernateMode=shutdown
+}}
+Save and exit the {{c|nano}} editor (you can also close out the terminal if you have no further use for it).
+
+After this, hibernate should work properly (on the CF-AX3). Press {{Key|Fn}}{{Key|F10}} and the machine will write its memory to the LVM swap partition on the LUKS encrypted volume ({{c|buildkernel}} conforms the kernel command line to specify this, as noted [[../Configuring_and_Building_the_Kernel#real_resume_var|earlier]]), and then automatically power off. To resume, ensure that the boot USB key is inserted, and slide the power key. Enter your LUKS password when prompted, log in to GNOME, and you should find your desktop just as you left it. As this feature uses encrypted swap, it is relatively safe to travel with the laptop hibernated in this fashion (you should unplug and carry the boot USB key separately, of course).
+
+== <span id="set_default_python">Setting the System Default {{c|python}} Interpreter</span> ==
+
+This is a bit of an odd one, but it does seem to catch people out. [[:Wikipedia:Python_(programming_language)|Python]] is a widely used dynamic language. There are two major versions (2.0 and 3.0),<ref>python.org wiki: [https://wiki.python.org/moin/Python2orPython3 "Should I use Python 2 or Python 3 for my development activity?"]</ref> and a ''lot'' of python scripts that you find on the web use the older version. The problem is that these scripts also often start with a ''versionless'' [[:Wikipedia:Shebang_(Unix){{!}}shebang]] like:
+{{GenericCmd|<pre>
+#!/usr/bin/env python
+</pre>
+}}
+On Gentoo, this will end up invoking Python 3.x (''not'' 2.x),<ref>Gentoo Forums: [https://forums.gentoo.org/viewtopic-t-921776-start-0.html#7025204 "python update 2.7 --> 3.2"]</ref> thereby (often) causing the script to break.
+
+It's generally safe to set the default {{Path|/usr/bin/python}} to refer to version 2.7 instead (since scripts that ''require'' version 3 will explicitly call it). 
+
+To do so, open a root terminal in GNOME (if you don't already have one open): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Then in this terminal, issue:
+{{RootCmd
+|eselect python list
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+Available Python interpreters, in order of preference:
+   [1]   python3.4
+   [2]   python2.7 (fallback)
+</pre>
+}}
+Your output may very somewhat from the above, but if the top line is '''not''' the '2.7' version (it is {{c|[2]}} in the above), set it as the default:
+{{RootCmd
+|eselect python set 2
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Substitute the correct index for python 2.7 (in the list returned on your system) for {{c|2}} in the above command.}}
+
+That's it!
+
+== <span id="disabling_sshd">Disabling {{c|sshd}}</span> ==
+
+Up until now, you've [[../Configuring_systemd_and_Installing_Necessary_Tools#start_sshd|been running]] {{c|sshd}} (the [[:Wikipedia:Secure_Shell|secure shell]] daemon) on your target machine, to allow for simpler configuration via a helper PC. This is no longer required, and running such a service can present security risks. Unless you have good reason to keep it, stop {{c|sshd}} now (and ensure it does not restart again on boot).
+
+To do so, open a root terminal in GNOME (if you don't already have one open): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Then in this terminal, issue:
+{{RootCmd
+|systemctl stop sshd
+|systemctl disable sshd
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|If you ''do'' wish to retain {{c|sshd}}, you should at least disable the ability to log-in directly as root (by editing {{Path|/etc/ssh/sshd_config}}), change to password-less login, and possibly {{c|emerge}} and configure {{c|denyhosts}} ({{Package|app-admin/denyhosts}}), or some similar service.<ref>Saive, Ravi. [http://www.tecmint.com/5-best-practices-to-secure-and-protect-ssh-server/ "5 Best Practices to Secure and Protect SSH Server"]</ref>}}
+
+== <span id="next_steps">Next Steps</span> ==
+
+Once you have worked through the above points to your satisfaction, congratulations - you now have a fully functioning dual-boot machine! We'll now cover a few quick points about day-to-day maintenance, cleanup, and other software you might like to install. [[../Using_Your_New_Gentoo_System|Click here]] to go to the next (and final) chapter, "Using Your New Gentoo System".
+
+== <span id="notes">Notes</span> ==
+{{reflist}}
+
+{| class="wikitable" style="margin: 1em auto 1em auto;"
+|-
+| [[../Setting_up_the_GNOME_3_Desktop|< Previous]]
+| [[../|Home]]
+| [[../Using_Your_New_Gentoo_System|Next >]]
+|}
+
+[[Category:Core system]]
+[[Category:Laptops]]
+[[Category:Kernel]]
+[[Category:Power management]]
+

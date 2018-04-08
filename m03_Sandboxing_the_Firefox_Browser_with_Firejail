@@ -1,0 +1,1545 @@
+<!-- Page: Sandboxing_the_Firefox_Browser_with_Firejail -->
+
+What is the most vulnerable application on your desktop? For most users, it is the '''web browser''', since &mdash; in the picturesque phrase of Nick Congleton &mdash; it is "a large and complex piece of software with the ability to execute code, and it accesses the open Internet and executes just about everything that it comes into contact with".<ref name="run_browser_in_firejail">Congleton, N. [https://linuxconfig.org/protect-your-system-run-your-browser-in-firejail "Protect your System. Run Your Browser in Firejail"]</ref> Whilst selective-execution plug-ins such as [[:Wikipedia:NoScript|NoScript]] can (and should<ref name="sans_use_noscript">SANS Internet Storm Center: Stearns, W. [https://isc.sans.org/diary.html?storyid=2460 "Ongoing Interest in JavaScript Issues"]</ref><ref name="javascript_meltdown_spectre">Cimpanu, C. [https://www.bleepingcomputer.com/news/security/mozilla-confirms-web-based-execution-vector-for-meltdown-and-spectre-attacks/ "Mozilla Confirms Web-Based Execution Vector for Meltdown and Spectre Attacks"]</ref><ref name="javascript_vulns_cox">Vaughan-Nichols, S. J. [http://www.zdnet.com/article/how-the-meltdown-and-spectre-security-holes-fixes-will-affect-you/ "How the Meltdown and Spectre Security Holes Fixes Will Affect You"]</ref>) be used to mitigate this risk, they cannot entirely remove it.<ref name="some_scripts_required">You can of course block ''all'' scripts unconditionally, but this isn't really a valid option for most people's daily workflow.</ref>
+
+Furthermore &mdash; hardening tools such as [[:Wikipedia:AppArmor|AppArmor]] notwithstanding &mdash; the very ''design''  of the X11 display server underpinning most Linux desktops means that a compromised application can easily log all keystrokes, capture images of the screen, and even ''inject''  key and mouse events into any other application running on the same display &mdash; and that's just when running as the regular user, without privilege escalation. As such, the consequence of even a modest compromise of the web browser on your system can be devastating.
+
+Fortunately however, with just a little effort, it ''is''  possible to effectively 'sandbox' graphical applications, so that:
+* they use their own isolated X11 server, with no access to, or visibility of, the "host" desktop, thereby inhibiting keylogging and similar attacks; and
+* they run inside a Linux 'container',<ref name="not_lxc">NB, in this context, while we are ''not'' referring to the userspace [[:Wikipedia:Lxc|{{c|lxc}}]] interface for process containment (see e.g., [https://linuxcontainers.org/lxc/introduction/ this introduction]), the {{c|firejail}} application which we'll be using ''does'' leverage many of the same ''kernelspace'' facilities that {{c|lxc}} relies on, so the use of the term 'container' is (I believe) justified.</ref>  thereby inhibiting many other categories of process-level exploit.
+
+Accordingly, in this mini-guide, I will be running through the process of X11-sandboxing the popular, open-source [[Firefox|'''Firefox''']]  web browser on your target PC, using the powerful [https://firejail.wordpress.com/ Firejail]<ref name="the_jailer">Schürmann, T. ''Linux Magazine'' [http://www.linux-magazine.com/Issues/2015/173/Firejail "The Jailer"]</ref> utility (and [[:Wikipedia:Xephyr|Xephyr]] X11 server-in-a-window). The approach described may easily be generalized to other browsers (or indeed applications, for example, mail clients etc.), and will work for both {{c|systemd}} and {{c|OpenRC}} users.
+
+The screenshot below shows an X11-sandboxed Firefox browser in use:
+
+[[File:X11_firejailed_firefox.png|thumb|none|800px|Firefox Running in an X11 (Firejail/Xephyr/OpenBox) Sandbox within GNOME 3 (Click to Zoom)]]
+
+Note that when deployed in this manner, {{c|firefox}} remains fully functional (so e.g., HTML5 videos on YouTube still work, as shown above), but runs in a highly 'locked-down' environment (aka 'sandbox'), wherein:
+* the parent "desktop" X11 server is not accessible; its sockets (''including''  its abstract UNIX domain socket) are masked through the use of file and network [[#namespaces|kernel namespaces]], thereby e.g., preventing keylogging etc.;
+* the range of permitted system calls is greatly restricted, via a comprehensive [[#seccomp|{{c|seccomp-bpf}}]] filter, and any attempt to call one of the restricted functions causes immediate termination of the process;
+** {{c|seccomp-bpf}} is ''also'' used to restrict the permitted socket protocols (to only {{c|IPv4}}, {{c|IPv6}}, {{c|UNIX}} and {{c|netlink}});
+* all Linux [[#capabilities|capabilities]] are explicitly dropped, as an additional barrier against privilege escalation;
+* via [[#filesystem_protection|filesystem protection]], only a small subset of your machine's full directory structure is visible, critical files are set read-only, many programs are masked, and only a tightly defined subset of your home directory files can be accessed;
+* a local [[#network_stack|network stack]] is used, with packet forwarding to your main network arranged ''outside''  the sandbox, so the application cannot capture or monitor other network traffic;
+* via a [[#pid_namespaces|PID namespace]], only processes local to the sandbox are visible within it; and
+* (optionally) via a [[#user_namespaces|user namespace]], within the sandbox no root account is even present.
+
+(Don't worry if some of the above terms are unfamiliar; they will be more fully explained [[#introduction|shortly]]).
+
+Furthermore, unlike a 'full' virtualisation environment (such as e.g., [[:Wikipedia:Xen|Xen]], [[:Wikipedia:VirtualBox|VirtualBox]] or [[:Wikipedia:QEMU|QEMU]]), Firejail sandboxes do ''not'' each run their own copy of a full-blown operating system &mdash; they simply live in a resource-isolated environment created by standard facilities of your system's ''existing'' Linux kernel. As such, despite the high level of protection offered, the overhead of running a Firejail sandbox is extremely low. Furthermore, there are no background server processes required, nor are there any out-of-tree kernel modules or similar to maintain.
+
+{{Note|<span id{{=}}"xwayland_note">While systems</span> using the more modern [[:Wikipedia:Wayland_(display_server_protocol){{!}}Wayland]] display server protocol (now the default in this guide) ''do''  provide isolation between graphical applications, the material covered here is still important, as:
+* at the time of writing, Wayland deployment is still relatively uncommon;
+* further, Wayland does not provide (nor does it aim to) the other (non-graphical-isolation) sandboxing features that {{c|firejail}} does; and
+* even where Wayland ''is'' deployed, unported or partially ported X11 applications (and this currently includes Firefox <ref name{{=}}"firefox_weston_bugzilla">Mozilla Bugzilla: [https://bugzilla.mozilla.org/show_bug.cgi?id{{=}}635134 "Firefox Wayland Port"]</ref>) are usually handled by placing them all within a shared XWayland<ref name{{=}}"xwayland">ArchLinux Wiki: [https://wiki.archlinux.org/index.php/wayland "Wayland"]</ref> X11-server anyhow, rendering them all accessible to one another.
+As such, ''it is still worth X11-sandboxing {{c|firefox}} when running Wayland''.<ref>Since this will protect other non-Wayland apps running within the shared XWayland instance from X11-based attacks launched from a compromised {{c|firefox}} instance. Wayland apps (e.g. {{c|gnome-terminal}}) are already protected from this vector of course, but {{c|firejail}}'s other protections ({{c|seccomp-bpf}}, namespaces etc.) are still useful, even in that case.</ref><br>For avoidance of doubt, the instructions in this guide will work regardless of whether your 'host' GNOME desktop is running natively on X11, or Wayland.}}
+
+The process we will be going through is as follows:
+* reviewing some (optional, but useful) introductory background material;
+* ensuring that you have the necessary (GNOME 3 + X11, or GNOME 3 + Wayland) baseline system available;
+* installing the required software, which will entail:
+** rebuilding your kernel with the necessary options enabled;
+** installing the {{Package|www-client/firefox}} browser (if you do not already have it);
+** rebuilding {{Package|x11-base/xorg-server}} with [[:Wikipedia:Xephyr|Xephyr]] support, and installing some X11 utilities;
+** installing the {{Package|sys-apps/firejail}} package (and some supporting utilities);
+** installing the {{Package|x11-wm/openbox}} window manager, for use inside {{c|xephyr}};
+* configuring your X11 sandbox, viz.:
+** setting up a persistent bridge, to which the sandbox can connect;
+** setting up a routing firewall (via {{c|iptables}}), to forward sandbox traffic from the bridge to your main network interface;
+** setting up an "autostart" service script, to enable {{c|xephyr}} window resizing and (configurable) clipboard sharing;
+** modifying {{c|firejail}}'s configuration file (to specify some {{c|xephyr}} settings);
+** creating an {{Path|/etc/firejail/firefox.local}} file, for 'tweaks' to {{c|firejail}}'s default {{c|firefox}} security profile;
+** setting up a {{c|.desktop}} file, to allow the sandboxed browser to be launched graphically;
+* testing your new X11-sandboxed browser;
+** some tips for day-to-day use will also be provided here;
+** as will some brief troubleshooting hints.
+
+{{Note|With the configuration described in this mini-guide, the sandbox will work ''even''  on machines that use a WiFi interface as their main network connection (something that {{c|firejail}} does not directly support using its <code>--net{{=}}<ifname></code> option).}}
+
+{{Tip|For non-graphical applications, using {{c|firejail}} is as very simple - just prefix your normal application invocation with it (for example, <code>firejail bash</code>, <code>firejail wget <url></code> etc. Please don't form the impression that {{c|firejail}} is a difficult program to use &mdash; for everyday use, quite the reverse is true, and indeed this was one of its design goals.<br>The approach presented in this article is necessarily more complex, only because of the need to properly isolate the X11 graphical environment, and to allow WiFi adaptors [[#why_nat_is_needed{{!}}to be used]] with the network namespacing which that isolation [[#about_xephyr|requires]].}}
+
+If you are ready, let's go!
+
+== <span id="introduction">Introduction</span> ==
+
+We'll begin with a simple demonstration that 'vanilla' X11 does not provide any isolation between applications running within the same desktop (X server<ref name="x11_and_desktop">Obviously, the relationship between X11 server and graphical desktop need not be one-to-one, but generally it ''will'' be so in the simple case.</ref>), as even many experienced Linux users are unaware this is the case. Then, we'll discuss how it ''is'' possible to isolate X11 processes, through the use of a separate, "nested" X server (in our case, {{c|xephyr}}) running within an appropriate {{c|firejail}} sandbox, and we'll conclude by running through some of {{c|firejail}}'s sandboxing features in a little more detail.
+{{Note|If you are already familiar with this background material, feel free to [[#prerequisites{{!}}click here]] to skip this section, and get on with installation directly.}}
+
+=== <span id="x11_vulnerability">Demonstrating the X11 Vulnerability</span> ===
+
+As just mentioned, by default X11 does not provide any GUI isolation between running applications. That means, ''inter alia'', that any application granted access to your display (on an X11-based desktop, such as GNOME<ref name="gnome_vanilla">In non-Wayland mode, of course.</ref>) can read and inject keystrokes into any other (even if their underlying processes have different {{c|uid}}s), take snapshots of the desktop or individual windows, and even move and resize windows at will. This holds true even if standard process-level sandboxing (for example, via a framework such as [[:Wikipedia:SELinux|SELinux]]) is in use, and as such can nullify any other security precautions taken on a system.<ref name="on_gui_isolation">Rutkowska, J. [http://theinvisiblethings.blogspot.is/2011/04/linux-security-circus-on-gui-isolation.html "The Linux Security Circus: On GUI Isolation"]</ref>
+
+You can easily demonstrate this yourself. Log into your GNOME desktop as your regular user (this will be {{c|sakaki}} in what follows, but obviously, adapt for your particular case). That done, open a terminal window, become root, and install the necessary software:
+
+{{RootCmd
+|emerge --verbose --noreplace x11-apps/xinput x11-apps/xwd
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|The host name you see when running these commands will reflect the settings on your target PC, rather than {{c|koneko}}.}}
+
+These are small programs and will not take long to download or install. Next, from the root prompt, start a {{c|gedit}} text editor session:
+
+{{RootCmd
+|gedit /root/secret_passwords.txt
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+A {{c|gedit}} text editor window will open. Now, since this process is running as the root {{c|uid}}, and using a file location ({{Path|/root/secret_passwords.txt}}) that is inaccessible to regular users, you might reasonably believe it to be secure... but as we will shortly see, it is not.
+
+{{Note|If you are using (X)Wayland with GNOME, then the {{c|gedit}} application won't be vulnerable to this attack. However, you can still demonstrate it using another editor, for example {{c|emacs}}.<br>Alternatively, you can temporarily log into a GNOME-on-X11 session for the duration of the demonstration, as described earlier ([[../Setting_up_the_GNOME_3_Desktop#x11_gnome_session{{!}}{{c|systemd}}]], [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#x11_gnome_session{{!}}{{c|OpenRC}}]]).}}
+{{Tip|If you ''are'' using Wayland, a quick way to see if a given application is running 'natively', or is hosted inside the shared XWayland X11 server, is to run the {{c|xeyes}} program. If the 'eyes' move to follow the cursor when it is in your application's window, then the app is using X11; if not, it is using Wayland.<ref name="xeyes_wayland">Bugaev, S. [https://medium.com/@bugaevc/how-to-easily-determine-if-an-app-runs-on-xwayland-or-on-wayland-natively-8191b506ab9a "How to Easily Determine if an App Runs on XWayland or on Wayland Natively"]</ref><br>The eyes will be watching you when running {{c|firefox}} ^-^<br>You can also run the {{c|xlsclients}} program (at a terminal, as the regular user) to get a list of all applications using the XWayland server.<ref name="xlsclients_manpage">[https://linux.die.net/man/1/xlsclients {{c|xlsclients}} manpage]</ref>}}
+
+Next, ''before'' typing anything in the {{c|gedit}} window, open another terminal window (as your regular, unprivileged user) and issue:
+{{Cmd
+|xinput --list
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+A list of pointer and keyboard devices known to your X11 server will be displayed. Note the {{c|id}} of the keyboard device (there may be more than one, in which case, note them all, and then try the last-listed {{c|id}} first, in what follows). Then issue:
+{{Cmd
+|xinput test 11
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Key release 36
+</pre>
+}}
+{{Note|Substitute for the number {{c|11}} in the above with the actual id of your keyboard, as returned from {{c|xinput --list}}.}}
+If {{c|xinput}} does not immediately output a <code>Key release <nn></code> message as above (caused by you letting go of the {{Key|Enter}} key, which you pushed down to execute the <code>xinput test <id></code> command in the first place), then you have specified the wrong {{c|id}} value &mdash; in that case, press {{Key|Ctrl}}{{Key|c}} to quit {{c|xinput}}, then try the command above again with a different {{c|id}} (from the original set of candidates you gleaned via {{c|xinput --list}}).
+
+Once it is working, mouse back into the (root) {{c|gedit}} window again, and start typing. Notice how your keystrokes are reflected by the <code>xinput test <id></code> program, ''even though it is not running as root'':
+
+[[File:X11_xinput_keylogger_demo.png|thumb|none|800px|Although Running Here as root, gedit's Keystrokes are Easily Logged by a Regular User's Process in X11]]
+
+{{Note|The numbers output are keyboard scan codes (in this case, for a UK layout keyboard), ''not'' ASCII codes. For those interested, a conversion table (in hex) may be found [https://msdn.microsoft.com/en-us/library/ms894072.aspx here].}} 
+
+When done, click on the terminal window in which {{c|xinput}} is running, and press {{Key|Ctrl}}{{Key|c}} to quit it. Then, leaving the {{c|gedit}} window open for now, issue:
+
+{{Cmd
+|xwd -display "${DISPLAY}" -root {{!}} convert xwd:- screen.png
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+{{Note|Again, if you are using (X)Wayland with GNOME, the above command will not work, as the XWayland server is ''rootless''<ref name="rootless_x11">Floser, M. [https://blog.martin-graesslin.com/blog/2015/02/rootless-xwayland-server-integration-into-kwin/ "Rootless Xwayland Server Integration into KWin"]</ref>. However, it ''is''  still possible for any application running on the shared XWayland server (i.e., X11 applications not yet ported to Wayland) to grab the windows of any other, by specifying the appropriate window identifier to {{c|xwd}}, via <code>-id <id></code> <ref>This trick cannot be used to target the windows of native Wayland applications, however.</ref>).}}
+
+These commands, again running only as the standard user (not root), will silently take a full desktop screenshot (''including'' the {{c|gedit}} window with the notional secret password text) and save it to {{Path|~/screen.png}}.
+
+You can check it worked with the {{c|eog}} ('eye-of-gnome') image tool, if you like:
+{{Cmd
+|eog screen.png &
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+Close out the {{c|eog}} viewer and (standard user) terminal window when done, then also close out the {{c|gedit}} window (there's no need to save the {{Path|/root/secret_passwords.txt}} file, we were just using it for illustration). Finally, type {{Key|Ctrl}}{{Key|d}} followed by {{Key|Ctrl}}{{Key|d}} again in the root terminal window, to close it. 
+
+As you can appreciate from the above, running X11 represents quite a significant security risk, particularly with applications like web browsers, which routinely execute large quantities of arbitrary, unchecked code during everyday use.
+
+{{Note|There isn't anything 'magic' about the applications {{c|xwd}} or {{c|xinput}} either; simply blocking or removing them from your system won't fix the underlying vulnerability. ''Any'' program with access to your X11 server's UNIX socket (and appropriate X11 authorization, whether via [[:Wikipedia:X_Window_authorization#Cookie-based_access{{!}}'magic cookie']] or {{c|uid}}) can do everything just demonstrated, and worse.}}
+
+{{Note|Although X11 ''does''  have a security extension ({{c|xcsecurity}} USE flag) that addresses this problem to some extent &mdash; by partitioning desktop apps into two sets: 'trusted' and 'untrusted' (via distinct 'magic cookies' / {{c|Xauthority}} files), and preventing apps in the latter group from meddling with those in the former &mdash; and while this is supported directly in {{c|firejail}} (via the <code>--x11{{=}}xorg</code> option) I would ''advise against'' its use under GNOME. That's because:
+* {{c|firejail}} assumes that your {{c|Xauthority}} file is located in {{Path|${HOME}/.Xauthority}}, and during sandbox startup creates a new, untrusted {{c|Xauthority}}  and bind-mounts it over that location; unfortunately however, in GNOME, with the {{c|gdm}} login manager, the ''actual'' {{c|Xauthority}} location is {{Path|/var/user/<uid>/gdm/Xauthority}} &mdash; so the application still has full access despite this precaution;
+* furthermore, even if the new, untrusted {{c|Xauthority}} file ''were to be'' bind-mounted in the right place, the target application ''has to elect to use it to be affected'', since {{c|gdm}} ''also'' activates {{c|xhost}} authorization for the logged-in user directly <ref name="gdm_xhost">See {{Path|/etc/gdm/Xsession}} &mdash; ({{c|grep}} for {{c|xhost}}).</ref> (as such, if the new application offers ''no'' {{c|Xauthority}} file, but merely ''runs'' with the logged-in user's {{c|uid}}, it will still be granted 'trusted' privileges (as that user)); and
+* with the <code>--x11{{=}}xorg</code> approach, the application is still running in the main, desktop X11 server, so notwithstanding the first two objections, this is still more risky than running it in a separate X11 server instance (for example, should you wish to prevent clipboard snooping).}} 
+
+{{Tip|If you are interested in taking the sandboxing / "security through isolation" concept even further, it's worth taking a quick look at [[:Wikipedia:Qubes_OS|Qubes OS]]. This (meta) operating system allows the user to create a number of (Xen-based) virtual machines, one per security domain, run one or more applications in each domain, and have all the applications render to a common desktop. The approach can provide extremely strong protection,<ref name="snowden_qubes_tweet">Snowden, E. (tweet) [https://twitter.com/Snowden/status/781493632293605376 "If you're serious about security <...>"]</ref>  but is relatively resource-intensive compared to {{c|firejail}} (as it relies on a type-1 hypervisor).}}
+
+=== <span id="sandboxing_with_firejail">Sandboxing with Firejail: A Brief, High-Level Tour</span> ===
+
+As we are going to be using {{Package|sys-apps/firejail}} to sandbox the {{c|firefox}} web browser on your machine, in this section, we'll briefly discuss the isolation technologies it offers<ref name="firejail_manpage">[https://firejail.wordpress.com/features-3/man-firejail/ {{c|firejail}} manpage]</ref> (actual installation and usage instructions will be given thereafter; [[#prerequisites{{!}}click here]] if you with to jump directly to that section).
+
+<span id="about_firejail_profiles">In its simplest form</span>, you can sandbox an application simply by prefixing its command line with <code>firejail</code> (run as your regular user; the {{c|firejail}} program itself is [[:Wikipedia:setuid|SUID]]). So, for example, <code>firejail gedit ~/test.txt</code> would run the {{c|gedit}} text editor on the file {{Path|~/test.txt}}, inside a sandbox. As discussed below, there are various protection mechanisms {{c|firejail}} can employ, and these are automatically specified on a per-application basis through the use of a ''profile'' configuration file.<ref name="firejail-profile_manpage">[https://firejail.wordpress.com/features-3/man-firejail-profile/ {{c|firejail-profile}} manpage]</ref> When a program {{c|<appname>}} is launched under {{c|firejail}}, it will automatically try to load the matching security profile {{Path|/etc/firejail/<appname>.profile}} (for our example, this would be {{Path|/etc/firejail/gedit.profile}}). If no such file exists, the (fairly restrictive) {{Path|/etc/firejail/default.profile}} is used instead (unless the sandbox has been started by the root user, in which case {{Path|/etc/firejail/server.profile}} is used).
+
+{{Tip|<span id{{=}}"override_profile">You can override</span> the {{Path|/etc/firejail/<appname>.profile}} binding by:
+* providing a file {{Path|~/.config/firejail/<appname>.profile}};
+* or, since all 'standard' profiles also try to source the additional customization file {{Path|/etc/firejail/<appname>.local}} when read, if you simply want to 'tweak' an existing profile, you can supply your additional configuration settings via that file (this approach has the benefit of allowing the ''main'' application profile to be upgraded whenever the rest of the package is);
+* or, you can direct that a specific profile be used for a given app, by passing the <code>--profile{{=}}<path></code> option to {{c|firejail}} when invoking it;
+* or, you can direct that ''no'' profile be used, by passing the <code>--noprofile</code> option to {{c|firejail}} when invoking it; if you do so, most of {{c|firejail}}'s protection mechanisms will be disabled (i.e., it is ''not'' at all the same thing as running with the default profile).}}
+
+We'll now briefly discuss the main categories of protection offered by {{c|firejail}}. Note that you won't actually need to run any of the examples here on your own machine &mdash; just read through them, they are presented simply to familiarize you with the concepts involved. (Also, we have not yet [[#setup|configured]] your machine correctly to run {{c|firejail}}; but of course, once we have, you can come back and try these out for yourself, if you like.)
+
+==== <span id="about_xephyr">Graphical Isolation via Xephyr</span> ====
+
+The first point to note is that {{c|firejail}} allows a graphical program to be started within its own, dedicated X11 server (via the use of its <code>--x11=<servertype></code> option).<ref name="x11_guide">Firejail Documentation: [https://firejail.wordpress.com/documentation-2/x11-guide/ "X11 Guide"]</ref> In what follows, we will use '''Xephyr''' &mdash; a full X11 server that outputs to a (resizeable) window on a pre-existing 'host' X display.
+
+The below screenshot shows an {{c|xterm}} terminal, launched on a {{c|xephyr}} X11 server, using {{c|firejail}} from the command line:
+
+[[File:X11_xephyr_abstract_unix_domain_sockets.png|thumb|none|800px|Using Just Firejail + Xephyr (no Network Namespace), the Abstract UNIX Domain Socket of the 'Outer' X11 Server is still Accessible]]
+
+As can be seen, in the {{c|gnome-terminal}} window (running on the 'outer' X11 server) there are three X11 UNIX sockets visible within the filesystem, at {{Path|/tmp/.X11-unix/X0}}, {{Path|/tmp/.X11-unix/X1}} and {{Path|/tmp/.X11-unix/X371}}. The first of these, {{c|X0}}, is {{c|uid}} root and connects to the {{c|gdm}} login manager's X11 server. The second, {{c|X1}}, connects to the X11 server hosting the GNOME desktop itself (so e.g., running <code>echo $DISPLAY</code> in the {{c|gnome-terminal}} session would return <code>:1</code>); it is the 'outer' (aka 'host') X11 server in this case. And the third, here {{c|X371}}, is connected to the {{c|xephyr}} X11 server (so e.g. running <code>echo $DISPLAY</code> in the {{c|xterm}} would return <code>:371</code>); it is the 'inner' or 'nested' X11 server in this example.
+
+Although &mdash; courtesy of {{c|firejail}}'s default [[#filesystem_protection|filesystem protection]] &mdash; within the {{c|xterm}} context (i.e., running on the {{c|xephyr}} server) only {{Path|/tmp/.X11-unix/X371}} is visible at the ''directory'' level (compare the outputs of <code>ls -l /tmp/.X11-unix/</code> in the two terminals above), this is ''not sufficient'' for graphical isolation, as the <code>netstat --unix --listening | grep X11</code> output shows. The funny looking paths starting with '@' are '''UNIX abstract domain sockets'''<ref name="abstract_domain_sockets">Unix & Linux Stack Exchange Forum: [https://unix.stackexchange.com/questions/206386/what-does-the-symbol-denote-in-the-beginning-of-a-unix-domain-socket-path-in-l "What does the @ Symbol Denote in the Beginning of a UNIX Domain Socket Path in Linux?"]</ref>, which are ''filesystem independent'', and make it possible for e.g. even a baseline {{c|xephyr}}-sandboxed program to capture input from the 'outer' desktop, unless other precautions are taken.
+
+<span id="enp0s3_example">To get around this issue</span>, and properly isolate the 'host' X11 server's sockets, we need to run Firejailed programs within their own ''network namespace'' (discussed [[#network_namespaces|shortly]]). By default, {{c|firejail}} will support this natively if you use a ''wired'' Ethernet interface on your machine; for example, in the below screenshot, there is an Ethernet adaptor available on {{c|enp0s3}}, so we can simply add <code>--net=enp0s3</code> to the {{c|firejail}} command line, which solves the problem:
+
+[[File:X11_xephyr_abstract_unix_domain_sockets_net_ns.png|thumb|none|800px|Using Firejail + Xephyr with a Network Namespace, the Abstract UNIX Domain Socket of the 'Outer' X11 Server is Inaccessible]]
+
+Unfortunately however, this simple approach will ''not'' work for a WiFi interface (which on many laptop machines represents the primary, and often only, means of network connectivity) (we'll discuss the reason why [[#why_nat_is_needed|shortly]]). As such, in the main text, we will provide a slightly different solution (using a bridge and routing firewall) which ''will'' work for with both wired ''and'' wireless interfaces.
+
+<span id="need_openbox">One other point to note</span> from the above screenshots: if you look carefully, you'll see that the {{c|xterm}} window itself (''not'' to be confused with the {{c|xephyr}} frame, which is entitled <code>firejail x11 sandbox</code>) has no title bar or other window decorations, and is not resizeable. Nor is it possible to dynamically open ''other'' windows 'inside' the {{c|xephyr}} frame. To work around these issues (which would be unacceptable when using a browser) we will run the {{Package|x11-wm/openbox}} [[:Wikipedia:Window_manager|''window manager'']] on {{c|xephyr}} when deploying {{c|firefox}} ({{c|openbox}} is a very capable yet lightweight window manager; it will do what we want 'out of the box', but can also be extensively customized, should you require this).
+
+==== <span id="seccomp">Permitted Syscall Management via Seccomp-BPF</span> ====
+
+The next isolation technique utilized by {{c|firejail}} is [[:Wikipedia:Seccomp|Seccomp-BPF]] (which stands for '''sec'''ure '''com'''puting - '''B'''erkeley '''p'''acket '''f'''ilter). This is a Linux kernel facility, via which the system calls available to a given userland process (and its descendants) may be restricted for safety. It works by intercepting syscall requests and matching their syscall number and argument list via a pre-specified BPF program (in this case, supplied by {{c|firejail}})<ref name="secure_computing_with_filters">kernel.org: [https://www.kernel.org/doc/Documentation/prctl/seccomp_filter.txt "SECure COMPuting with Filters"]</ref> The BPF program's rules specify the subsequent action to take if a match occurs (for example: allow the call, return an error code, kill the calling process etc.)
+
+Most {{c|firejail}} profiles (including the default profile and {{c|firefox}} profile) specify a fairly restrictive {{c|seccomp-bpf}} filter set, which, at the time of writing, blocks the following syscalls:<ref name="firejail_manpage"/> {{c|mount}}, {{c|umount2}}, {{c|ptrace}}, {{c|kexec_load}}, {{c|kexec_file_load}}, {{c|name_to_handle_at}}, {{c|open_by_handle_at}}, {{c|create_module}}, {{c|init_module}}, {{c|finit_module}}, {{c|delete_module}}, {{c|iopl}}, {{c|ioperm}}, {{c|ioprio_set}}, {{c|swapon}}, {{c|swapoff}}, {{c|syslog}}, {{c|process_vm_readv}}, {{c|process_vm_writev}}, {{c|sysfs}}, {{c|_sysctl}}, {{c|adjtimex}}, {{c|clock_adjtime}}, {{c|lookup_dcookie}}, {{c|perf_event_open}}, {{c|fanotify_init}}, {{c|kcmp}}, {{c|add_key}}, {{c|request_key}}, {{c|keyctl}}, {{c|uselib}}, {{c|acct}}, {{c|modify_ldt}}, {{c|pivot_root}}, {{c|io_setup}}, {{c|io_destroy}}, {{c|io_getevents}}, {{c|io_submit}}, {{c|io_cancel}}, {{c|remap_file_pages}}, {{c|mbind}}, {{c|set_mempolicy}}, {{c|migrate_pages}}, {{c|move_pages}}, {{c|vmsplice}}, {{c|chroot}}, {{c|tuxcall}}, {{c|reboot}}, {{c|mfsservctl}}, {{c|get_kernel_syms}}, {{c|bpf}}, {{c|clock_settime}}, {{c|personality}}, {{c|process_vm_writev}}, {{c|query_module}}, {{c|settimeofday}}, {{c|stime}}, {{c|umount}}, {{c|userfaultfd}}, {{c|ustat}}, {{c|vm86}}, {{c|vm86old}}, {{c|afs_syscall}}, {{c|bdflush}}, {{c|break}}, {{c|ftime}}, {{c|getpmsg}}, {{c|gtty}}, {{c|lock}}, {{c|mpx}}, {{c|pciconfig_iobase}}, {{c|pciconfig_read}}, {{c|pciconfig_write}}, {{c|prof}}, {{c|profil}}, {{c|putpmsg}}, {{c|rtas}}, {{c|s390_runtime_instr}}, {{c|s390_mmio_read}}, {{c|s390_mmio_write}}, {{c|security}}, {{c|setdomainname}}, {{c|sethostname}}, {{c|sgetmask}}, {{c|ssetmask}}, {{c|stty}}, {{c|subpage_prot}}, {{c|switch_endian}}, {{c|ulimit}}, {{c|vhangup}} and {{c|vserver}}.
+
+The below screenshot shows an example of {{c|seccomp-bpf}} in use. In it, a {{c|chroot}} call is attempted within an {{c|xterm}} process running inside {{c|firejail}} sandbox. Because this call is one of those restricted by default (see the list above), the {{c|chroot}} binary is aborted and an error is written to the audit log, {{Path|/var/log/audit/audit.log}} (note that you need to have {{c|CONFIG_AUDIT}} turned on in your kernel, have {{Package|sys-apps/systemd}} or {{Package|sys-apps/openrc}} (as appropriate) compiled with the {{c|audit}} USE flag, and have {{c|auditd}} running, to be able to see this log).
+
+[[File:Firejail_seccomp_example.png|thumb|none|800px|Firejail's Default seccomp-bpf Syscall Filter in Action]]
+
+By default, both 32-bit and 64-bit filters are installed.
+
+{{Note|One other point worth mentioning is that {{c|firejail}} can also use {{c|seccomp-bpf}} to restrict the socket ''protocols'' permissible for an application, and indeed its {{c|firefox}} profile does this, enabling only the {{c|IPv4}}, {{c|IPv6}}, {{c|UNIX}} and {{c|netlink}} protocols. To be fair, this doesn't provide a great deal of additional security, but it does not hurt to have it activated.}}
+
+==== <span id="capabilities">Privilege Management via Capabilities</span> ====
+
+As a third isolation technique, {{c|firejail}} provides the ability to restrict the ''capabilities'' of a Linux process.
+
+To briefly explain: historically UNIX implementations segregated processes into two simple groups, viz:
+* '''root-privileged''' processes, which bypass all kernel permission checks; and
+* '''unprivileged''' processes, which are subject to full [[:Wikipedia:Access_control_list|ACL-based]] permission checking, based on the effective user and group IDs ({{c|uid}}/{{c|gid}}), and the supplementary group list.<ref name="linux_capabilities_guide">Firejail Documentation: [https://firejail.wordpress.com/documentation-2/linux-capabilities-guide/ "Linux Capabilities Guide"]</ref>
+
+That all changed with the introduction of ''capabilities'', in Linux kernel 2.2. Capabilities split up the monolithic root privilege into smaller blocks (or sets) of permissions, which can be independently enabled or disabled on a per-thread basis (and as of kernel 2.6.24, may also be persistently associated with executable files, via extended attributes<ref name="capabilities_manpage"> [http://man7.org/linux/man-pages/man7/capabilities.7.html {{c|capabilities}} manpage]</ref>).
+
+By default,<ref>That is, via <code>caps.drop all</code> in {{Path|/etc/firejail/firefox.profile}}.</ref> {{c|firejail}} drops all ''all'' capabilities from the {{c|firefox}} process. ''Inter alia'', this causes subsequent attempts by the process (or its children) to load kernel modules, escalate privileges, replace the kernel, restart the system etc. to be rejected.
+
+{{Note|Unlike {{c|firejail}}'s {{c|seccomp-bpf}} filter, attempts to use a syscall requiring an unavailable capability simply cause an error code to be returned, they do ''not'' abort the process.}}
+
+The below screenshot shows an example of this in action. In it, a trivial program ({{c|rootchown}}) is first compiled (by root); this application simply attempts to set the ownership of a file (the pathname of which is given as its first argument) to {{c|uid}} 0 {{c|gid}} 0 {{c|(root:root)}}. Of course, under Linux, such a program would normally fail unless also ''invoked'' by the root user. However, next, the {{c|cap_chown}} capability is added to the executable's extended attributes via {{c|setcap}} (you can think of this as a sort of restricted SUID, allowing the program to carry out the {{c|chown}} operation when invoked by ''any'' user (who needs only the right to execute it)).
+
+Then, two {{c|xterm}} windows are started. In the first (upper left) one, no {{c|firejail}} profile is used, so the unprivileged user can successfully use the dangerous {{c|rootchown}} program to make a newly created file ({{Path|~/test1}}) owned {{c|root:root}}.
+
+[[File:Firejail_caps_example.png|thumb|none|800px|Firejail can Prevent SUID-style Capability-Based Privilege-Escalation Attacks]] 
+
+However, in the second (lower left) window, all capabilities are explicitly dropped (via the <code>--caps.drop=all</code> option). In this case, the attempt to run {{c|rootchown}} fails, with an <code>Operation not permitted</code> error.
+
+The 'no-capabilities' status for a process under Linux is inherited by all its children, and, once capabilities ''are'' dropped, there is no way to get them back (modulo any serious kernel security bugs; however, see also the note [[#nonewprivs|below]] for one 'gotcha' you need to guard against). As such, this facility represents a very important line of defence against exploits. At the time of writing, the capabilities ''dropped'' by {{c|firejail}}'s {{c|firefox}} profile are<ref name="capabilities_manpage"/>: {{c|CAP_AUDIT_CONTROL}}, {{c|CAP_AUDIT_READ}}, {{c|CAP_AUDIT_WRITE}}, {{c|CAP_BLOCK_SUSPEND}}, {{c|CAP_CHOWN}}, {{c|CAP_DAC_OVERRIDE}}, {{c|CAP_DAC_READ_SEARCH}}, {{c|CAP_FOWNER}}, {{c|CAP_FSETID}}, {{c|CAP_INIT_EFF_SET}}, {{c|CAP_IPC_LOCK}}, {{c|CAP_IPC_OWNER}}, {{c|CAP_KILL}}, {{c|CAP_LAST_CAP}}, {{c|CAP_LEASE}}, {{c|CAP_LINUX_IMMUTABLE}}, {{c|CAP_MAC_ADMIN}}, {{c|CAP_MAC_OVERRIDE}}, {{c|CAP_MKNOD}}, {{c|CAP_NET_ADMIN}}, {{c|CAP_NET_BIND_SERVICE}}, {{c|CAP_NET_BROADCAST}}, {{c|CAP_NET_RAW}}, {{c|CAP_PACCT}}, {{c|CAP_SETFCAP}}, {{c|CAP_SETGID}}, {{c|CAP_SETPCAP}}, {{c|CAP_SETUID}}, {{c|CAP_SYSLOG}}, {{c|CAP_SYS_ADMIN}}, {{c|CAP_SYS_BOOT}}, {{c|CAP_SYS_CHROOT}}, {{c|CAP_SYS_MODULE}}, {{c|CAP_SYS_NICE}}, {{c|CAP_SYS_PACCT}}, {{c|CAP_SYS_PTRACE}}, {{c|CAP_SYS_RAWIO}}, {{c|CAP_SYS_RESOURCE}}, {{c|CAP_SYS_TIME}}, {{c|CAP_SYS_TTY_CONFIG}}, {{c|CAP_WAKE_ALARM}}.
+
+{{Note|<span id{{=}}"nonewprivs">When</span> {{c|firejail}} drops capabilities, it removes them from the so-called capability bounding set, which acts as a mask on the capabilities that may be held by it or its children. ''However'', per the capabilities manpage,<ref name="capabilities_manpage"/> if a process has a capability in its inherited set that is ''not'' in its bounding set, it can still gain that capability in its permitted set by executing a file that ''has'' the target capability in ''its'' inherited set. As such, in addition to using the <code>--caps.drop{{=}}all</code> option, for full security you must also ensure that the {{c|firejail}} option <code>--nonewprivs</code> is used (this latter option prevents ''any'' privilege escalation via {{c|execve}}; it is ''automatically'' set if a {{c|seccomp-bpf}} filter is in use,<ref name="firejail_manpage"/> and for avoidance of doubt is explicitly set by {{c|firejail}}'s default {{c|firefox}} profile too).}}
+
+{{Note|Restricting capabilities for a program like {{c|firefox}} is really a 'strength in depth' approach, since the browser is launched with the {{c|uid}} of the regular user (who will usually have no root capabilities) and nor does the {{c|firefox}} executable itself have any capabilities specified via extended attributes.<ref name="sandbox_apps_with_firejail">nachoparker [https://ownyourbits.com/2017/10/29/sandbox-your-applications-with-firejail/ "Sandbox your Applications with Firejail"]</ref> As such, we are really protecting against the a compromised browser launching ''other'' enhanced-capability applications, or (somehow) elevating its privileges to root level.}}
+
+==== <span id="namespaces">Resource Isolation via Linux Namespaces</span> ====
+
+We've mentioned a few types of ''Linux namespace'' in passing already, so now let's take a slightly more in-depth look at this important kernel technology, and how {{c|firejail}} makes use of it to enhance security.
+
+In essence, namespaces ''wrap'' global system resources, such that processes ''inside'' the namespace appear to have their own isolated copy of those resources. As such, they are a major enabler for containers, lightweight virtualisation, and sandboxing.<ref name="namespaces_in_operation">Kerrisk, M. [https://lwn.net/Articles/531114/ "Namespaces in Operation, Part 1: Namespaces Overview"]</ref>
+
+{{Note|There is a degree of confusion about what exactly is meant by a 'Linux container'. Some authors take it to refer only to processes created via the [https://linuxcontainers.org/lxc/introduction/ lxc library], but we use it here in a broader sense, to denote ''any'' process whose resources are &mdash; to a greater or lesser extent &mdash; ''isolated'' through the use of those same ''kernel'' facilities that userspace tools like {{c|lxc}} rely on to do their work.}}
+
+The Linux kernel currently provides seven major classes of [[:Wikipedia:Linux_namespaces|namespace]] , viz.:<ref name="ferroin_namespaces">Firejail Issue 1347, Comment by Ferroin [https://github.com/netblue30/firejail/issues/1347#issuecomment-311038614 "Response to: Implications of CONFIG_USER_NS"]</ref><ref name="resource_management_presentation">Rosen, R. [http://www.haifux.org/lectures/299/netLec7.pdf "Resource Management: Linux Kernel Namespaces and cgroups"]</ref>
+
+# <span id="uts_namespaces">'''UTS namespaces'''</span> : probably the simplest, these just enable containers to have their own hostnames and domain names if desired.<ref name="uts_announce">Linux Kernel Mailing List: Hallyn, S. E. [https://lwn.net/Articles/179345/ "UTS Namespaces: Introduction"]</ref> Firejail places all newly created sandboxes in their own UTS namespace by default; and you can e.g., use the <code>--hostname=<name></code> option to modify the properties of this.
+# <span id="mount_namespaces">'''Mount namespaces'''</span>: the first namespace type to be implemented in Linux (in 2002), these allow containers to have their own compartmentalized 'views' of the filesystem; somewhat like {{c|chroot}}, but much more flexible and secure.<ref name="mount_namespaces_announce">linux-fsdevel Mailing List: Viro, A. [http://lwn.net/2001/0301/a/namespaces.php3 "Per-Process Namespaces for Linux"]</ref> For example, as {{c|mount}} and {{c|umount}} calls don't propagate across namespaces (unless explicitly requested), it is possible to use overlay filesystems, bind mounts and the like to make parts of a container's filesystem hidden, read-only, or "amnesiac" (changes are forgotten when the container is closed). Mount namespaces are also used by PID namespaces (see next point) to provide a custom view of the special {{c|proc}} filesystem. Firejail makes extensive use of mount namespaces, for example, to facilitate file and directory {{c|blacklist}}ing and {{c|whitelist}}ing, to support the {{c|--private}} (amnesiac home directory) option etc. All newly created Firejail sandboxes have their own mount namespace by default (discussed in more detail [[#filesystem_protection|below]]).
+# <span id="pid_namespaces">'''PID namespaces'''</span>: these are used to isolate the process IDs within a container.<ref name="pid_namespaces">Emelyanov, P. and Kolyshkin, K. [https://lwn.net/Articles/259217/ "PID Namespaces in the 2.6.24 Kernel"]</ref> PID numbers are remapped across a PID namespace boundary, and a process cannot see (and so, ''a fortiori'', cannot kill etc.) processes outside its PID namespace (other than those in any child namespaces). Distinct tasks in different namespaces can have the same (numeric) PID. Firejail places all newly created sandboxes in their own PID namespace by default (within which the {{c|firejail}} process itself is PID 1).
+# <span id="network_namespaces">'''Network namespaces'''</span>: these enable containers to have their own network devices, IP addresses, ARP and routing tables, {{c|netfilter}} rules etc.: essentially an isolated network stack.<ref name="network_ns">User corbet on LWN.net [https://lwn.net/Articles/259217/ "Network Namespaces"]</ref>  This makes them very useful for containerization (e.g. running multiple web servers), but also for sandboxing. Firejail does ''not'' place new sandboxes in their own network namespace by default, but can do so when the <code>--net=<ifname></code> parameter is passed. In the configuration described later in this tutorial, we shall make use of this facility, to ensure that the "outer" X11 abstract Unix socket (see [[#about_xephyr|above]]) is inaccessible within the {{c|xephyr}} context.
+# <span id="user_namespaces">'''User namespaces'''</span>: these allow containers to have their own user and group ID number spaces.<ref name="user_ns">Kerrisk, M. [https://lwn.net/Articles/528078/ "User Namespaces Progress"]</ref> It has been a somewhat controversial feature, because of the ability it provides for a regular, non-root user to set themselves up as root ''within'' a container, and then potentially exploit some (root-only) kernel facilities that are not yet properly namespace aware to launch an attack ''outside'' the container boundary.<ref name="arch_no_user_ns">Arch Linux Bug Tracker: [https://bugs.archlinux.org/task/36969 "add CONFIG_USER_NS"]</ref> Firejail does ''not'' place new sandboxes in a user namespace by default, but will attempt to do so if e.g. the <code>--noroot</code> option is enabled (as it is in the {{c|firefox}} profile, for example). Note that in the user namespaces created by {{c|firejail}}, there is ''no'' root user present at all.<ref>As such, the risk lies not so much with {{c|firejail}}'s <code>--noroot</code> option itself, but rather with the need to turn on {{c|CONFIG_USER_NS}} in the kernel to be able to use it, which in turn potentially opens the door for exploitation by other software.</ref> If, however, {{c|CONFIG_USER_NS}} is turned off in the kernel for security (as it will be in Gentoo by default), this particular option will just no-op if specified; the overall effect on the sandbox security (and operation) in such a case is negligible.
+# <span id="control_group_namespaces">'''Control group namespaces'''</span>: these allow containers to remap the control group of processes within them. It is a relatively new feature (Linux 4.6) and not currently used by Firejail (although it does make extensive use of the [[:Wikipedia:Cgroups|control groups]] feature itself (for example, to allow a sandboxed process to be resource-limited where desired)).
+# <span id="ipc_namespaces">'''IPC namespaces'''</span>: these allow containers to isolate System V IPC objects and (since Linux 2.6.30) POSIX message queues. Firejail does ''not'' place new sandboxes in an IPC namespace by default, but will do so if the <code>--ipc-namespace</code> option is passed. It is not used by default in the current {{c|firefox}} security profile.
+
+There are two very important isolation features that {{c|firejail}} relies on the existence of Linux namespaces to implement, so let's discuss those next.
+
+==== <span id="network_stack">Comms Isolation via Network Namespaces</span> ====
+
+First, {{c|firejail}} leverages [[#network_namespaces|network namespaces]] to provide '''comms isolation''' &mdash; ensuring that sandboxed applications cannot snoop on other network traffic, set up listening server ports, launch mail spam attacks etc., even if compromised. As shown [[#enp0s3_example|earlier]], if you have a wired Ethernet adaptor, you only need pass {{c|firejail}} the <code>--net=<ifname></code> option to use this feature.<ref name="x11_guide">Firejail Documentation: [https://firejail.wordpress.com/documentation-2/basic-usage/#net "Basic Usage: Direct Network Setup"]</ref><ref>Note that there's a ''little'' more to it than that of course: you would need to at least specify {{c|firejail}}'s <code>--netfilter</code> option to have a default input-drop-stance firewall created (''inside'' the new network namespace), and then add your own custom rule to this, to block undesired traffic (e.g., outbound to port 25). Alternatively, this filtering can be done (in a forwarding setup) in the host system's {{c|netfilter}}/{{c|iptables}} ruleset, as discussed later in the text; this latter approach is slightly more secure.</ref> In such a case, the sandbox is connected to the network via a {{c|macvlan}} device<ref name="macvlan">Makam, S. [https://sreeninet.wordpress.com/2016/05/29/macvlan-and-ipvlan/ "Macvlan and IPvlan Basics"]</ref>; it has an address within the local network's netmask range, but runs in its own network namespace, with fully distinct distinct TCP/IP stack, routing table, MAC etc. (see [[#network_namespaces|above]]).
+
+The screenshot below shows an example of this in action:
+
+[[File:Firejail_direct_network.png|thumb|none|800px|Use of a Direct-Connect ({{c|macvlan}}) Sandbox TCP/IP Stack; One Adaptor, Multiple MACs/IPs (Click to Zoom)]]
+
+Notice how the host system's {{c|enp0s3}} IP address (in this case, {{c|10.0.2.15}}) and the sandbox's {{c|eth0-4660}} IP address (here, {{c|10.0.2.165}}) are on the ''same'' ({{c|10.0.2.0/24}}) network segment (the [https://www.computerhope.com/jargon/n/netmask.htm netmask] being 24 bits, i.e., {{c|255.255.255.0}}). In fact, they are both bound to the ''same'' underlying network adaptor &mdash; the very purpose of {{c|macvlan}} being to allow a single ''physical'' interface to have multiple MAC and IP addresses using ''virtual'' {{c|macvlan}} sub-interfaces. Since each sub-interface is connected directly to the underlying network, clients of a {{c|macvlan}} interface can still perform DHCP requests etc.
+
+<span id="why_nat_is_needed">This is a convenient approach</span>, but unfortunately it ''won't'' work with WiFi adaptors, because all access points (APs) will ''reject'' frames from a MAC address that did not originally authenticate with them. As such, an attempt to setup a second connection on a {{c|macvlan}} sub-interface of a {{c|wlan}} adaptor would cause any other (existing) connection (on the same physical adaptor, but with a different MAC) to be immediately torn down, thereby dropping the wireless connection.<ref name="macvlan_wlan_incompatible">SuperUser Forum: [https://superuser.com/a/1114044 "How to Configure macvlan Interface for Getting the IP?"]</ref>
+
+To get around this issue we must instead use a ''routed'' setup.<ref name="x11_guide">Firejail Documentation: [https://firejail.wordpress.com/documentation-2/basic-usage/#routed "Basic Usage:
+Routed Network Setup"]</ref> Under this approach (which we will leverage more fully later in the implementation section of this mini-guide), the sandbox is connected (via a {{c|veth}} inter-namespace tunnel <ref name="veth_manpage"> [http://man7.org/linux/man-pages/man4/veth.4.html {{c|veth}} manpage]</ref>) to a Linux ''bridge'', and traffic is then routed between the bridge and the default network gateway interface by netfilter rules configured in the 'outer' context. In this way, ''any'' valid network connection &mdash; whether wired or wireless &mdash; can be used to (indirectly) provide network connectivity to processes in the sandbox.
+
+The screenshot below shows a simple routed sandbox connection in action:
+
+[[File:Firejail_routed_network.png|thumb|none|800px|Use of a Routed (Bridged {{c|veth}}) Sandbox TCP/IP Stack; WiFi Compatible (Click to Zoom)]]
+
+In this example, a bridge ({{c|br0}}) is first set up ''outside'' the sandbox, and assigned a network address and netmask (here, {{c|10.10.30.1}} and {{c|255.255.255.0}}, respectively). IP forwarding is turned on in the kernel, and the [[:Wikipedia:Iptables|{{c|iptables}}]] / [[:Wikipedia:Netfilter|{{c|netfilter}}]] firewall reset to a permissive state (with all inputs, outputs and forwarding between interfaces allowed).
+
+{{Note|Although often talked about semi-interchangeably, properly speaking '''{{c|netfilter}}''' refers to the ''kernel's'' packet filtering framework, whereas '''{{c|iptables}}''' refers to a ''userspace'' tool commonly used to interface with it.<ref name="iptables_vs_netfilter">Ellingwood, J. [https://www.digitalocean.com/community/tutorials/a-deep-dive-into-iptables-and-netfilter-architecture "A Deep Dive into Iptables and Netfilter Architecture"]</ref>}}
+
+Then a {{c|MASQUERADE}} rule is configured in the firewall (still in the 'host' context &mdash; the sandbox actually maintains its own, distinct netfilter ruleset (due to having its own [[#network_namespaces|network namespace]]), but this is not modified here).
+
+The effect of this rule is to dynamically translate packets originating from the source network (here, the bridge, i.e., anything on the {{c|10.10.30.0/24}} segment) so they ''appear'' to come from the IP address of the {{c|enp0s3}} interface (here, this happens to be {{c|10.0.2.15}}, but by using {{c|MASQUERADE}} (as opposed to {{c|SNAT}}) we remove the need to cite the address explicitly in the {{c|iptables}} rule, which is useful where e.g., DHCP is used on the default gateway interface, making the required address dynamic).<ref name="nat_intro">Rupp, K. [https://www.karlrupp.net/en/computer/nat_tutorial "NAT - Network Address Translation"]</ref> The firewall also automatically activates state-matching logic to ''reverse'' the process for any reply packets. Normal traffic from the 'host' context (i.e., related to applications running ''outside'' the sandbox) is still sent and received directly (here, through {{c|enp0s3}}) as usual.
+
+After that, an {{c|xterm}} is started inside a {{c|firejail}} sandbox as the regular user, with the <code>--net=br0</code> parameter.
+
+As may be seen, this causes one endpoint of a virtual Ethernet ({{c|veth}}) tunnel (here labelled as {{c|eth0}}) to be created by {{c|firejail}} ''inside'' the sandbox; this works just like a regular network interface (so tools like {{c|wget}} can use it, as shown). In the above example, an address of {{c|10.10.30.184}} has been assigned to this {{c|eth0}} interface (leftmost blue box in the screenshot) ({{c|firejail}} chooses an address and validates it with ARP automatically &mdash; there's no need for a DHCP server etc.).
+
+Outbound packets on {{c|eth0}} are tunnelled to the matching element of the {{c|veth}} pair<ref name="veth_intro">Lowe, S. [https://blog.scottlowe.org/2013/09/04/introducing-linux-network-namespaces/ "Introducing Linux Network Namespaces"]</ref> which exists ''outside'' the sandbox (and which is attached to the {{c|br0}} bridge by {{c|firejail}}; rightmost blue box).
+
+From there, outbound packets are forwarded by the ('host' context) {{c|netfilter}} firewall to the default network gateway interface (here, {{c|enp0s3}}, IP {{c|10.0.2.15}}, the green box). During this process, the transiting packets' apparent source address is rewritten ({{c|10.10.30.184}} &rarr; {{c|10.10.30.1}}), as a result of the {{c|MASQUERADE}} rule. Note that in this case, '''there is no reason why the default gateway could not be a WiFi ({{c|wlan}}) interface, rather than an Ethernet one ({{c|enp0s3}})''' &mdash; since, unlike the {{c|macvlan}} approach, nothing in this configuration attempts to provision the gateway interface with more than one MAC.
+
+Inbound reply packets, initially ingressing on the {{c|enp0s3}} interface, essentially follow the above flow in reverse, eventually egressing on the {{c|eth0}} interface inside the sandbox.
+
+As a result, we achieve the strong communications isolation required. As a side benefit, because each network namespace has its own set of abstract UNIX domain sockets, {{c|firejail}} can make the 'outer' X11-server [[#enp0s3_example|entirely inaccessible]] within the sandbox. Furthermore, it is easy to perform more fine-grained {{c|iptables}}-based control of the sandbox's network activity if desired (for example, by adding a rule to block any outbound connections on port 25, as a [[:Wikipedia:Anti-spam_techniques#Port_25_blocking|protection against mail spam]]) and since this is done ''outside'' the sandbox, it would be invisible to (and unchangeable by) any application running ''inside'' it.
+
+{{Note|As mentioned, because each network namespace has its own dedicated {{c|netfilter}} ruleset too, {{c|firejail}} can actually set up an additional {{c|netfilter}} / {{c|iptables}} firewall ''within'' the sandbox if you like (this operates entirely separately from the 'host' namespace {{c|netfilter}} / {{c|iptables}} firewall we have just discussed, and sandbox traffic to or from the outside world must pass through both). The option <code>--netfilter</code> turns this on (and configures the sandbox firewall in an initial output-and-reply-only stance, in which e.g., [[:Wikipedia:STUN|STUN]] requests are prohibited).<br>For avoidance of doubt, the default {{c|firefox}} profile specifies this option.<ref name="firejail_manpage"/>}}
+
+==== <span id="filesystem_protection">Filesystem Protection via Mount Namespaces</span> ====
+
+The second important {{c|firejail}} isolation feature facilitated by Linux namespaces is '''filesystem protection''' &mdash; ensuring that sandboxed applications don't have access to private (or dangerous) libraries, files or directories, even if compromised. To do this, {{c|firejail}} ''automatically builds a on-the-fly root filesystem for each sandbox'', within which a large number of localized restrictions are applied (some by default, and others as specified via command-line option and/or security profiles). As mentioned above, the key enabling technology here is [[#mount_namespaces|mount namespaces]]; these allow (for example) large numbers of local bind mounts<ref name="bind_mounts">Unix & Linux Stack Exchange Forum: [https://unix.stackexchange.com/questions/198590/what-is-a-bind-mount/198591#198591 "What Is a Bind Mount?"]</ref> to be made within the sandbox context only, in a way that is invisible to the 'host' (namespace) context.
+
+This approach to sandbox construction is related to the venerable {{c|chroot}} (which we used [[../Building_the_Gentoo_Base_System_Minus_Kernel#enter_chroot|earlier]] in the install), but is distinct from it. In a {{c|chroot}}, a sufficiently complete filesystem tree is created at (typically) some sub-location of the 'base' filing system, and then the {{c|chroot}} syscall is used to make this sub-location the effective root path for the calling process (and its descendants). [[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_bind_mounts|Commonly]], special system directories such as {{Path|/proc}}, {{Path|/sys}} and {{Path|/dev}} are bind mounted into the subtree, prior to the actual {{c|chroot}} call; any locations ''not'' spanned by the subtree or its mounts become invisible to the process (and descendants) after the {{c|chroot}}.
+
+{{Note|Since the {{c|chroot}} call is (supposed to be) an irreversible containment, it is common to talk of placing a process in a '{{c|chroot}} jail'.}}
+
+By contrast, {{c|firejail}} leaves the ''standard'' root directory in place, but switches to a new [[#mount_namespaces|''mount namespace'']], after which the 'inside-the-sandbox' view of the root filesystem is significantly altered via various (local) {{c|mount}} operations. Since these changes do ''not'' (by default) propagate outside the mount namespace, the 'host' system's view of the root filesystem is unaffected.
+
+{{Note|Actually, {{c|firejail}} ''can'' use a {{c|chroot}} filesystem too, through the use of the <code>--chroot{{=}}<path></code> option. This is sometimes useful when e.g. trying out new Linux distributions. However, it isn't necessary (or, by default, used) when constructing a safe filesystem to e.g., run programs like {{c|firefox}}.}}
+
+By default, {{c|firejail}} modifies the baseline root filesystem in the sandbox by bind-remounting {{Path|/etc}}, {{Path|/var}}, {{Path|/usr}}, {{Path|/bin}}, {{Path|/sbin}}, {{Path|/lib}}, {{Path|/lib32}}, {{Path|/libx32}} and {{Path|/lib64}} read-only. Only {{Path|/home}} and {{Path|/tmp}} are writable.<ref name="firejail_manpage"/><ref name="firejail-profile_manpage"/>
+
+This is then further modified by relevant directives in the active security profile (in our case, {{Path|/etc/firejail/firefox.profile}}) together with any command line options passed directly to {{c|firejail}} itself. Firejail allows a number of protection strategies to be employed; these generally use some combination of [[:Wikipedia:Tmpfs|{{c|tmpfs}}]] (memory-based temporary filesystem) mounts, bind-mounting 'dummy' files and directories over sensitive locations, and modified filesystem permissions to do their work.
+
+For example, in the below screenshot, an {{c|xterm}} is started within a {{c|firejail}} sandbox, using the default {{c|firefox}} security profile:
+
+[[File:Firejail_mount_tmpfs.png|thumb|none|800px|Note the Large Number of Mounts to the Sandbox (Click to Zoom)]]
+
+As may be seen, starting the sandbox does ''not'' change the mount table ({{Path|/proc/mounts}}) as visible from the 'outer' context; these remain relatively limited: '''17''' entries, of which 7 are mounts of, or bind-mounts of locations from, {{c|tmpfs}} filesystems. ''Within'' the sandbox, however, it is quite a different story &mdash; there are '''200''' mount table entries, of which 170 are marked as {{c|tmpfs}}.
+
+{{Note|This does ''not'' mean that {{c|firejail}} has created 163 ''new'' {{c|tmpfs}} filesystems; the vast majority are simply 'occluding' bind mounts (using the special ''dummy file'' and ''dummy directory'' located at {{Path|/run/firejail/firejail.ro.file}} and {{Path|/run/firejail/firejail.ro.dir}} respectively) to 'mask out' sensitive locations in the root tree. Because {{Path|/run}} is ''itself'' a {{c|tmpfs}} (you can use <code>findmnt</code> without any arguments to easily see this), the filesystem type propagates and is displayed for each such bind mount in {{c|/proc/mounts}}, adding one to the count each time.}}
+
+To better understand what is going on here, let's take a closer look at some of the filesystem-modification options that {{c|firejail}} offers (this is ''not'' a comprehensive list):
+
+* <code>--read-only=<file_or_dir></code> When a file or directory is marked with this directive, {{c|firejail}} bind mounts it (citing identical source and target paths) with the {{c|MS_RDONLY}} flag set (as with all such operations, this bind mount is only visible in the sandbox context). Since the {{c|mount}}, {{c|umount}} and {{c|umount2}} syscalls will generally be restricted by a {{c|seccomp-bpf}} filter, and {{c|CAP_SYS_ADMIN}} dropped within the sandbox (see above discussion, [[#seccomp|here]] and [[#capabilities|here]]), there is no way for the sandboxed application (even if compromised) to undo this operation (true of all the below options).
+* <code>--noexec=<file_or_dir></code> As above, but the marked file or directory is bind-remounted with the {{c|noexec}}, {{c|nodev}} and {{c|nosuid}} options set (see this [[../Final_Preparations_and_Reboot_into_EFI#setup_fstab|previous discussion]] for an explanation of what these are).
+* <code>--blacklist=<file_or_dir></code> When a file or directory is marked with this directive, {{c|firejail}} bind mounts a empty, only-readable-by-root dummy file ({{Path|/run/firejail/firejail.ro.file}}) or directory ({{Path|/run/firejail/firejail.ro.dir}}) as appropriate on top of the specified path. This 'occludes' the original filesystem element within the sandbox, making its contents inaccessible.
+* <span id="about_whitelisting"><code>--whitelist=<file_or_dir></code></span> Of course, one problem with blacklisting is that anything not explicitly excluded is still allowed, and so (particularly as systems change over time) it is easy for something sensitive to get missed. Further, the ''name'' of the blacklisted file or directory is still visible within the sandbox even when the contents are occluded, which may not always be acceptable. To address this, {{c|firejail}} also offers ''whitelisting''. When a file or directory is marked with this directive, {{c|firejail}} mounts a new {{c|tmpfs}} over the ''parent'' directory of the cited path (if it has not already done so due to a previous <code>--whitelist</code> directive), and then bind-mounts the specified file or directory inside (at its original location). This means that ''everything else'' in the parent directory (recursively), that is ''not'' whitelisted, becomes invisible inside the sandbox. Further, while changes to whitelisted files or directories persist when the sandbox is closed, any other changes disappear (since they were performed in a {{c|tmpfs}}).<br>For example, if {{c|firejail}} was started with the options <code>--whitelist=~/.config</code> and <code>--whitelist=~/.mozilla</code> (and no others), then it would create a new {{c|tmpfs}} and mount it over the user's home (the 'parent' path {{Path|~/}}) (with the same permissions and ownership as the original home directory had), and then bind-mount the original {{Path|~/.config}} and {{Path|~/.mozilla}} directories inside this. Nothing else in the user's home directory would be visible.{{Note|In fact, the default {{c|firefox}} profile does something similar, albeit with a larger list of whitelisted components within {{Path|~/}}; most of these are hidden ('dot') paths however: the only 'regular' whitelisted directory is {{Path|~/Downloads}} (as may be seen in the above screenshot).}}
+* <code>--private</code> This directive causes a {{c|tmpfs}} to be mounted over the user's home (and another over {{Path|/root}}), with a minimal 'fresh' configuration in place. In that sense, it is similar in effect to the {{Path|~/<subpath>}} whitelisting performed by the default {{c|firejail}} profile, but is even more extreme &mdash; only the original {{Path|~/.Xauthority}} file is bind mounted, and otherwise new skeleton contents are provided (e.g. {{Path|~/.bashrc}}). As such, ''all'' changes will be discarded upon exit. In fact, the <code>--private</code> option will override any home directory whitelisting, if specified together. This can be useful if you want to e.g., access a site using a 'vanilla' browser configuration (no custom add-ons etc.), but in an 'amnesiac' manner (for example, a banking or government site).{{Tip|It is still possible to specify that certain files or directories be bind-mounted in the {{c|tmpfs}} home, if you use the <code>--private-home{{=}}<file>,<dir></code> option instead.}}
+* <code>--private-bin=<file>,<file></code> This directive causes a {{c|tmpfs}} to be mounted over {{c|/bin}}, with only the specified binaries copied over. The new {{c|/bin}} is then bind-mounted over {{Path|/sbin}}, {{Path|/usr/bin}}, {{Path|/usr/sbin}} and {{Path|/usr/local/bin}}. This allows for a very restricted environment to be provided, similar to what one might setup in a old-school server {{c|chroot}}.
+
+Firejail provides a large number of other facilities that we have not discussed above. For example, you can use <code>--private-lib=<path>,<path></code> to build a new {{Path|/lib}} in a {{c|tmpfs}}, with only the libraries necessary to run the application present (similar to <code>--private-bin</code>). As another example, you can specify the use of a [[:Wikipedia:Docker_(software)|Docker]]-style ''overlay'' filesystem<ref name="overlay_filesystem">kernel.org; Brown, N. [https://www.kernel.org/doc/Documentation/filesystems/overlayfs.txt "Overlay Filesystem"]</ref> (<code>--overlay</code>, <code>--overlay-named</code> and <code>--overlay-tmpfs</code> options) to store all changes made to the filesystem inside a sandbox into an (potentially reusable) overlay. However, the above summary has hopefully given you a reasonable view of what {{c|firejail}} can do; please refer to the relevant manpages <ref name="firejail_manpage"/><ref name="firejail-profile_manpage"/> for further information.
+
+That concludes our high-level tour of {{c|firejail}}. We will now turn to consider its installation and use for sandboxing (at least as an initial application) the {{c|firefox}} web browser.
+
+== <span id="prerequisites">Prerequisites</span> ==
+
+To proceed, you will require a target system running Gentoo Linux (either the stable or testing branch is fine), with:
+
+* a kernel that has at least the baseline configuration used on the Gentoo 'minimal install' media, with the necessary additional configuration changes made to enable an X11-based graphical desktop to run;
+** although most relatively modern kernels should work, given the threat model we are trying to protect against here, a version patched against the Meltdown and (so far as possible) Spectre [https://meltdownattack.com vulnerabilities]<ref name="unmelted_pi">Raspberry Pi Blog: Upton, E. [https://www.raspberrypi.org/blog/why-raspberry-pi-isnt-vulnerable-to-spectre-or-meltdown/ "Why Raspberry Pi Isn't Vulnerable to Spectre or Meltdown"] &mdash; a very readable architectural description of the 'speculation' family of attacks, even though written from a non-x86_64 perspective.</ref> is highly recommended (see [https://wiki.gentoo.org/wiki/Project:Security/Vulnerabilities/Meltdown_and_Spectre this page] for a list of patched kernels, required microcode updates etc.);
+** additionally, {{c|CONFIG_GENTOO_LINUX}} and {{c|CONFIG_GENTOO_LINUX_PORTAGE}} should be set;
+* a working X11-based desktop (I assume GNOME 3 in what follows, but the instructions may be easily adapted for other desktops, for example Xfce4, with some minimal configuration changes);
+** a Wayland-based system is also usable, provided it uses the rootless XWayland X11 server to host unported applications such as {{c|firefox}} (see [[#xwayland_note|note]] above);
+* the {{c|buildkernel}} tool from the {{c|sakaki-tools}} overlay installed (as specified [[../Configuring_and_Building_the_Kernel#install_buildkernel|earlier]] in the tutorial).
+
+For avoidance of doubt, if you have installed a GNOME-based Gentoo system using the other instructions included in this EFI Install Guide, your system is suitable (although in such a case, you may still wish to check that the version of your kernel contains the most recent Meltdown and Spectre patches, particularly if you are running on the stable branch).
+
+== <span id="installation">Installing the Necessary Software</span> ==
+
+We'll begin by installing the necessary additional software on your machine.
+
+=== <span id="kernel_config">Kernel</span> ===
+
+You will need to enable a number of additional kernel settings (and rebuild your kernel) in order to use {{c|firejail}} successfully.
+
+{{Important|In what follows, I am assuming that you know how to use the {{c|make menuconfig}} kernel configuration tool (which {{c|buildkernel}} invokes). You can find a short overview of {{c|make menuconfig}} in an earlier section of this tutorial ([[../Setting_up_the_GNOME_3_Desktop#make_menuconfig_intro{{!}}{{c|systemd}}]], [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro{{!}}{{c|OpenRC}}]]); if you skipped over it before, you may wish to review it now (or at least, read the sub-section regarding "implementing a shorthand configuration fragment in {{c|make menuconfig}}" ([[../Setting_up_the_GNOME_3_Desktop#kernel_config_shorthand_note{{!}}{{c|systemd}}]], [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#kernel_config_shorthand_note{{!}}{{c|OpenRC}}]])), before proceeding. You may also find the material in the "Final Configuration Steps" chapter useful to review ([[../Final_Configuration_Steps{{!}}{{c|systemd}}]], [[../Final_Configuration_Steps_under_OpenRC{{!}}{{c|OpenRC}}]]). Greg Kroah-Hartman's ''Linux Kernel in a Nutshell'' is also highly recommended.<ref name{{=}}"kernel_in_nutshell">Kroah-Hartman, Greg. [http://www.kroah.com/lkn/ ''Linux Kernel in a Nutshell'' (ebook)]. O'Reilly, 2006</ref>}}
+
+If you are using one, ensure that your boot USB key is inserted. Then, open a terminal window, become root, and issue:
+
+{{RootCmd
+|buildkernel --menuconfig
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|The host name you see when running these commands will obviously reflect the settings on your target PC.}}
+
+Then, ensure that the following options are set (where an item is marked 'M' (make as module) in the below, it may also generally be built directly into the kernel if you prefer):
+
+{{KernelBox
+|title=Minimal kernel configuration changes to support Firejail
+|<pre>
+    General Setup  --->
+        [*] Namespaces support  --->
+            [*]   UTS namespace
+            [*]   IPC namespace
+            [ ]   User namespace
+            [*]   PID Namespaces
+            [*]   Network namespace
+[*] Networking support  --->
+    Networking options  --->
+        <M> 802.1d Ethernet Bridging
+        [*] Network packet filtering framework (Netfilter)  --->
+            [*]   Advanced netfilter configuration
+            <M>     Bridged IP/ARP packets filtering
+            Core Netfilter Configuration  --->
+                [*] Netfilter ingress support
+                <M> Netfilter connection tracking support
+                [*] DCCP protocol connection tracking support
+                [*] SCTP protocol connection tracking support
+                [*] UDP-Lite protocol connection tracking support
+                <M> Netfilter Xtables support (required for ip_tables)
+                <M>   "SNAT and DNAT" targets support
+                <M>   "conntrack" connection tracking match support
+                <M>   "state" match support
+            IP: Netfilter Configuration  --->
+                <M> IPv4 connection tracking support (required for NAT)
+                <M> IPv4 NAT
+                <M>   IPv4 masquerade support
+                <M> IP tables support (required for filtering/masq/NAT)
+                <M>   Packet filtering
+                <M>   iptables NAT support
+                <M>     MASQUERADE target support
+    Device Drivers  --->
+        [*] Network device support  --->
+            [*]   Network core driver supportn
+            <M>     Bonding driver support
+            <M>     MAC-VLAN support
+            <M>       MAC-VLAN based tap driver
+            <M>     Universal TUN/TAP device driver support
+            <M>     Virtual ethernet pair device 
+</pre>
+}}
+
+{{Important|Some of the options in the above list may not be immediately visible to you, if they have dependencies (also from the list) that are not initially satisfied. Accordingly, if you can't find a particular option in the location specified, try in the first instance setting all the other options that ''are'' visible to you, then come back to look for it again. Repeat this process as necessary, until all the required options have been set.}}
+
+{{Important|These modifications assume that you have a 'sane' baseline kernel configuration to begin with, for example, one that was derived from the Gentoo Minimal Install system kernel, and then suitably augmented to allow a graphical desktop system to run successfully.}}
+
+{{Note|There are many more {{c|netfilter}} components that you may wish to install, the set above is just an absolutely minimal list to be able to use {{c|firejail}} in the configuration discussed in this guide.}}
+
+If you wish, you can also turn on user namespaces (see [[#user_namespaces|above]] for a brief discussion regarding the benefits and risks of so doing):
+{{KernelBox
+|title=Additional kernel configuration changes to support user namespaces
+|<pre>
+    General Setup  --->
+        [*] Namespaces support  --->
+            [*]   User namespace
+</pre>
+}}
+
+Once you have made the necessary changes, save the kernel configuration and wait for {{c|buildkernel}} to complete compiling and installing the kernel. When it has completed, reboot your system, then follow the usual steps to unlock the LUKS partition and log in again (using GNOME) as your regular user.
+
+=== <span id="firefox">Installing the Firefox Browser</span> ===
+
+With the kernel configured, we will next install the Firefox web browser.
+
+Now, because, at the time of writing, Firefox will silently auto-download a Gecko Media Plugin binary blob on first use if the (default active) {{c|gmp-autoupdate}} USE flag is set,<ref name="gmp-autoupdate">Gentoo Forums: [https://forums.gentoo.org/viewtopic-t-1019906.html "Policy question re Firefox binary blob auto-download"]</ref> I recommend you create an entry in {{Path|/etc/portage/package.use/firefox}} to ''unset'' this flag, before proceeding (of course, this step is optional; [[#actual_firefox_emerge|click here]] to skip it).
+
+Open a terminal window, become root, and issue:
+
+{{RootCmd
+|nano -w /etc/portage/package.use/firefox
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and append to that file:
+
+{{FileBox|filename=/etc/portage/package.use/firefox|title=Append following to inhibit media codec blob auto-download|lang=bash|1=
+# inhibit Gecko Media Plugin binary blob auto-download
+www-client/firefox -gmp-autoupdate
+}}
+
+Leave the rest of the file (if any contents pre-existed) as-is. Save, and exit {{c|nano}}.
+
+<span id="actual_firefox_emerge">Then</span>, to install {{c|firefox}} itself, issue (still working as root):
+
+{{RootCmd
+|emerge --ask --verbose --changed-use www-client/firefox
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ... assuming no errors you will see ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+This may take some time to complete, as {{c|firefox}} is a large, complex package with many dependencies.
+
+{{Note|In this, ''and'' in subsequent emerges calling for use of the {{c|--changed-use}} or {{c|--noreplace}} option, the {{c|emerge}} may exit immediately, stating "{{c|Nothing to merge; quitting}}" (or simply, "{{c|Total: 0 packages, Size of downloads: 0 KiB}}"), if the specified package is already installed (and also, in the case of {{c|--changed-use}}, if its USE flags have not been updated since it was last emerged). This is exactly as expected, and we have used the idiom here to avoid any unnecessary recompilation.<br>There is one additional minor point worth bearing in mind &mdash; if you {{c|emerge}} a package that is already part of your system, but only as a dependency of {{c|another}} installed package (and you didn't specify the {{c|--oneshot}} flag to {{c|emerge}}) then you'll be asked "{{c|Would you like to add these packages to your world favorites? [Yes/No]}}"; in such cases you should press {{Key|y}}, then press {{Key|Enter}}, to confirm.}}
+
+=== <span id="install_xephyr">Rebuilding your X11 Server with Xephyr Support</span> ===
+
+Once completed, the next step is to ensure your X11 server (which you originally installed earlier in the install ([[../Setting_up_the_GNOME_3_Desktop#install_x11|{{c|systemd}}]], [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#install_x11|{{c|OpenRC}}]])) allows the use of the [[:Wikipedia:Xephyr|Xephyr]] X11 server-in-a-window.
+{{Note|NB: for avoidance of doubt, you ''should'' complete this section, even if you are using a Wayland-based GNOME desktop.}}
+
+Issue:
+
+{{RootCmd
+|nano -w /etc/portage/package.use/xorg-server
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+<span id="need_xpra">and append</span> to that file:
+
+{{FileBox|filename=/etc/portage/package.use/xorg-server|title=Append following text to enable Xephyr support in your X11 server|lang=bash|1=
+# enable Xephyr X11-server-in-a-window
+# also build Xvfb server required by x11-wm/xpra dependency of firejail
+# and also build kdrive X servers (required by Xephyr)
+x11-base/xorg-server xephyr xvfb kdrive
+}}
+
+Leave the rest of the file (if any contents pre-existed) as is. Save, and exit {{c|nano}}.
+
+{{Note|<span id{{=}}"need_xvfb">The {{c|xvfb}} USE flag</span> is an indirect requirement of {{c|firejail}}, due to the latter's dependency on the {{Package|x11-wm/xpra}} package.}}
+
+Now we can re-emerge the X-server itself. Issue:
+
+{{RootCmd
+|emerge --ask --verbose --oneshot --changed-use x11-base/xorg-server
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+<span id="install_xsel_xrandr">You should also</span> {{c|emerge}} the {{Package|x11-misc/xsel}} and {{Package|x11-apps/xrandr}} packages at this time, as we will need them (for clipboard management and display rescaling, respectively) later. Issue:
+
+{{RootCmd
+|emerge --ask --verbose --noreplace x11-misc/xsel x11-apps/xrandr
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+These are both small programs, so the above {{c|emerge}} should not take long.
+
+<span id="install_xeyes">Lastly, install</span> the tiny {{Package|x11-apps/xeyes}} package (it provides an easy, visual way to check if an application's events are visible from another context, a useful diagnostic); and also install {{c|xlsclients}} (which can be used to get a list of all connected X11 applications). Issue:
+
+{{RootCmd
+|emerge --ask --verbose --noreplace x11-apps/xeyes x11-apps/xlsclients
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+=== <span id="install_firejail">Installing Firejail and Required Utilities</span> ===
+
+Next, we can install the {{c|firejail}} program itself (together with a few other utility packages required for the setup described in this tutorial). However, before doing so, we need to alter its default USE flags, to enable inclusion of the code for X11 isolation.
+
+To do so, still working as root, issue:
+
+{{RootCmd
+|nano -w /etc/portage/package.use/firejail
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and ''append'' to that file:
+
+{{FileBox|filename=/etc/portage/package.use/firejail|title=Append following text to enable X11 isolation in Firejail|lang=bash|1=
+# enable X11 isolation
+sys-apps/firejail x11
+# requirements of firejail
+x11-wm/xpra server
+}}
+
+{{Note|As mentioned [[#need_xpra|above]], {{c|firejail}} unconditionally pulls in the {{Package|x11-wm/xpra}} package, which requires the {{c|server}} USE flag set &mdash; so even though we will actually be using {{c|xephyr}} as our X11 server, we need to set it here.}}
+
+Leave the rest of the file (if it was non-blank to begin with) as is. Save, and exit {{c|nano}}.
+
+Now we are ready to install {{c|firejail}}. Issue:
+
+{{RootCmd
+|emerge --ask --verbose --changed-use sys-apps/firejail
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+This {{c|emerge}} may take some time to complete, as {{c|firejail}} (with X11 isolation active) pulls in {{Package|x11-wm/xpra}} and its dependencies.
+
+Next, since we will need the {{c|brctl}} program to setup networking correctly, install the {{Package|net-misc/bridge-utils}} package (which supplies this utility). Issue:
+
+{{RootCmd
+|emerge --ask --verbose --noreplace net-misc/bridge-utils
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+<span id="install_iptables">We'll also need</span> the {{c|iptables}} front-end to the kernel {{c|netfilter}} facility. Issue:
+
+{{RootCmd
+|emerge --ask --verbose --noreplace net-firewall/iptables
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+The use of these additional programs was discussed [[#network_stack|earlier]].
+
+Finally, since it will be useful to have a simple terminal window available (at least initially) inside the sandboxed environment (and {{c|gnome-terminal}} will not work there, by default), issue:
+
+{{RootCmd
+|emerge --ask --verbose --noreplace x11-terms/xterm
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+=== <span id="install_openbox">Installing the OpenBox Window Manager</span> ===
+
+Next, as discussed [[#need_openbox|previously]], we must install a window manager for use within the {{c|xephyr}} X11 server display. Here, we'll use {{Package|x11-wm/openbox}}, as it is relatively lightweight, but can still do everything we need 'out of the box' (feel free however to choose an alternative package, if desired).
+
+{{Note|We are using {{c|openbox}} with {{c|xephyr}}, rather than {{c|firejail}}'s default {{c|xpra}}, as the latter does not work reliably in this context under Gentoo.}}
+
+To install {{c|openbox}}, issue:
+
+{{RootCmd
+|emerge --ask --verbose --noreplace x11-wm/openbox
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+Congratulations, that's all the necessary software installed!
+
+== <span id="setup">Configuration</span> ==
+
+Next, we will configure a baseline set of files and startup services to get your X11 sandboxed browser up and running. Although complete, the following is ''only'' meant as a starting point, so feel free to modify some or all of these files, as desired, once you have your sandboxed browser system working.
+
+=== <span id="setup_bridge">Setting Up the Bridge</span> ===
+
+As discussed [[#network_stack|earlier]], we need to ensure that we have a 'routing' firewall-and-bridge setup in your 'outer' ('host') context, to enable sandboxed {{c|firefox}} to reach the public internet, even should your target PC be using a WiFi network interface.
+
+We'll write a short script to construct (and, when instructed, tear down) the bridge part of this plumbing first. Issue:
+
+{{RootCmd
+|touch /usr/local/sbin/firejail-bridge
+|chmod 755 /usr/local/sbin/firejail-bridge
+|nano -w /usr/local/sbin/firejail-bridge
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+<span id="bridge_script">and then enter</span> the following text in that file:
+
+{{FileBox|filename=/usr/local/sbin/firejail-bridge|title=Simple bridge setup/teardown script for X11-sandboxed Firejail|lang=bash|1=
+#!/bin/bash
+# Simple bridge setup/teardown script for a routed X11 firejail
+# (by default, br10 on 10.10.20.1/24)
+# pass argument "start" to setup bridge, or "stop" to
+# tear it down
+#
+# Copyright (c) 2018 sakaki <sakaki@deciban.com>
+# License: GPL-3.0+
+
+# we avoid br0, br1 etc. as these may already be in use
+BRIDGE="br10"
+
+# modify if 10.10.20.0/24 subnet already in use on your machine
+SUBNET_PREFIX="10.10.20"
+
+if [[ "start" == "$1" ]]; then
+        # create a null bridge with address 10.10.20.1, and bring it up
+        brctl addbr "$BRIDGE"
+        ip addr add "$SUBNET_PREFIX".1/24 dev "$BRIDGE"
+        ip link set "$BRIDGE" up
+elif [[ "stop" == "$1" ]]; then
+        # delete the bridge, if it exists
+        if brctl show "$BRIDGE" &>/dev/null; then
+                ip link set "$BRIDGE" down
+                brctl delbr "$BRIDGE"
+        fi
+else
+        >&2 echo "$0: error: please use 'start' or 'stop'"
+        exit 1
+fi
+}}
+
+{{Note|<span id{{=}}"different_br_name">In the unlikely case</span> that the {{c|10.10.20.0/24}} subnet is already in use on your machine, or that the {{c|br10}} bridge name is already taken, modify the {{c|SUBNET_PREFIX}} and/or {{c|BRIDGE}} variables in the script as required. Most users will ''not'' need to change these settings, however.}}
+
+{{Note|While it ''is'' possible to create a bridge using NetworkManager's GUI or CLI,<ref name{{=}}"networkmanager_bride">Ask Xmodulo Forum: [http://ask.xmodulo.com/configure-linux-bridge-network-manager-ubuntu.html "How to configure a Linux bridge with Network Manager on Ubuntu"]</ref> the above method is more generic, as it should work whether or not {{c|NetworkManager}} is in use.}}
+
+Next, we need to ensure that our new script is run each time the system is started up; to do so, [[#setup_bridge_systemd|click here]] to jump to the (following) instructions for use with {{c|systemd}} (the default), or [[#setup_bridge_openrc|click here]] to jump to the (following) instructions for use with {{c|OpenRC}}, as appropriate.
+
+{{Tip|As an alternative to the below approach, it is possible, under ''both'' {{c|systemd}} and {{c|OpenRC}} in Gentoo, to use (executable) {{Path|/etc/local.d/firejail-bridge.{start,stop}}} files to invoke the script. That's because any {{Path|/etc/local.d/<name>.start}} files get run at the final phase of system startup, and any {{Path|/etc/local.d/<name>.stop}} files get run at the first phase of system shutdown, by the {{c|local}} service under {{c|OpenRC}}; and the same thing happens under {{c|systemd}} (indirectly) courtesy of the {{Path|/usr/lib/systemd/system-generators/gentoo-local-generator}} generator (installed by {{Package|sys-apps/gentoo-systemd-integration}}, a dependency of {{Package|sys-apps/systemd}}). However, in what follows, we will stick with the approach of using explicit unit files ({{c|systemd}}) or initscripts ({{c|OpenRC}}), since these can be straightforwardly invoked, enabled and disabled from the command line, making a system using them somewhat easier to maintain.}}
+
+==== <span id="setup_bridge_systemd">Creating a Persistent Bridge under systemd (Default)</span> ====
+
+To enable the {{Path|/usr/local/sbin/firejail-bridge}} script to be run each boot under {{c|systemd}}, we need to write a simple [https://www.freedesktop.org/software/systemd/man/systemd.unit.html unit] file.<ref name="systemd_startup_script">Unix & Linux Stack Exchange Forum: [https://unix.stackexchange.com/questions/47695/how-to-write-startup-script-for-systemd/47715#47715 "How to Write Startup Script for systemd"]</ref> To do so, issue:
+
+{{RootCmd
+|nano -w /etc/systemd/system/firejail-bridge.service
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and enter in that file:
+
+{{FileBox|filename=/etc/systemd/system/firejail-bridge.service|title=Minimal unit to invoke the firejail-bridge script under systemd|lang=ini|1=
+[Unit]
+Description=Set up persistent bridge interface for firejail
+Wants=network.target
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/firejail-bridge "start"
+RemainAfterExit=true
+ExecStop=/usr/local/sbin/firejail-bridge "stop"
+
+[Install]
+WantedBy=multi-user.target
+}}
+
+{{Note|This is broadly equivalent to specifying that the system be in runlevel >{{=}}3<ref name="sysv_runlevel_mapping">Arch Linux Wiki: [https://wiki.archlinux.org/index.php/systemd#Mapping_between_SysV_runlevels_and_systemd_targets "systemd: Mapping Between SysV Runlevels and systemd Targets"]</ref> and have the networking subsystem (e.g., {{Package|net-misc/networkmanager}}) activated, as necessary requirements for this service to run. The service itself is marked '{{c|oneshot}}', i.e., there is no persistent daemon process left running. However, we have also specified the {{c|RemainAfterExit}} tag, to make {{c|systemd}} regard the service as active, even after the invoked {{Path|/usr/local/sbin/firejail-bridge}} script has completed. Finally, and as may easily be inferred, the {{c|ExecStart}} and {{c|ExecStop}} stanzas are called whenever the service is started or stopped, respectively.}}
+
+This unit file does ''not'' need to be made executable (but should only be writeable by root).
+
+Next, ''start'' the new service (so triggering the {{c|ExecStart}} action, thereby running the {{Path|/usr/local/sbin/firejail-bridge}} script with the "start" parameter, which in turn sets up the {{c|br10}} bridge itself). Issue:
+
+{{RootCmd
+|systemctl daemon-reload
+|systemctl start firejail-bridge
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Tip|There is no requirement that a unit file's name ''match'' that of any script or program it executes; we just do so here for simplicity. In fact, in the above command, {{c|firejail-bridge}} is really a shorthand for {{c|firejail-bridge.service}}, the complete filename of the unit we just created.}}
+
+Check that the bridge has come up successfully; issue:
+
+{{RootCmd
+|ifconfig br10
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+br10: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.10.20.1  netmask 255.255.255.0  broadcast 0.0.0.0
+        inet6 fe80::c44c:68ff:fec3:99aa  prefixlen 64  scopeid 0x20<link>
+... additional output suppressed ...
+</pre>
+}}
+
+{{Note|Of course, if you have modified the bridge's name from the default {{c|br10}} (and this ''won't'' apply to most readers), then you'll need to change the parameter in the command above to match (and similarly, if you have changed its address, the {{c|inet}} value shown by the <code>ifconfig br10</code> command will be different; again, this won't apply to most readers).}}
+
+The exact details shown for the bridge (for example, its {{c|inet6}} address) will of course depend on your machine specifics, but you should at least see the name and IPv4 address as above (unless you have modified either in the {{c|/usr/local/sbin/firejail-bridge}} script, of course).
+
+Assuming that worked, ''enable'' the unit file, so the bridge gets setup on boot:
+
+{{RootCmd
+|systemctl enable firejail-bridge 
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Congratulations, your persistent bridge setup is now complete! Continue reading at [[#setup_firewall|"Setting Up a Routing Firewall"]], below.
+
+==== <span id="setup_bridge_openrc">Creating a Persistent Bridge under OpenRC</span> ====
+
+To run the script at system startup under {{c|OpenRC}}, we need to write a simple [https://wiki.gentoo.org/wiki/Handbook:AMD64/Working/Initscripts#Writing_initscripts init script].<ref name="writing_openrc_init_scripts">Big Elephants Blog: [http://big-elephants.com/2013-01/writing-your-own-init-scripts/ "Writing Your Own Init Scripts"]</ref> To do so, issue:
+
+{{RootCmd
+|touch /etc/init.d/firejail-bridge
+|chmod 755 /etc/init.d/firejail-bridge
+|nano -w /etc/init.d/firejail-bridge
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and enter in that file:
+
+{{FileBox|filename=/etc/init.d/firejail-bridge|title=Minimal service to invoke the firejail-bridge script under OpenRC|lang=bash|1=
+#!/sbin/openrc-run
+# Set up persistent bridge interface for firejail
+#
+# Copyright (c) 2018 sakaki <sakaki@deciban.com>
+# License: GPL-3.0+
+
+depend() {
+        need net
+}
+
+start() {
+        ebegin "Setting up bridge interface for firejail"
+        /usr/local/sbin/firejail-bridge "start"
+        eend $?
+}
+
+stop() {
+        ebegin "Tearing down bridge interface for firejail"
+        /usr/local/sbin/firejail-bridge "stop"
+        eend $?
+}
+}}
+
+{{Note|The {{c|depend()}} function in the above notifies {{c|OpenRC}} that networking (e.g., via {{Package|net-misc/networkmanager}}) must be activated before the {{c|firejail-bridge}} service can be run (and further, that our new service must be restarted, should networking be restarted while it is running). The {{c|start()}} function simply prints a notification, runs the {{Path|/usr/local/sbin/firejail-bridge}} script with "start" parameter, and then notifies the user of the returned result; the {{c|stop()}} function does the same but passes "stop" as the parameter to our script.}}
+
+Next, ''start'' the new service (so triggering the {{c|start()}} function, thereby running the {{Path|/usr/local/sbin/firejail-bridge}} script with the "start" parameter, which in turn sets up the {{c|br10}} bridge itself). Issue:
+
+{{RootCmd
+|rc-service firejail-bridge start
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Tip|There is no requirement that an {{c|OpenRC}} service file's name match that of any script or program it executes; we just do so here for simplicity.}}
+
+Check that the bridge has come up successfully; issue:
+
+{{RootCmd
+|ifconfig br10
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+br10: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.10.20.1  netmask 255.255.255.0  broadcast 0.0.0.0
+        inet6 fe80::c44c:68ff:fec3:99aa  prefixlen 64  scopeid 0x20<link>
+... additional output suppressed ...
+</pre>
+}}
+
+{{Note|Of course, if you have modified the bridge's name from the default {{c|br10}} (and this ''won't'' apply to most readers), then of course you'll need to change the parameter in the above command to match.}}
+
+The exact details shown for the bridge (for example, its {{c|inet6}} address) will of course depend on your machine specifics, but you should at least see the name and IPv4 address as above (unless you have modified either in the {{c|/usr/local/sbin/firejail-bridge}} script, of course).
+
+Assuming that worked, ''add'' the service to the default runlevel, so the bridge gets setup on boot:
+
+{{RootCmd
+|rc-update add firejail-bridge default
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Congratulations, your persistent bridge setup is now complete! Continue reading at [[#setup_firewall|"Setting Up a Routing Firewall"]], immediately below.
+
+=== <span id="setup_firewall">Setting Up a Routing Firewall</span> ===
+
+With the bridge component of the plumbing disposed with, we can now turn our attention to creating the ''routing firewall''. We'll use the {{c|iptables}} userspace tool to configure the {{c|netfilter}} kernel subsystem here, to enable packets originating from a {{c|firejail}} sandbox (which will be connected &mdash; across network namespaces &mdash; via a {{c|veth}} tunnel to the host system's {{c|br10}} bridge) to be forwarded with network address translation ('NAT') onward to your system's main gateway interface (related reply packets will be automatically handled too); see the [[#network_stack|earlier background material]] for a detailed discussion of this.
+
+{{Important|Note that these rules will 'live' in the ''host's'' network namespace, not that of the sandbox, so, if you are running a system with an ''existing'' firewall setup, then you should modify that existing configuration rather than following the instructions in this section. In what follows, we'll be setting up a very simple firewall 'from scratch' (and in a manner directed at a client, rather than a server, use case).}}
+
+Issue:
+
+{{RootCmd
+|touch /usr/local/sbin/firejail-firewall
+|chmod 755 /usr/local/sbin/firejail-firewall
+|nano -w /usr/local/sbin/firejail-firewall
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and then enter the following text in that file:
+
+{{FileBox|filename=/usr/local/sbin/firejail-firewall|title=Simple firewall setup script for an X11-sandboxed Firejail|lang=bash|1=
+#!/bin/bash
+# Simple configuration script for an IPv4 routing firewall
+# suitable for use with a firejail sandbox on a client machine
+# New input is blocked by default, and bridge traffic is
+# redirected to the gateway interface, with masquerading
+#
+# Copyright (c) 2018 sakaki <sakaki@deciban.com>
+# License: GPL-3.0+
+
+# modify to match your particular machine's main interface
+NETIF="enp0s3"
+
+# modify if 10.10.20.0/24 subnet already in use on your machine
+# (for something other than br10)
+SUBNET="10.10.20.0/24"
+
+# clear firewall state, including policies, rules and counters
+iptables --flush
+iptables -t nat -F
+iptables -X
+iptables -Z
+
+# setup default policies, which apply in the absence of
+# any contradicting explicit rule
+# (here: drop any input, but allow output and forwarding)
+iptables -P INPUT DROP
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD ACCEPT
+
+# explicit rules
+# allow any input from localhost
+iptables -A INPUT -i lo -j ACCEPT
+# also permit any input state matched to an existing connection
+# (i.e., a reply)
+iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# add any specific blocks you want here
+# for example, prevent any port 25 forwarding (SMTP) from the sandbox
+# to help guard against mail spam
+iptables -A FORWARD -s "$SUBNET" -p tcp --dport 25 -j DROP
+
+# dynamically translate the source address of any outbound
+# traffic from the bridge subnet (and reverse for matched input)
+iptables -t nat -A POSTROUTING -s "$SUBNET" -o "$NETIF" -j MASQUERADE
+}}
+
+{{Important|<span id{{=}}"substitute_main_if">Substitute the name</span> of your target PC's main network adaptor interface for {{c|enp0s3}} in the above; you will have noted this name down [[../Final_Preparations_and_Reboot_into_EFI#note_if_name|earlier]] in the install. For avoidance of doubt, it ''is'' permissible for this to be a WiFi interface name, for example {{c|wlp2s0}} or similar.}}
+
+{{Note|In the unlikely case that you chose ''not'' to use the {{c|10.10.20.0/24}} subnet for the {{c|firejail}} bridge ({{c|br10}}) [[#different_br_name|earlier]], modify the value assigned to the {{c|SUBNET}} variable in the above script as appropriate. For avoidance of doubt, most users will ''not'' need to change the default setting, however.}}
+
+{{Note|For simplicity, we only deal with IPv4 networking in these instructions, but it is straightforward to extend them to work with IPv6 also.}}
+
+Save, and exit {{c|nano}}.
+
+The above {{c|iptables}} script, will, when executed, first flush all existing rules from the kernel's {{c|netfilter}} firewall (in the 'host' network namespace), and then set up a minimal firewall which {{c|ACCEPT}}s all output and forwarded packets, but {{c|DROP}}s input packets unless they are {{c|RELATED}} to an already {{c|ESTABLISHED}} connection, or originate from the {{c|lo}} ({{c|localhost}}) interface.
+
+In addition, to illustrate the kind of further filtering you can do, a {{c|FORWARD}} rule is set up to block any attempt to connect to port 25 over TCP from the {{c|firejail}} bridge subnet. This is a basic precaution to prevent a compromised browser attempting to send mail spam. You can of course add more filters (and other firewall rules), as you see fit.
+
+{{Tip|A good starting point to learn more about {{c|iptables}} firewall configuration (if a little dated now) is Michael Rash's book ''Linux Firewalls''.<ref name{{=}}linux_firewalls>Rash, Michael ''Linux Firewalls: Attack Detection and Response with {{c|iptables}}, {{c|psad}}, and {{c|fwsnort}}'' No Starch Press, 2007</ref>}}
+
+The last {{c|iptables}} line in the script sets up a {{c|nat}} (network address translation) rule, which looks for packets being sent out via your main network interface (i.e., {{c|$NETIF}} &mdash; this is {{c|enp0s3}} by default in the above, but you will of course [[#substitute_main_if{{!}}have modified this]] to match your system's default gateway), whose source ({{c|-s}}) address lies in the bridge's subnet range (by default, {{c|10.10.20.0/24}}). When such packets are seen, the rule causes their source address to be ''rewritten'' (via the {{c|MASQUERADE}} chain) to match that of {{c|$NETIF}}, and state-tracking logic is simultaneously put in place to reverse the process for any reply packets.
+
+{{Note|If you have a fixed IP address on your outbound interface (not one that is allocated via DHCP), then it is slightly more efficient to use an {{c|SNAT}} rather than a {{c|MASQUERADE}} rule.<ref name{{=}}"snat_vs_masquerade">Unix & Linux Stack Exchange Forum: [https://unix.stackexchange.com/questions/21967/difference-between-snat-and-masquerade/21968#21968 "Difference between SNAT and Masquerade"]</ref> However, using {{c|MASQUERADE}} ''will'' still work in this case.}}
+
+{{Note|A fuller exposition of the routing firewall may be reviewed in the background reading section, [[#network_stack|above]].}}
+
+<span id="enable_ipv4_forwarding">To enable the script to work</span>, we need to turn on IPv4 forwarding in the kernel (and also ensure this happens every boot). To do so, issue:
+
+{{RootCmd
+|nano -w /etc/sysctl.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and ''modify'' the lines in that file that currently read:
+
+{{FileBox|filename=/etc/sysctl.conf|title=Lines to modify to enable IPv4 forwarding in kernel|lang=bash|1=
+# Disables packet forwarding
+net.ipv4.ip_forward = 0
+}}
+
+to the following:
+
+{{FileBox|filename=/etc/sysctl.conf|title=Lines modified to enable IPv4 forwarding in kernel|lang=bash|1=
+# Enables packet forwarding
+net.ipv4.ip_forward = 1
+}}
+
+Leave the rest of the file as-is. Save, and exit {{c|nano}}. Then, reload the configuration. Issue:
+{{RootCmd
+|sysctl --load
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and check that the change has been taken up; issue:
+
+{{RootCmd
+|cat /proc/sys/net/ipv4/ip_forward
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+1
+</pre>
+}}
+
+<span id="test_firejail_firewall_script">If the result returned</span> is {{c|1}}, as above, all is well. Next, run the script we just created to setup our desired firewall configuration. Issue:
+
+{{RootCmd
+|firejail-firewall
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|If this reports an error, double-check that you have setup all the necessary components in the kernel, as directed [[#kernel_config{{!}}earlier]].}}
+
+<span id="check_iptables_save">Next, check that the</span> firewall rules have been properly installed. Issue:
+
+{{RootCmd
+|iptables-save
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+-A POSTROUTING -s 10.10.20.0/24 -o enp0s3 -j MASQUERADE
+COMMIT
+... additional output suppressed ...
+*filter
+:INPUT DROP [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD -s 10.10.20.0/24 -p tcp -m tcp --dport 25 -j DROP
+COMMIT
+... additional output suppressed ...
+</pre>
+}}
+
+The output will look somewhat different from the above of course (and the numeric packet counts, inside the square brackets, may be non-zero), but you should be able to verify that the same rules are present.
+
+{{Note|If you [[#substitute_main_if{{!}}have changed]] the name of the default interface (from {{c|enp0s3}}, or [[#different_br_name|have changed]] the address of the bridge subnet (from {{c|10.10.20.0/24}}) earlier, then verify that the output from {{c|iptables-save}} reflects these changes.}}
+
+However, even assuming the output from {{c|iptables-save}} looks fine, we are not yet done, because, as things stand, the {{c|netfilter}} firewall will be reset the next time the system is booted.
+
+To get around that, we need to save off the current configuration to file, and then enable a service that will ''reload'' this saved configuration automatically during startup. Fortunately, the requisite service already exists (provided as part of the {{Package|net-firewall/iptables}} package, which we installed [[#install_iptables|earlier]]). So next, [[#setup_networking_systemd|click here]] to jump to the (following) instructions if you are running {{c|systemd}} (the default), or [[#setup_networking_openrc|click here]] to jump to the (following) instructions if you are running {{c|OpenRC}}.
+
+==== <span id="setup_networking_systemd">Create Persistent Firewall State under systemd (Default)</span> ====
+
+Begin by saving off the persistent firewall state (and ensuring it is also saved afresh on each shutdown). Issue:
+
+{{RootCmd
+|systemctl start iptables-store
+|systemctl enable iptables-store
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|The {{c|iptables-store}} and {{c|iptables-restore}} units are automatically installed (but not, by default, enabled) by the {{Package|net-firewall/iptables}} package under {{c|systemd}}. The rules are saved to the file {{Path|/var/lib/iptables/rules-save}}, by default.}}
+
+Then, enable the state-reloading service:
+
+{{RootCmd
+|systemctl enable iptables-restore
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Congratulations, your persistent routing firewall is now setup! Now continue reading at [[#setup_clipboard_sharing|"Setting Up Clipboard Sharing and Display Rescaling for Xephyr"]], below.
+
+==== <span id="setup_networking_openrc">Create Networking Setup Script under OpenRC</span> ====
+
+Begin by saving off the persistent firewall state:
+
+{{RootCmd
+|rc-service iptables save
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|The {{c|iptables}} service is automatically installed (but not, by default, enabled) by the {{Package|net-firewall/iptables}} package under {{c|OpenRC}}. The rules are saved to the file {{Path|/var/lib/iptables/rules-save}}, by default.}}
+
+Then, start the {{c|iptables}} service (which will automatically reload the saved firewall rules, and will additionally ''save'' the ruleset afresh on each shutdown), and ensure that it is automatically started at boot. Issue:
+
+{{RootCmd
+|rc-service iptables start
+|rc-update add iptables default
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Congratulations, your persistent routing firewall is now setup! Now continue reading at [[#setup_clipboard_sharing|"Setting Up Clipboard and Display Rescaling for Xephyr"]], immediately below.
+
+=== <span id="setup_clipboard_sharing">Setting Up Clipboard Sharing and Display Rescaling for Xephyr</span> ===
+
+Next, we'll set up a background service script (to be run with regular user, not root, privileges), which will address two of the main usability shortcomings encountered when running a graphical application inside a nested {{c|xephyr}} X11-server, specifically:
+* copy and paste does not work between the {{c|xephyr}} and host clipboards; and
+* when the {{c|xephyr}} window is resized, only mouse clicks within the ''original'' window boundary are accepted.
+
+
+The script provided runs a main loop once per second, which will:
+* sync any changes in the {{c|xephyr}} clipboard to the host's, if (and only if) the sentinel file {{Path|~/.main_clipboard_write_ok}} is present (using the {{c|xsel}} program, which we installed [[#install_xsel_xrandr|earlier]]);
+* sync any changes in the host's clipboard to the {{c|xephyr}} clipboard, if (and only if) the sentinel file {{Path|~/.main_clipboard_read_ok}} is present (ditto); and
+* propagate any changes in the {{c|xephyr}} outer window size to its display (using {{c|xrandr}}, which was also installed [[#install_xsel_xrandr|earlier]]).
+
+{{Note|Note that this 'helper' script will run ''outside'' the sandbox, and because of the [[#filesystem_protection{{!}}filesystem protection]] applied by the default {{c|firefox}} {{c|firejail}} profile, the sentinel files just mentioned are not visible to, nor can they be created or deleted by, the processes running inside it.}}
+
+{{Note|In fact, the helper will work even if you have more than one {{c|xephyr}} server runnning. Note however that in this case, ''all'' clipboard changes affecting one {{c|xephyr}} window are propagated to all other {{c|xephyr}} windows unconditionally. It would be a straightforward matter to add another sentinel file to toggle this behaviour if desired (left as an exercise for the reader ^-^).}}
+
+Issue:
+
+{{RootCmd
+|touch /usr/local/bin/xephyr-helper
+|chmod 755 /usr/local/bin/xephyr-helper
+|nano -w /usr/local/bin/xephyr-helper
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Then copy the following contents into that file (modifying as desired):
+
+{{FileBox|filename=/usr/local/bin/xephyr-helper|title=Simple Xephyr clipboard reflector / xrandr rescaling script|lang=bash|1=
+#!/bin/bash
+#
+# Reflect changes in any Xephyr window clipboard to the $DISPLAY (main)
+# X server clipboard, and vice-versa; also ensure all Xephyr windows have the
+# correct internal bounds (for click mapping) by perodically running xrandr
+# on them.
+#
+# To allow bi-directional clipboard reflection, create (touch) both sentinel files:
+#   ~/.main_clipboard_read_ok and
+#   ~/.main_clipboard_write_ok
+# For a more restrictive approach, create only one (or neither), as required.
+#
+# Should be run as the regular user, in the top-level (containing) display
+# and ideally autostarted on login.
+#
+# Copyright (c) 2018 sakaki <sakaki@deciban.com>
+#
+# License (GPL v3.0)
+# ------------------
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+
+declare -A CLIPBOARDS
+declare -a XEPHYRS
+CONTENT=""
+
+# the following two sentinel files can be used to control
+# whether the main desktop clipboard is readable (and so
+# reflected into Xephyr windows) and writeable (and so
+# can reflect the clipboard from Xephyr windows)
+# respectively
+READ_MAIN_CLIPBOARD_OK="$HOME/.main_clipboard_read_ok"
+WRITE_MAIN_CLIPBOARD_OK="$HOME/.main_clipboard_write_ok"
+
+locate_and_rescale_xephyr_displays() {
+	declare -a xephyrs
+	local display
+	xephyrs=($(pgrep -u $(id -u) -a Xephyr {{!}} egrep -o "[[:digit:]]+$"))
+	for display in ${xephyrs[@]}; do
+		if [[ ! " ${XEPHYRS[@]} " =~ " $display " ]]; then
+			# new xephyr display
+			# initialize it from the main display's clipboard, if allowed
+			if [[ -f "$READ_MAIN_CLIPBOARD_OK" ]]; then
+				xsel --output --clipboard --display "$DISPLAY" {{!}} \
+					xsel --input --clipboard --display ":$display"
+			fi
+		fi
+	done
+	for display in ${XEPHYRS[@]}; do
+		if [[ ! " ${xephyrs[@]} " =~ " $display " ]]; then
+			# closed xephyr display
+			unset CLIPBOARDS[$display]
+		fi
+	done
+	XEPHYRS=(${xephyrs[@]})
+	# now ensure the window size of all Xephyr displays is correct
+	for display in ${XEPHYRS[@]}; do
+		xrandr --display ":$display" &>/dev/null
+	done
+}
+
+snapshot_clipboards() {
+	local display
+	# X displays are of format :<number>
+	# we drop the prefix colon when using as an associative array key
+	if [[ -f "$READ_MAIN_CLIPBOARD_OK" ]]; then
+		CLIPBOARDS[${DISPLAY#:}]="$(xsel --output --clipboard --display "$DISPLAY")"
+	fi
+	for display in ${XEPHYRS[@]}; do
+		CLIPBOARDS[$display]="$(xsel --output --clipboard --display ":$display")"
+	done
+}
+
+set_all_clipboards_to() {
+	local display
+	CONTENT="$1"
+	for display in "${!CLIPBOARDS[@]}"; do
+		CLIPBOARDS[$display]="$CONTENT"
+		# update actual clipboard; note we don't use <<< here, as that
+		# appends a newline
+		# only reflect to main display if permitted
+		if [[ ":$display" != "$DISPLAY" {{!}}{{!}} -f "$WRITE_MAIN_CLIPBOARD_OK" ]]; then
+			echo -n "$CONTENT" {{!}} \
+				xsel --input --clipboard --display ":$display" &>/dev/null
+		fi
+	done
+}
+
+reflect_changes() {
+	local display
+	for display in "${!CLIPBOARDS[@]}"; do
+		if [[ "${CLIPBOARDS[$display]}" != "$CONTENT" ]]; then
+			set_all_clipboards_to "${CLIPBOARDS[$display]}"
+			break
+		fi
+	done
+}
+
+# main program loop
+renice -n 19 $$ &>/dev/null
+while true; do
+	locate_and_rescale_xephyr_displays
+	snapshot_clipboards
+	reflect_changes
+	sleep 1
+done
+}}
+
+Save, and exit {{c|nano}}.
+
+{{Note|<span id{{=}}"x_server_selections">X servers actually maintain</span> ''three'' selected elements at any given time, named '''primary''', '''secondary''' and '''clipboard'''.<ref name{{=}}"xsel_manpage">[https://linux.die.net/man/1/xsel {{c|xsel}} manpage]</ref> As written, the {{c|xephyr-helper}} script will only synchronize the ''clipboard''  (so, for example, middle-click-paste won't work between the sandbox and host). Again, this is easy to rectify if it bothers you.}}
+
+Now, open a fresh terminal window as your ''regular'' user (leaving the root terminal window open also).
+
+<span id="create_clipboard_sentinel">Next, if (and only if) you would like</span> your host system's clipboard to be automatically reflected to any running {{c|firejail}} X11 sandbox (when changed), ''as your regular user'' issue (this step is optional):  
+
+{{Cmd
+|touch ~/.main_clipboard_read_ok
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+Similarly, if (and only if) you would like the sandbox's clipboard to be automatically reflected to the host's (when changed), issue (again, this step is optional):
+
+{{Cmd
+|touch ~/.main_clipboard_write_ok
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+{{Note|These files must be created (if wanted) for each regular user who will run {{c|firejail}} X11-isolated processes (in the respective home directory for each such user).}}
+
+{{Tip|The script checks for the existence of the two sentinel files each time round the loop, so you can change them on the fly, or even e.g., create simple GNOME top-bar icons to turn clipboard reflection on or off in each direction (see the [https://extensions.gnome.org/extension/1154/top-bar-script-executor/ "Top bar script executor" shell extension], available in the GNOME Tweak Tool).}}
+
+<span id="start_xephyr_helper">We can now try starting the script directly</span>, to check that no immediate error is flagged. So, working as your regular user, issue:
+{{Cmd
+|xephyr-helper
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+If the script starts correctly and does not immediately terminate with an error, all is well. By default, it will produce no output. Stop it manually now, by pressing {{Key|Ctrl}}{{Key|c}}.
+
+Next, we need to arrange that our script will be automatically started up in the background whenever your regular user logs in to GNOME. To do this, we'll create a simple [[:Wikipedia:Freedesktop.org|XDG]] [https://specifications.freedesktop.org/autostart-spec/autostart-spec-latest.html autostart file].
+
+{{Note|XDG-compliant desktops environments, such as GNOME and KDE, automatically start any {{Path|&#42;.desktop}} files found in the following locations:
+* '''System-wide''': {{Path|${XDG_CONFIG_DIRS}/autostart/}} (by default, {{Path|/etc/xdg/autostart/}});
+** GNOME also looks for desktop files in {{Path|/usr/share/gnome/autostart/}}; and
+* '''User-specific''': {{Path|${XDG_CONFIG_HOME}/autostart/}} (by default, {{Path|~/.config/autostart/}}).<ref name{{=}}"desktop_entries_autostart">Arch Linux Wiki: [https://wiki.archlinux.org/index.php/Desktop_entries#Autostart "Desktop Entries: Autostart"]</ref>}}
+
+Still working as your regular user, issue:
+
+{{Cmd
+|mkdir -pv ~/.config/autostart
+|touch ~/.config/autostart/xephyr-helper.desktop
+|chmod 755 ~/.config/autostart/xephyr-helper.desktop
+|nano -w ~/.config/autostart/xephyr-helper.desktop
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+and place the following text in that file:
+
+{{FileBox|filename=~/.config/autostart/xephyr-helper.desktop|title=Simple .desktop file to autostart xephyr-helper script|lang=ini|1=
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Name=xephyr-helper
+Comment=Simple usability services for Xephyr
+Terminal=false
+Exec=/usr/local/bin/xephyr-helper
+}}
+
+Save, and exit {{c|nano}}.
+
+{{Note|The meaning of the above keys should mostly be self-explanatory (a full list of the standard {{c|.desktop}} file keys may be found [https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#recognized-keys here]).<br>Note that you do ''not'' need to include a {{c|X-GNOME-Autostart-enabled}} tuple for modern GNOME desktops,<ref name{{=}}"gnome_desktop_bootleg">GitHub Gist: najamelan [https://gist.github.com/najamelan/b44e943145b03e018229 "Gnome Desktop Entry Format extensions - bootlegged documentation"]</ref> contrary to what you will sometimes read.}}
+
+{{Note|By convention, .desktop files have their executable bit set, since they contain directions about running a program; however, this is not a hard requirement; they will work just as well if the bit is clear.<br>In this guide, we have chosen to follow convention and set the executable bit.}}
+
+With that done, manually start the desktop file now, to check that the {{c|xephyr-helper}} script runs correctly. We'll temporarily (hard) link it in to the {{Path|~/.local/share/applications/}} directory to allow this to be done easily from the command line (using the {{c|gtk-launch}} utility). Still running as your regular user, issue:
+
+{{Cmd
+|mkdir -pv ~/.local/share/applications
+|ln ~/.config/autostart/xephyr-helper.desktop ~/.local/share/applications/
+|gtk-launch xephyr-helper
+|unlink ~/.local/share/applications/xephyr-helper.desktop
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+<span id="check_xephyr_helper_running">Check that the script</span> is running in the background successfully:
+
+{{Cmd
+|pgrep --exact xephyr-helper
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+21733
+</pre>
+}}
+
+The actual process id ('pid') returned by {{c|pgrep}} will almost certainly differ on your machine; the important thing is that ''some'' pid is printed (if not, it indicates that something is most likely wrong with your {{c|.desktop}} file &mdash; since you managed to run the {{c|xephyr-helper}} script directly from the command line [[#start_xephyr_helper|earlier]]).
+
+Assuming the script ''is'' now running in the background, congratulations, setup of your {{c|xephyr}} usability helper is now complete! It will now be automatically launched in the background whenever your regular user logs in to GNOME.
+
+{{Note|You should create an (identical) {{Path|~/.config/autostart/xephyr-helper.desktop}} file for each regular user who will run {{c|firejail}} X11-isolated processes (in their respective home directory, ensuring also that the {{c|.desktop}} file is owned by that user, of course).}}
+
+=== <span id="setup_firejail_config">Configuring Firejail</span> ===
+
+Our next task is to modify {{c|firejail}}'s shipped configuration file slightly, to:
+* specify the ''initial size'' any {{c|xephyr}} window(s) should open at; and
+* indicate that we also want our {{c|xephyr}} window(s) to be ''resizeable''.
+
+Switching back to your root terminal again, issue:
+
+{{RootCmd
+|nano -w /etc/firejail/firejail.config
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+<span id="modify_firejail_config">and ''modify'' the section</span> of that file dealing with {{c|xephyr}} settings, adding the ''uncommented'' lines as below:
+
+{{FileBox|filename=/etc/firejail/firejail.config|title=Specifying Xephyr options for Firejail (the important lines are the uncommented ones)|lang=bash|1=
+# Screen size for --x11=xephyr, default 800x600. Run /usr/bin/xrandr for
+# a full list of resolutions available on your specific setup.
+# xephyr-screen 640x480
+# xephyr-screen 800x600
+# xephyr-screen 1024x768
+# xephyr-screen 1280x1024
+xephyr-screen 1024x768
+
+# Firejail window title in Xephyr, default enabled.
+# xephyr-window-title yes
+
+# Xephyr command extra parameters. None by default; these are examples.
+# xephyr-extra-params -keybd ephyr,,,xkbmodel=evdev
+# xephyr-extra-params -grayscale
+xephyr-extra-params -resizeable
+}}
+
+Leave the rest of the file as-is. Save, and exit {{c|nano}}.
+
+{{Note|Only lines ''without'' a leading '#' (i.e., uncommented lines) are relevant in the above. The commented lines themselves are provided for context, to help you locate the appropriate stanzas in the {{c|/etc/firejail/firejail.conf}} file; it is possible their content may be somewhat different on your system, depending on the version of {{c|firejail}} you have installed. In any event, the actual location of the new, uncommented lines in the {{Path|/etc/firejail/firejail.config}} file is unimportant, but it helps to keep things in the appropriate place for future reference.}}
+
+You can of course modify the {{c|xephyr-screen}} size from the above {{c|1024x768}} to something more appropriate to your system (you can specify any size that will fit on your display). Generally speaking, given that you are likely to have multiple browser windows open ''within'' your {{c|xephyr}} window, an initial setup just a little smaller than your 'native' screen resolution may prove to be the most useable. You can easily come back to this setting to fine tune it later.
+
+In any event, since you have stipulated that {{c|firejail}} pass the {{c|-resizeable}} parameter to {{c|xephyr}} [[#modify_firejail_config|above]], and since we [[#setup_clipboard_sharing|have arranged]] for the {{c|xephyr-helper}} script to be running in the background upon login, once the sandbox has been launched you can resize (and, if you like, maximize) the {{c|xephyr}} window to suit your requirements, by click-dragging one of its handles with the mouse, as usual.
+
+=== <span id="setup_local_firefox_config">Creating a (Supplementary) Local Firejail Security Profile for Firefox</span> ===
+
+Next, we'll create a supplementary ('{{c|.local}}') security configuration profile for use with {{c|firefox}}. As discussed in the background reading section [[#about_firejail_profiles|earlier]], such a file will (if present) be sourced at the start of the main {{Path|/etc/firejail/firefox.profile}}, and so is a good way to stipulate 'tweaks' to the shipped profile, without having to edit it directly.
+
+{{Note|Modifications in a {{c|.local}} profile will apply to ''all'' {{c|firejail}} users on the local machine.}}
+
+{{Tip|<span id{{=}}"user_specific_profile">If you want to make</span> ''user-specific'' changes to the profile, create a (regular-user-owned) file named {{Path|~/.config/firejail/firefox.config}} as follows:{{FileBox|filename=~/.config/firejail/firefox.config|title=Adding user-specific configuration options to the firefox profile|lang=ini|1=
+# Add your user-specific modifications here, e.g.
+whitelist ~/user_specific_file_or_dir
+
+# Source the main firefox profile
+include /etc/firejail/firefox.profile
+}}As discussed [[#override_profile{{!}}earlier]], when {{c|firejail}} finds a matching {{c|.config/firejail/<appname>.profile}} in the invoking user's home directory, this will be loaded in preference to the default {{Path|/etc/firejail/<appname>.profile}}. However, as you can see above, when our personal {{Path|firejail.profile}} is processed, it concludes by sourcing the default {{c|/etc/firejail/firefox.profile}} (so that all the work there does not have to be duplicated). Incidentally, in such a case, the main profile will ''still'' then go on to pull in our {{Path|/etc/firejail/firefox.local}} file, just as before.<br>This approach can be used to make local customizations to any shipped {{c|firejail}} application profile.<br>For avoidance of doubt, there's no need to set this up file up right now &mdash; the technique is related here for future reference only.
+}}
+
+The main change we need here is to allow access from within the sandbox to three {{c|openbox}} window manager configuration files; these reside in a directory ({{Path|~/.config/openbox/}}) that is normally masked by the home directory [[#about_whitelisting|whitelisting]] (filesystem protection) strategy employed by the {{c|firefox}} profile.
+
+{{Note|Although {{c|firejail}} ''does'' provide a separate profile for the {{c|openbox}} application itself, we avoid using it here, as:
+* it is much more permissive than the {{Path|/etc/firejail/firefox.profile}}; and
+* only small changes need to be made to {{Path|/etc/firejail/firefox.profile}} to allow {{c|openbox}} to work under it.}}
+
+As root, issue:
+
+{{RootCmd
+|nano -w /etc/firejail/firefox.local
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+<span id="openbox_xml_files">and place the following</span> text in that file:
+
+{{FileBox|filename=/etc/firejail/firefox.local|title=Custom security profile additions for firejailed firefox|lang=ini|1=
+whitelist ~/.config/openbox/rc.xml
+whitelist ~/.config/openbox/menu.xml
+whitelist ~/.config/openbox/autostart
+}}
+
+{{Note|While you ''won't'' need to create a custom {{Path|~./config/openbox/rc.xml}}, {{Path|~/.config/openbox/menu.xml}} or {{Path|~/.config/openbox/autostart}} (described [http://openbox.org/wiki/Configuration here], [https://wiki.archlinux.org/index.php/openbox#Menus here], and [http://openbox.org/wiki/Help:Autostart here] respectively) to use {{c|firefox}} under {{c|openbox}} within an X11-{{c|firejail}} sandbox initially, you almost certainly will when you start using the system regularly, so it is sensible to permit access to these paths now.}}
+
+Save, and exit {{c|nano}}.
+
+Finally, switch back to your ''regular'' user terminal, and ensure that the relevant parent directory exists (there's no need to create the {{Path|~/.config/openbox/rc.xml}}, {{Path|~/.config/openbox/menu.xml}} or {{Path|~/.config/openbox/autostart}} files until and unless you explicitly need them, though):
+{{Cmd
+|mkdir -pv ~/.config/openbox
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+=== <span id="setup_desktop_file">Creating a .desktop File for X11-Firejailed Firefox</span> ===
+
+The final configuration task is to create a {{c|.desktop}} file, to allow our X11-sandboxed {{c|firefox}} to be launched as a 'first class' application from the GNOME desktop (with a matching icon that can be docked in the 'Favourites' bar, etc.).
+
+{{Note|Although {{c|firejail}} ''does'' provide the {{c|firecfg}} desktop integration utility, it isn't sufficient for our purposes here, as we don't want to directly invoke "{{c|firejail firefox}}", but rather to start up {{c|firefox}} within the {{c|openbox}} window manager, inside a {{c|xephyr}} X11-server started by {{c|firejail}}. As such, we'll need to create a dedicated {{c|.desktop}} file for the purpose.}}
+
+We'll first fetch a custom icon for the sandboxed browser, so it is easy to distinguish at a glance. The following (downloadable) icon by Frank Souza is free for non-commercial use; of course feel free to substitute your own (incidentally, the standard {{c|firefox}} icon is available at {{Path|/usr/lib64/firefox/browser/icons/mozicon128.png}}, should you wish to use that instead).
+
+Working still as your regular user, issue:
+{{Cmd
+|wget https://www.iconfinder.com/icons/79853/download/png/128 -O ~/Pictures/firejailed_firefox128.png
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+{{Tip|Many services such as [https://www.iconfinder.com iconfinder.com] enable you to apply a license filter, so that only free reuse icons are displayed. Be careful if you intend to deploy the result within a business environment however, as many of the icons (including the above) have a 'no commercial use' stipulation.}}
+
+{{Cmd
+|touch ~/.local/share/applications/Firejail-Firefox.desktop
+|chmod 755 ~/.local/share/applications/Firejail-Firefox.desktop
+|nano -w ~/.local/share/applications/Firejail-Firefox.desktop
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
+
+and enter the following text in that file:
+
+{{FileBox|filename=~/.local/share/applications/Firejail-Firefox.desktop|title=Baseline .desktop file for X11-sandboxed Firefox|lang=ini|1=
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Icon=/home/sakaki/Pictures/firejailed_firefox128.png
+Exec=env GTK_IM_MODULE=xim /usr/bin/firejail --x11=xephyr --name=firefox --net=br10 --profile=/etc/firejail/firefox.profile openbox --startup /usr/lib64/firefox/firefox %u
+Name=X11-Firejailed Firefox
+Comment=X11-Firejailed Firefox
+StartupWMClass=Xephyr
+Terminal=false
+MimeType=text/html;text/xml;application/xhtml+xml;application/vnd.mozilla.xul+xml;text/mml;x-scheme-handler/http;x-scheme-handler/https;
+Categories=Network;WebBrowser;
+}}
+
+Save, and exit {{c|nano}}.
+
+{{Note|You have to use fully qualified paths in {{c|.desktop}} files, so substitute your own regular user name for {{c|sakaki}} in the icon path ({{Path|/home/sakaki/Pictures/firejailed_firefox128.png}}) above. Also, if you have elected to use your own icon, use that path in preference to the one given.}}
+
+{{Note|In the unlikely event that you changed the bridge name (from {{c|br10}}) or its subnet (from {{c|10.10.20.0/24}}) [[#different_br_name|earlier]], substitute your modified version(s) in the above file. For avoidance of doubt, most users will ''not'' have to change the defaults, however.}}
+
+{{Note|If you elected to create a user-local profile (as described in the [[#user_specific_profile{{!}}above]] tip), be sure to modify the <code>--profile</code> path (to point to {{Path|/home/<username>/.config/firejail/firefox.profile}}) in the above file (remember, {{c|firejail}} is launching {{c|openbox}}, not your target application directly, so it is necessary to tell it the 'real' profile to load, via <code>--profile</code>). For avoidance of doubt, if you have just followed the main text, you do ''not'' need to modify the value given, however.}}
+
+{{Note|Should you want to create ''other'' X11-firejailed applications on your target machine (for example, to sandbox {{c|thunderbird}}), then follow the same basic pattern as presented here, ''but'' be sure to give each a distinct {{c|.desktop}} file (incidentally, the {{c|xephyr-helper}} script, {{c|iptables}} configuration etc. is common, and does ''not'' need to be modified or duplicated when setting up additional applications).}}
+
+As with the autostart {{c|.desktop}} file we set up [[#start_xephyr_helper|earlier]], most of the above keys should be self-explanatory (a full list may be found [https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#recognized-keys here]). However, there are a few points worth clarifying:
+* As just described, we stipulate a custom {{c|Icon}}, so that the protected application may easily be distinguished.
+* The {{c|Exec}} stanza is fairly complex. We'll unpack that separately, below.
+* We specify that the application belongs to the {{c|Xephyr}} {{c|StartupWMClass}} &mdash; this ensures that if multiple instances are launched, they are don't all show up as separate icons in the dock, and that the desktop window-switcher groups them all together.<ref name="startupwmclass">Ask Ubuntu: [https://askubuntu.com/questions/367396/what-represent-the-startupwmclass-field-of-a-desktop-file/367851#367851 "What Represent the StartupWMClass Field of a .desktop File?"]</ref>
+* We notify a sensible set of [[:Wikipedia:Media_type|{{c|MimeType}}s]] the program can handle (to allow the desktop to suggest it when e.g. a file of matching type is double-clicked).
+
+Let's now look at the {{c|Exec}} stanza in more detail:
+* We use the {{c|env}} program<ref name="env_manpage">[https://linux.die.net/man/1/env {{c|env}} manpage]</ref> to launch {{c|firejail}} in a modified environment: specifically, we set {{c|GTK_IM_MODULE{{=}}xim}} to specify the use of the (legacy, but always installed) [[:Wikipedia:X_Input_Method|X input method]]<ref name="x_input_method_spec">X Consortium: [https://www.x.org/releases/X11R7.6/doc/libX11/specs/XIM/xim.html "The Input Method Protocol"]</ref> (you can replace this with another framework, such as [https://wiki.archlinux.org/index.php/fcitx fcitx], if you have it emerged). We need to do this, because otherwise [https://wiki.archlinux.org/index.php/IBus IBus] will be chosen by default, which unfortunately does not work with {{c|firejail}} when (as here) the network namespace feature is in use.<ref name="no_ibus_with_net_ns">Firejail Documentation: [https://firejail.wordpress.com/support/known-problems/#ibus "Known Problems: Cannot Connect to IBus-Daemon in a New Network Namespace"]</ref>
+* {{c|firejail}} is invoked with the <code>--x11=xephyr</code> option (to use a dedicated X11 server, as discussed [[#about_xephyr|earlier]]).
+* <span id="name_the_sandbox">The <code>--name=firefox</code> option specifies the sandbox's name</span>. This makes it easy to invoke {{c|firejail}} to perform operations on the running sandbox (from a regular-user command prompt on the 'host' desktop; see the {{c|firejail}} manpage<ref name="firejail_manpage"/> for more details; some examples are also given [[#join_sandbox|later]] in this document). (Incidentally, there is no requirement that the sandbox name match that of the application, it can be anything you like. Unnamed sandboxes can still be operated on, by {{c|pid}}.)
+* The <code>--net=br10</code> option instructs {{c|firejail}} to create a new network namespace for the sandbox, then connect it via a {{c|veth}} inter-namespace tunnel to the {{c|br10}} bridge (again, as discussed [[#setup_firewall|earlier]]).
+* Since our underlying target program is actually {{c|firefox}}, but we are starting {{c|openbox}} as the 'top level' sandbox application, we explicitly specify the {{c|firejail}} profile (via <code>--profile=/etc/firejail/firefox.profile</code>), to prevent the (less-restrictive) {{Path|/etc/firejail/openbox.profile}} being auto-selected instead.
+* The final part of the invocation actually launches {{c|openbox}}; the remainder of the arguments are then passed along to it. Here, we use <code>--startup /usr/lib64/firefox/firefox %u</code>, so that when {{c|openbox}} runs, it in turn starts up {{c|firefox}}, as desired (you can use the same pattern if creating other {{c|.desktop}} files for different applications). Note that the <code>%u</code> is expanded during the {{c|.desktop}} file handling,<ref name="desktop_exec_spec">freedesktop.org [https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables "Desktop Entry Specification: The {{c|Exec}} Key"]</ref> to the URL that caused {{c|firefox}} to be invoked (most commonly, this will be empty). 
+
+With the {{c|.desktop}} file in place, congratulations, configuration of your X11-firejailed {{c|firefox}} is now complete!
+
+== <span id="testing_and_use">Testing and Use</span> ==
+
+In this section, we'll first run briefly through some tests with your new sandboxed browser (which will also be useful as a familiarization exercise). Following that, some brief miscellaneous tips and troubleshooting notes conclude the mini-guide.
+
+=== <span id="basic_tests">Testing your X11-Sandboxed Firefox</span> ===
+
+To check that all the startup components are working as they should, first save any other work in progress, then log out and reboot your machine (following your standard procedure to enter the LUKS passphrase etc. when prompted). Next, log in again as your regular user to GNOME (using a standard X11 or Wayland session, as appropriate to your setup).
+
+Having done so, make sure that your original {{c|firefox}} is ''not'' running (if it is, close it), then click on the {{c|Activities}} label on the top-right of your screen (or press the {{Key|Windows}} key), and type {{c|firefox}} into the search box. You should see both the new and original X11-sandboxed icons visible:
+
+Right-click on the (new) icon, then select {{c|Add to Favourites}}. Press {{Key|Esc}}, then click on the {{c|Activities}} label again (or press the {{Key|Windows}} key). You should see that your new icon is now present in the left-hand dock, at the bottom. You can drag it slightly out to the right while holding down the left mouse button, then up, to position it within the dock as desired <ref name="reposition_dock_items">Ask Ubuntu: [https://askubuntu.com/questions/87629/how-to-drag-and-move-icons-in-the-gnome-shell-favourites-bar/112226#112226 "How to Drag and Move Icons in the GNOME-Shell Favourites Bar?"]</ref> (release the left mouse button when done):
+
+{|style="background:transparent; color:black" 
+|[[File:Select_firejailed_firefox.png|thumb|none|600px|Finding the X11-Firejailed Firefox App in GNOME...]]
+|[[File:Docked_firejailed_firefox.png|thumb|none|300px|...and Running from the "Favourites" Dock]]
+|}
+
+Then, click on your new ("X11-Firejailed Firefox") icon in the dock. You should see that a window entitled "{{c|firejail x11 sandbox}}" opens (this is the {{c|xephyr}} frame, a standalone "desktop-in-a-window"), with the initial dimensions that you specified in {{Path|/etc/firejail/firejail.conf}}, [[#setup_firejail_config|above]]. It will be filled (at least initially) with a black background colour. Then, a {{c|firefox}} browser window should almost immediately open (automatically) ''inside'' this frame. The exact layout you see will obviously depend upon your setup, but should look something like the below:
+
+[[File:Firejailed_firefox_startup_view.png|thumb|none|600px|Firefox in an X11 Sandbox (Firejail/Xephyr/OpenBox) &mdash; Initial View (Click to Zoom)]]
+
+You can now do some basic testing on your new setup.
+
+To begin with, try browsing to a few sites as you would normally. Note that if you have used {{c|firefox}} before on your target machine, then any previous bookmarks, browsing history etc., will be available inside the sandbox, because the necessary cache and configuration files locations are whitelisted in {{Path|/etc/firejail/firefox.profile}}. Media playback and (existing, installed) add-ons should be functional too.
+
+Try browsing to a site like YouTube, and verify that video (and audio) playback works without glitches, with a similar quality level to your 'host' desktop:
+
+[[File:Firejailed_firefox_playing_video.png|thumb|none|600px|Video Playback in an X11-Firejailed Firefox (Click to Zoom)]]
+
+Next, try moving and resizing the {{c|xephyr}} window itself on your main desktop; you should also be able to maximize it if you like. Check that after any such resize, you can still click on (and, e.g., maximize etc.) {{c|firefox}} windows ''within'' the {{c|xephyr}} frame (this should be possible, due to our {{c|xephyr-helper}} [[#setup_clipboard_sharing|script]]):
+
+[[File:Firejailed_firefox_resize_xephyr_window.png|thumb|none|600px|Moving and Resizing the Xephyr Window (Click to Zoom)]]
+
+The {{c|xephyr}} window acts like a mini-desktop (thanks to {{c|openbox}}). Verify that you can open multiple browser windows inside the sandbox (click on the 'burger stack' menu in {{c|firefox}}, then {{c|New Window}}); and check that these windows can be moved around, resized, maximized, closed etc. at will (note that you can of course still use multiple ''tabs'' per {{c|firefox}} window, as well):
+
+{|style="background:transparent; color:black" 
+|[[File:Firejailed_firefox_new_window.png|thumb|none|500px|Within the Firejail/Xephyr/Openbox Frame...]]
+|[[File:Firejailed_firefox_two_windows.png|thumb|none|500px|...Multiple Firefox Windows, Tabs Can be Opened (Click to Zoom)]]
+|}
+
+<span id="openbox_context_menu">Next, right-click</span> on the (black) background area inside the {{c|xephyr}} window, to bring up an {{c|openbox}} context menu. Be aware that the menu displayed is simply the shipped default (you can modify it by [https://wiki.archlinux.org/index.php/openbox#Menus creating] {{Path|~/.config/openbox/menu.xml}} if you like), and so many of the applications shown either won't be installed on your system, or will fail to start due to {{c|firejail}}'s sandbox restrictions. Nevertheless, you ''should'' be able to run {{c|xterm}} (a simple terminal emulator) and {{c|nautilus}} (GNOME's file browser) via the menu, as shown below:
+
+{|style="background:transparent; color:black" 
+|[[File:Firejailed_firefox_openbox_context_menu.png|thumb|none|500px|You Can Launch Other Apps in the Sandbox via OpenBox...]]
+|[[File:Firejailed_firefox_xterm_nautilus.png|thumb|none|500px|...Such as Xterm and Nautilus (Click to Zoom)]]
+|}
+
+{{Note|If your host GNOME desktop is using Wayland (rather than X11), then be aware that any (permitted) GNOME application (such as {{c|nautilus}}) will actually launch ''outside'' the {{c|xephyr}} frame. However, they will still 'see' the filesystem inside the sandbox. Native X11 applications (such as {{c|xterm}}) will always launch inside the {{c|xephyr}} window, however.}}
+
+You can use these two applications to explore the [[#filesystem_protection|limited filesystem]] visible within the sandbox &mdash; you should find that most of the existing directories in your {{c|$HOME}} are invisible. However, by default the {{Path|~/Downloads}} is [[#about_whitelisting|whitelisted]], and so its contents are visible both inside and outside the sandbox. Check that you can download a file from {{c|firefox}} into this directory (it is the default for {{c|firefox}}), and then open it on your 'host' desktop:
+
+[[File:Firejailed_firefox_download.png|thumb|none|600px|The Location ~/Downloads is Whitelisted (Click to Zoom)]]
+
+{{Tip|Despite the name, you can of course also use the {{Path|~/Downloads}} directory to place files you want to ''upload'' to a website, so that they are visible to the firejailed browser. Alternatively, you can use {{c|firejail}}'s file copy commands, as described [[#file_copy_commands|below]].}}
+
+Next, verify that (most) other locations in your home directory are off-limits, by creating a file {{Path|~/host-test}} outside the sandbox, and another {{Path|~/sandbox-test}} inside it. Neither should be visible from the other context, as shown below:
+
+[[File:Firejailed_firefox_filesystem_protection.png|thumb|none|600px|Illustrating Firejail's Filesystem Protection (Click to Zoom)]]
+
+{{Note|Furthermore, the file {{Path|~/sandbox-test}} will be deleted when the sandbox is closed, since it has been created in a {{c|tmpfs}} (see discussion [[#about_whitelisting|above]]).}}
+
+Next, assuming you chose to create the sentinel files {{Path|~/main_clipboard_write_ok}} and {{Path|~/main_clipboard_read_ok}} [[#create_clipboard_sentinel|earlier]], you should verify that clipboard sharing is working. Select some text in one of your browser windows inside the sandbox, and try pasting it into an application on your 'host' desktop as you normally would (the operation should succeed). Then, try it in the reverse direction (copying from an application on the 'host', and pasting into an application in the sandbox; this should also work):
+
+[[File:Firejailed_firefox_shared_clipboard.png|thumb|none|600px|Illustrating Clipboard Sharing between Sandbox and Host (Click to Zoom)]]
+This is a very useful facility, but if you leave it turned on (via the sentinel files) be wary of clipboard snooping or injection exploits, which may be launched from a compromised browser.
+
+{{Tip|One reasonable compromise between convenience and security here, is to create a small shell script, which simply touches the two sentinel files for you, then deletes them again after a short delay (say, five minutes). You can then add an icon to GNOME's top-bar (via the [https://extensions.gnome.org/extension/1154/top-bar-script-executor/ "Top bar script executor" shell extension], available from the GNOME Tweak Tool) to run it. In that way, you can easily turn on clipboard sharing temporarily when your workload requires it, but it will default to being safely off.}}
+
+Finally, open an {{c|xterm}} within the sandbox (via the {{c|openbox}} context menu [[#openbox_context_menu|as above]]), and therein issue (as your regular user) <code>xeyes&</code>. The {{c|xeyes}} program will try to intercept mouse events, and so move the 'eyes' to track your cursor. Next, use the move the cursor across and then ''out'' of the sandbox window. You should find that the 'eyes' track your cursor up to the ''edge'' of the {{c|xephyr}} frame, but no further (this is a quick, although not complete, way to check that X11 events outside the sandbox are indeed isolated from programs running within it):
+
+[[File:Firejailed_firefox_xeyes.png|thumb|none|600px|Verifying Firejail's X11 Isolation with xeyes (Click to Zoom)]]
+
+{{Note|If you run {{c|xeyes}} on your 'host' desktop, you'll find it can follow the cursor both within host windows (if running Wayland however, only those windows relying on the XWayland server will be 'visible'<ref name="xeyes_wayland"/>) ''and'' within the {{c|xephyr}} sandbox. This is as expected; the {{c|xephyr}} X11 server has its own event loop (and {{c|firejail}} arranges so that the host's X11 sockets are [[#about_xephyr{{!}}inaccessible to it]]), but {{c|xephyr}} itself is just another X11 application from the point of view of the 'host' desktop. Mouse events destined for the {{c|xephyr}} window get handled first by the host desktop's X11 server (and so are visible to an {{c|xeyes}} running in the 'host' context), before being passed down to the {{c|xephyr}} X11 server.}}
+
+That concludes the tests &mdash; if you have got this far, almost certainly your system's other sandboxing features are working correctly too (e.g., program blacklisting etc.), but, feel free to try these out for yourself, per the examples shown in the background reading section [[#sandboxing_with_firejail|earlier]] (for example, you could try to {{c|su}} to root inside the sandbox {{c|xterm}}, to check that this is disallowed, etc.).
+
+Assuming all the above tests were successful, then {{Highlight|congratulations, you have successfully installed an X11-firejailed {{c|firefox}} browser on your system!}} Use this for all your general web surfing going forward, and you'll benefit from significantly enhanced security against a range of possible browser-based exploits.
+
+You can now continue reading below for a few additional usage tips, or alternatively, to rejoin the main guide, please click [[../Using_Your_New_Gentoo_System#additional_mini_guides|here ({{c|systemd}})]] or [[../Using_Your_New_Gentoo_System_under_OpenRC#additional_mini_guides|here ({{c|OpenRC}})]].
+
+If however you experienced some problems, then please refer instead to the "Troubleshooting" section ([[#troubleshooting|below]]).
+
+=== <span id="hints">Miscellaneous Hints and Tips</span> ===
+
+The following is a miscellaneous list of hints and tips that you may find useful. It should be regarded as a 'work in progress'; feel free to contribute! The points are listed in no particular order.
+
+* <span id="use_script_blocker">You should install</span> a selective script blocker add-on such as [[:Wikipedia:NoScript|NoScript]] or [https://www.ghacks.net/2017/11/28/a-umatrix-guide-for-firefox/ uMatrix] in your browser as soon as practicable. The best defence against exploit code is not allowing it to run in the first place.
+** <span id="custom_user_dot_js">Also consider using</span> [https://github.com/pyllyukko/user.js this] {{c|user.js}} configuration file for {{c|firefox}}, to harden the browser settings and make it more secure (there is also a less-locked-down "[https://github.com/pyllyukko/user.js/tree/relaxed relaxed variant]", which is very useable on a day-to-day basis).
+* <span id="use_firecfg">If you like, you can easily activate {{c|firejail}} protection</span> for ''all'' supported applications, by running (as root, or using {{c|sudo}}) the {{c|firecfg}} utility.<ref name="firecfg_manpage">[https://firejail.wordpress.com/features-3/man-firecfg/ {{c|firecfg}} manpage]</ref> Once this has been done, clicking on the icon of a supported program (or launching it from the command line) will ''automatically'' start it within a sandbox. Note however that, by default, you won't get any X11 sandboxing of graphical applications launched this way (to do ''that'', you need to set up an appropriate {{c|.desktop}} file, patterned on the one we created for {{c|firefox}}, [[#setup_desktop_file|earlier]]).
+* <span id="one_instance_only">If you attempt to launch</span> a standard {{c|firefox}} window (in the 'host' desktop) whilst the sandboxed version is open, it will fail, because by default the newly launched application will try to connect to the running instance, only to be barred due to {{c|firejail}}'s protection (even if you use the {{c|--no-remote}} or {{c|--new-instance}} options). The solution is either to: a) close your {{c|xephyr}} window while you use your host desktop browser, <span id="option_b">or b)</span> start your new browser in 'amnesiac' mode (see [[#amnesiac_browser|below]]), or c) invoke {{c|firefox}} to open ''inside'' the existing sandbox context (which we have [[#name_the_sandbox|named]] "firefox"). As an example of c), you could issue (as your regular user): <code>firejail --join="firefox" firefox --new-window "https://www.gentoo.org"</code>, to open the Gentoo homepage in a new window inside the sandbox ({{c|xephyr}} frame).
+* <span id="one_sandboxed_instance_only">Similarly, if you try to launch two</span> instances of the "X11-Firejailed Firefox" application, it will not work. You can open as many browser windows as you like inside the {{c|xephyr}} window however, and that (outer) window can be resized to be as large as you like.
+* <span id="amnesiac_browser">If you want to quickly launch a browser in 'vanilla' state</span> (no plugins, history etc.; the [[#option_b|option b)]] just discussed) you can do this by issuing (as your regular user) e.g., <code>firejail --private --dns=8.8.8.8 firefox --no-remote</code>.<ref name="high_security_browser">Firejail Documentation: [https://firejail.wordpress.com/documentation-2/firefox-guide/#high "Firefox Sandboxing Guide: High Security Browser Setup"]</ref> This will open a browser window on your main desktop, and will work ''even if'' you have an X11-sandboxed version running. It is useful if you want to e.g. access a trusted site (for banking, say) but you ''don't'' completely trust the plugins etc. you use might employ for day-to-day browsing. The new browser instance will ''not'' be running in an X11 sandbox (so you have full copy/paste/drag/drop etc. available) but ''is'' started under {{c|firejail}}, with an empty ({{c|tmpfs}}) {{Path|/root/}} and skeleton {{Path|~/}} directory, which will be discarded when the browser is closed &mdash; so the setup is reasonably 'amnesiac'.
+** There are useful variants of the above, such as starting with a ''copy'' of your {{Path|~/.mozilla}} directory in place, using separate (preserved) directories as 'home' in different contexts (such as for work use, home use) etc. Refer to the {{c|firejail}} manpage<ref name="firejail_manpage"/> for further details.
+* <span id="list_sandboxes">You can get a list of all running sandboxes</span> with <code>firejail --list</code>, and a process tree for each sandbox with <code>firejail --tree</code> (issued as your regular user via a terminal on the 'host' desktop).<ref name="Firejail Documentation:">Firejail Documentation: [https://firejail.wordpress.com/documentation-2/basic-usage/#list "Basic Usage: Listing Sandboxes and Processes"]</ref>
+* <span id="join_sandbox">You can 'enter' the context of an existing sandbox</span> from outside, by using {{c|firejail}}'s <code>--join</code> option. For example, if you have an "X11-Firejailed Firefox" window open, issuing: <code>firejail --join="firefox"</code> from a terminal window on the 'host' desktop would will open a bash shell ''inside'' the sandbox (this is a useful alternative to {{c|xterm}}).<ref name="Firejail Documentation:">Firejail Documentation: [https://firejail.wordpress.com/documentation-2/basic-usage/#join "Basic Usage: Joining an Existing Sandbox"]</ref> The same approach can also be used to launch a graphical application inside an existing {{c|xephyr}} sandbox, as [[#one_instance_only|above]].
+* <span id="file_copy_commands">In addition to using the {{Path|~/Downloads}} directory</span> to pass files in and out of the sandbox, you can explicitly copy files in and out from a (regular user) command prompt on the host, using <code>firejail --put="firefox" <file> <path_in_sandbox></code> and <code>firejail --get="firefox" <path_in_sandbox> <file></code>, respectively (the location of <file> is the current working directory).<ref name="firejail_manpage"/>
+* {{c|openbox}} is a full-blown window manager with an extensive community. You can easily customize the background, startup applications, context menu contents and more, by editing its xml configuration files (see [[#openbox_xml_files|above]]).
+
+There are many other capabilities of {{c|firejail}} that I have not touched on in this guide, such as e.g. imposing resource limits on processes (bandwidth, CPU time etc.), auditing security profiles, integration with [[:Wikipedia:AppArmor|AppArmor]] and more. I highly recommend that you take a moment now to read the {{c|firejail}} [https://firejail.wordpress.com/features-3/man-firejail/ manpage] and [https://firejail.wordpress.com/documentation-2/ on-line documentation].
+
+When you're ready to rejoin the main guide, please click [[../Using_Your_New_Gentoo_System#additional_mini_guides|here ({{c|systemd}})]] or [[../Using_Your_New_Gentoo_System_under_OpenRC#additional_mini_guides|here ({{c|OpenRC}})]].
+
+=== <span id="troubleshooting">Troubleshooting</span> ===
+
+If you are having difficulty getting your X11-Firejailed Firefox running properly, the following troubleshooting hints may help (please note, this is by no means a comprehensive list).
+
+A relatively common issue is that the newly created, X11-firejailed browser appears to start up OK, but then can't load web pages (has no network connectivity), so we'll discuss that first:
+* Before doing anything else, verify that you ''can'' successfully run (as the regular user) a 'vanilla' instance of {{c|firefox}} (when no sandboxed instance is running) on your 'host' desktop, and use it to view web pages. If you can't, you have a fundamental system problem, outside the scope of this mini-guide &mdash; rectify that first, and then retry.
+* Assuming that ''does'' work, however, close your 'host' instance of {{c|firefox}}, and then try running <code>firejail firefox</code> from the command line, working as the regular user on a terminal launched from the 'host' desktop. This won't get you any X11 sandboxing or network isolation of course, but it should work (and allow browsing) &mdash; if not, it suggests that something is wrong with your {{c|firejail}} installation, most likely due to some missing kernel configuration options. Double check these (see [[#kernel_config|above]]), recompile your kernel (and reboot) if necessary, and try again.
+* However, if the previous test worked, but you are still unable to connect to the web from a browser running inside a ''full'' ({{c|xephyr}}) sandbox, this suggests you have an issue with the bridge or {{c|iptables}} routing. First, make sure that your persistent bridge is available and has a valid IP address (for most users, this will be {{c|br10}} and {{c|10.10.20.1/24}}, respectively), by using {{c|ifconfig}} (or similar tool). If the bridge isn't listed, check that your {{c|firejail-bridge}} service is running (see [[#setup_bridge|above]]), and that the {{Path|/usr/local/sbin/firejail-bridge}} script runs without error, if invoked standalone.
+* However, if your bridge ''is'' present, next check that forwarding is enabled in your kernel. Run <code>cat /proc/sys/net/ipv4/ip_forward</code> and check that the result is <code>1</code>, if not, set up your {{Path|/etc/sysctl.conf}} file correctly, then reload it (instructions [[#enable_ipv4_forwarding|here]]).
+* Moving on, if your bridge is up, and IPv4 forwarding is enabled, but you still have no connectivity, the most likely remaining suspect is the {{c|iptables}}-based NAT routing, by [[#why_nat_is_needed|means of which]] packets appearing on the {{c|br10}} bridge get sent out on your host's main network interface. Accordingly, check next that your {{c|iptables}} rules have been set up properly: run (as root) <code>iptables-save</code> and examine the output (see this [[#check_iptables_save|earlier discussion]]). In particular, ensure that the interface listed in the {{c|MASQUERADE}} rule really ''is'' that of your main IP interface (the one through which your default gateway is reached; you can find this using <code>ip route show</code>, and looking for the entry marked {{c|default}}). If it is ''not'' (for example, the {{c|iptables-save}} output includes something like <code>-A POSTROUTING -s 10.10.20.0/24 -o enp0s3 -j MASQUERADE</code>, but your default interface as reported by <code>ip route show</code> is something different, i.e., not {{c|enp0s3}}), fix this in the {{Path|/usr/local/sbin/firejail-firewall}} script (as directed [[#substitute_main_if|earlier]]), then invoke the ({{c|firejail-firewall}}) script once more (remember also to save off the new firewall rules if you are successful, and also make sure that you have the necessary rule-reloading service enabled, so any changes are persistent; see [[#test_firejail_firewall_script|above]] (''ff'') for details).
+* If, having done all that, you ''still'' can't connect inside the {{c|xephyr}} sandbox, double check that the correct bridge name (by default, {{c|br10}}) has been used (for the <code>--net</code> parameter) in the {{Path|~/.local/share/applications/Firejail-Firefox.desktop}} file. If not, fix it, close the sandbox window, and then launch the "X11-Firejailed Firefox" application again. You should be able to access the web now.
+** NB: if you elected to change either the default bridge name (from {{c|br10}}) or the default bridge address / subnet (from {{c|10.10.20.1/24}} [[#different_br_name|earlier]], make sure that these are used consistently inside the {{Path|/usr/local/sbin/firejail-bridge}}, {{Path|/usr/local/sbin/firejail-firewall}} and {{Path|~/.local/share/applications/Firejail-Firefox.desktop}} files).
+* If you still can't connect, the obvious answers are exhausted &mdash; I'm afraid you'll have to dig a bit deeper with terminal tools inside the sandbox, to diagnose your problem.
+
+A few other (miscellaneous) issues are commonly encountered:
+* If you can successfully launch the ({{c|xephyr}}) sandboxed browser, and view web pages using it, but find that strange things happen when you resize the {{c|xephyr}} window (for example, clicks seem to get ignored), then you need to ensure that your {{c|xephyr-helper}} script is running. Run <code>pgrep --exact "xephyr-helper"</code> to check this (as noted [[#check_xephyr_helper_running|earlier]]). If you find it ''isn't'' running, make sure you have set up the {{Path|~/.config/autostart/xephyr-helper.desktop}} file, and also check that you are able to run the helper directly without errors (as discussed [[#setup_clipboard_sharing|earlier]]). Remember that an autostart entry needs to be set up for each user on the machine that wishes to run X11-sandboxed {{c|firefox}}.
+** On Wayland systems, you may find that your (host) display server locks up when you try to resize any {{c|xephyr}} windows (particularly if you are using a multi-GPU system). If this happens to you, comment out the <code>xephyr-extra-params -resizeable</code> line in {{Path|/etc/firejail/firejail.config}} (discussed [[#setup_firejail_config|above]]), and try again.
+* If you are unable to copy and paste between the 'host' desktop and the sandbox (or vice versa), ensure in the first instance that the {{c|xephyr-helper}} script is running, as just discussed. If it is, make sure you have also created (in the 'host' context, as your regular user) the files {{Path|~/.main_clipboard_read_ok}} and {{Path|~/.main_clipboard_write_ok}}, as appropriate to your desired policy.
+** By default, 'middle-click' paste doesn't work between sandbox and host, although you can easily modify the {{c|xephyr-helper}} script to enable this (see [[#x_server_selections|above]]). Drag and drop doesn't work either (making that work is possible too, but a little more tricky).
+* If the {{c|xephyr}} window comes up OK, and you can e.g. open an {{c|xterm}} within it, but {{c|firefox}} itself won't start, make sure that you don't have another {{c|firefox}} instance already running on your system (use <code>pgrep firefox</code> to check); if you find you do have another, shut it down first (as discussed [[#one_instance_only|above]]) (if you can see no window to close, use <code>pkill -9 firefox</code> to remove any lingering rogue processes that an earlier invocation of the browser may have left behind).
+
+As mentioned, once you have tracked down the problem, refer to the appropriate section of the guide above to fix it, then proceed to test again. You can also try posting a request for help to [https://forums.gentoo.org forums.gentoo.org], or, if you believe what you are seeing is a bug, open an issue with the [https://github.com/netblue30/firejail/issues {{c|firejail}} project].
+
+Good luck! To rejoin the main guide, please click [[../Using_Your_New_Gentoo_System#additional_mini_guides|here ({{c|systemd}})]] or [[../Using_Your_New_Gentoo_System_under_OpenRC#additional_mini_guides|here ({{c|OpenRC}})]].
+
+== <span id="notes">Notes</span> ==
+
+{{reflist}}
+
+[[Category:Security]]
+

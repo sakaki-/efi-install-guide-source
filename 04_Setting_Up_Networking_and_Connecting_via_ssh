@@ -1,0 +1,204 @@
+<!-- Page: Setting_Up_Networking_and_Connecting_via_ssh -->
+
+Having successfully booted our target PC with the Gentoo minimal install image, our next task is to establish network connectivity for it.
+
+Once that is done, we'll connect in remotely to the target, from the helper PC, via {{c|ssh}}. This will make subsequent installation steps (such as the copy/paste of lengthy commands) much easier.
+
+This section shadows [[Handbook:AMD64/Installation/Networking|Chapter 3]] of the Gentoo handbook.
+
+== <span id="setting_up_networking_and_ssh">Getting Networking Running</span> ==
+
+Decide whether you wish to perform the install using a wired Ethernet connection, or over WiFi (using [[:Wikipedia:Wi-Fi_Protected_Access|WPA/WPA2]]), and follow the appropriate instructions below. In both cases, the presence of a [[:Wikipedia:Dynamic_Host_Configuration_Protocol|DHCP]] server on the subnet will be assumed.
+
+{{Note|If you need to use a fixed IP address, a proxy, IPv6, or an unencrypted WiFi connection, please see [[Handbook:AMD64/Installation/Networking|Chapter 3]] of the Gentoo handbook for more details.
+}}
+
+=== <span id="connecting_via_ethernet">Connecting via Wired Ethernet</span> ===
+
+This is the easier option, if your machine physically supports it. To proceed, <span id="get_ip_address">plug an ethernet cable into the target machine now</span>, and hook it up to your network (into the back of your cable or ADSL router etc.). Wait for a minute or so (for DHCP to allocate you an address), then (at the keyboard of your target PC) enter:
+
+{{RootCmd
+|ifconfig
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+<pre>
+enp0s25: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.106  netmask 255.255.255.0  broadcast 192.168.1.255
+        ... etc ...
+</pre>
+}}
+
+Hopefully, it will have autoconfigured an interface, as above. In the old days, you'd be looking for {{Highlight|eth0}} in the output of this command, but things have now changed <ref name="predictable_names">freedesktop.org: [http://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames Predictable Network Interface Names]</ref> (to ensure device naming stability across reboots), so your wired ethernet interface name will probably be something a bit stranger-sounding, such as {{Highlight|enp0s25}} (as is the case here). You are looking for the 'inet' (assuming IPv4) entry; in this case {{Highlight|192.168.1.106}} (yours will almost certainly differ).
+
+If that was successful, then try:
+
+{{RootCmd
+|ping -c 3 www.gentoo.org
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+If this works, it demonstrates that you have a functioning network connection, with working DNS name resolution.
+
+When ready, [[#setup_ssh_server|click here]] to jump to the next section of the tutorial.
+
+=== <span id="connecting_via_wifi">Connecting via WiFi (WPA/WPA2)</span> ===
+
+If your PC has no Ethernet port, you'll have to perform the installation over WiFi. First, check that your PC's adaptor has driver support in the minimal-install image. Issue:
+{{RootCmd
+|iwconfig
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+<pre>
+wlp2s0    IEEE 802.11abgn ESSID:off/any
+          Mode:Managed  Access Point: Not-Associated Tx-Power=0 dBm
+          Retry  long limit:7   RTS thr:off   Fragment thr:off
+          Encryption key:off
+          Power Management: on
+          
+lo        no wireless extensions.
+</pre>
+}}
+Your <span id="note_wifi_if_name">results will differ from the above</span>, but you're looking for a record starting with '''{{c|wl}}''', as this is a wireless adaptor. In this example, the predictable network interface name<ref name="predictable_names"/> of the WiFi adaptor is {{c|wlp2s0}}; take a note of the particular name reported in your case.
+{{Note|If you see no records beginning with {{c|wl}}, then you will not be able to install the system wirelessly. Use a wired adaptor if your machine has one, or purchase a supported USB to Ethernet (or WiFi) adaptor, and use that.<br>Most machines do have driver support in the minimal install image, however.}}
+
+Next, we'll need to <span id="create_wpa_config">create a configuration file</span>, to allow the {{c|wpa_supplicant}} program to handle the encrypted network connection. You'll need to know your WiFi access point's [[:Wikipedia:Service_set_(802.11_network)|{{c|ESSID}}]] (the name you'd see when connecting to it via your phone etc.) and its WPA (or WPA2) passphrase. Issue:<ref>Linux.icydog.net Blog: [http://linux.icydog.net/wpa.php "Command line WPA"]</ref>
+{{RootCmd
+|wpa_passphrase "ESSID" > /etc/wpa.conf
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+<pre>
+<then type your WiFi access point passphrase (without quotes) and press Enter>
+</pre>
+}}
+{{Note|Substitute the correct name for {{c|"ESSID"}} in the above ({{c|"MyWiFi"}}, or whatever it happens to be in your case).}}
+
+Lock down the file's access permissions (to root only) and check that its contents look sane. Issue:
+{{RootCmd
+|chmod -v 600 /etc/wpa.conf
+|cat /etc/wpa.conf
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Assuming that looks OK, we can connect. Issue:
+{{RootCmd
+|wpa_supplicant -Dnl80211,wext -iwlp2s0 -c/etc/wpa.conf -B
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+<pre>
+Successfully initialized wpa_supplicant
+</pre>
+}}
+{{Note|Substitute the wireless network interface name you wrote down [[#note_wifi_if_name{{!}}a minute ago]] for {{c|wlp2s0}} in the above command.}}
+In this command:
+{| class="wikitable"
+|-
+! Option !! Description
+|-
+| {{c|-D}} || Specifies the wireless driver name to use. {{c|wext}} is the 'catch all' and will work in most cases; {{c|nl80211}} is the more modern version that will ultimately replace it. It's fine to specify multiple drivers here, so we do.
+|-
+| {{c|-i}} || Specifies the interface name (from {{c|iwconfig}} [[#note_wifi_if_name{{!}}above]]).
+|-
+| {{c|-c}} || Specifies the configuration file path (as created by {{c|wpa_passphrase}} [[#create_wpa_config{{!}}above]]).
+|-
+| {{c|-B}} || Instructs {{c|wpa_supplicant}} to run in the background.
+|}
+
+Now wait a moment or two, then issue:
+
+{{RootCmd
+|ifconfig wlp2s0
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+<pre>
+wlp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.106  netmask 255.255.255.0  broadcast 192.168.1.255
+        ... etc ...
+</pre>
+}}
+{{Note|Substitute the wireless network interface name you wrote down [[#note_wifi_if_name{{!}}a minute ago]] for {{c|wlp2s0}} in the above command.}}
+
+Hopefully, it will have connected successfully. You are looking for the 'inet' (assuming IPv4) entry; in this case {{Highlight|192.168.1.106}} (yours will almost certainly differ).
+
+If that was successful, then try:
+
+{{RootCmd
+|ping -c 3 www.gentoo.org
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+If this works, it demonstrates that you have a functioning network connection, with working DNS name resolution.
+
+== <span id="setup_ssh_server">Connecting via {{c|ssh}} and Using {{c|screen}}</span> ==
+
+Our next step is to setup {{c|ssh}} so we can remotely connect and run the install from our helper PC. Still on the target machine console, enter:
+{{RootCmd
+|sed -i 's/^#PermitRootLogin.*$/PermitRootLogin yes/' /etc/ssh/sshd_config
+|/etc/init.d/sshd start
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|From release 7.0 of {{c|OpenSSH}}, the defaults have changed to prohibit password-based login as {{c|root}}, hence the reason we edit the {{Path|/etc/ssh/sshd_config}} file above.<ref name{{=}}"openssh_7_release_notes">OpenSSH Unix Announce: [http://lists.mindrot.org/pipermail/openssh-unix-announce/2015-August/000122.html OpenSSH 7.0 released]</ref> (More recent versions of the minimal install image have fixed this issue, but it does not hurt to apply the edit even when using them.)}}
+
+Now take note of the RSA and ED25519 fingerprints for the host (which one is used when you try to connect, will depend upon the settings and recency of the system in your helper PC):
+{{RootCmd
+|for K in /etc/ssh/ssh_host_*key.pub; do ssh-keygen -l -f "${K}"; done
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|At the time of writing, {{c|sshd}} from the minimal install image does not set up {{c|ECDSA}} keys.}}
+{{Note|By default, the above command will now display [[:Wikipedia:SHA256{{!}}SHA-256]] fingerprints in [[:Wikipedia:Base64{{!}}Base64]] format (as used by more modern versions of the {{c|ssh}} client program); however, if your {{c|ssh}} client still uses [[:Wikipedia:MD5{{!}}MD5]] fingerprints, you can display these using the following command instead:
+{{RootCmd
+|for K in /etc/ssh/ssh_host_*key.pub; do ssh-keygen -l -E "md5" -f "${K}"; done
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+}}
+
+Next, <span id="log_in_via_helper">move back onto the second</span>, helper PC (on the same subnet), and enter:
+{{Cmd
+|sed -i '/^[^[:digit:]]*192.168.1.106[^[:digit:]]/d' ~/.ssh/known_hosts
+|ssh root@192.168.1.106
+|prompt=user@pc2 $}}
+(The {{c|sed}} command simply removes any record of fingerprints for previous connections to other {{c|sshd}} servers at that IP address, since {{c|ssh}} will refuse to connect if it finds a conflicting one.)
+{{Note|Of course, substitute whatever IP address you got back from {{c|ifconfig}} for 192.168.1.106 in the above commands.}}
+{{Tip|If you have a large number of existing keys in your {{Path|~/.ssh}} directory, you may get a "{{c|Too many authentication failures}}" error when attempting to connect. In this case (which will not affect most users), simply add the {{c|-o PubkeyAuthentication{{=}}no}} option to your {{c|ssh}} command.<ref>Server Fault: [https://serverfault.com/questions/36291/how-to-recover-from-too-many-authentication-failures-for-user-root/540613#540613 "How to recover from 'Too many Authentication Failures for user root'"]</ref>}}
+Check the reported key fingerprint and then, if it matches one you noted earlier, continue as below:
+{{GenericCmd|<pre>
+... additional output suppressed ...
+Are you sure you want to continue connecting (yes/no)? <type 'yes', then Enter>
+... additional output suppressed ...
+Password: <enter root password you just set>
+... additional output suppressed ...
+</pre>
+}}
+
+You should find that you can continue configuring remotely, which is much more convenient (as you will have a full windowing environment with graphical web browser, copy and paste, and so on).
+
+{{Note|Assuming you are using DHCP, if you have to reboot your machine during the following process, bear in mind that it may not come back up with the same address (although with many DHCP setups, it will).
+}}
+
+Now, still via this remote login {{c|ssh}} connection (i.e., at the helper PC's keyboard), <span id="start_screen">issue</span>:
+
+{{RootCmd
+|screen
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+to start a new [[:Wikipedia:GNU_Screen|screen]] session - this is useful as it allows you to multiplex several virtual consoles, disconnect while lengthy compiles are running and then reconnect later, and so on.
+
+{{Note|With some (helper-PC-side) terminals, you may get an error issued when trying to run {{c|screen}}, of the form <code>Cannot find terminfo entry for 'xxx'</code>.<ref>Stack Overflow: [http://stackoverflow.com/questions/10823994/unix-screen-utility-error-cannot-find-termcap-entry-for-xterm-256color "Unix screen utility error: Cannot find termcap entry for 'xterm-256color'"]</ref> If this happens, simply try again with:{{RootCmd|TERM{{=}}xterm-color screen|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>}}}}
+{{Note|See [https://library.linode.com/linux-tools/utilities/screen this brief discussion] of how to use screen. And here is an even briefer overview of some commands you may find useful to get you started: {{Key|Ctrl}}{{Key|a}} is the ''escape character'' for screen, which you type and then follow up with the rest of the command if necessary; so for example {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|?}} to get help, {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|d}} to detach the current session (disconnect from it from your ssh console, leaving any active commands to run in the background), {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|c}} to create a new 'window', {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|"}} (that's a double quote) to list the current windows, {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|n}} to go to the next window and {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|p}} to go to the previous window. If you disconnect, you can reconnect to your session from a console (either when logged in via {{c|ssh}}, or directly on the machine's console itself) using {{RootCmd|screen -D -R}}You can also use this command to reconnect to a {{c|screen}} session if e.g. your {{c|ssh}} connection gets dropped for some reason.}}
+
+== <span id="next_steps">Next Steps</span> ==
+
+Next, we'll prepare the storage on the target machine. [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key|Click here]] to go to the next chapter, "Preparing the LUKS-LVM Filesystem and Boot USB Key".
+
+== <span id="notes">Notes</span> ==
+{{reflist}}
+
+{| class="wikitable" style="margin: 1em auto 1em auto;"
+|-
+| [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB|< Previous]]
+| [[../|Home]]
+| [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key|Next >]]
+|}
+
+[[Category:Core system]]
+

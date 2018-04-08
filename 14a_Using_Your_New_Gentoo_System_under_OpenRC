@@ -1,0 +1,644 @@
+<!-- Page: Using_Your_New_Gentoo_System_under_OpenRC -->
+
+<span id="using_your_new_system">In this (final) section</span>, we'll consider a number of miscellaneous (but important) topics regarding your new system. Although this final part of the tutorial has no precise analogue in the Gentoo manual, it logically relates to [[Handbook:AMD64/Installation/Finalizing#Where_to_go_from_here|Chapter 11]].
+
+The topics we'll briefly cover are:
+* recapping how to boot to Linux from Windows (and vice versa);
+* keeping your machine up to date;
+* migrating your kernel to the internal hard drive (optional);
+** and how to dispense with the USB key entirely (also optional);
+* tweaking GNOME; and
+* installing a firewall, and other applications; plus
+* links to some additional 'mini-guides', that don't fit naturally within the rest of the tutorial, ''e.g.'':
+** how to [[../Disabling_the_Intel_Management_Engine|disable the Intel Management Engine]] on your PC, and;
+** how to [[../Sandboxing_the_Firefox_Browser_with_Firejail|sandbox the {{c|firefox}} browser with {{c|firejail}}]].
+
+Let's go!
+
+{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|OpenRC}} init, rather than {{c|systemd}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Using_Your_New_Gentoo_System{{!}}click here]] to go to the default ({{c|systemd}}) version of this page.}}
+
+== <span id="dual_boot_procedure">Booting into Linux or Windows (Recap)</span> ==
+
+With the setup you have just carried out, you can easily boot your target PC into either Gentoo Linux or Windows, as desired. Here's a brief recap of how to go about it (with links back to the more detailed explanations in the body of the text, where relevant):
+* If you power up the machine ''without'' the boot USB key inserted, '''Windows''' will always load automatically. You can do this safely even if you hibernated your Linux session last time (assuming you had no Windows partitions mounted in Linux!). {{Note|If you migrate your kernel to the internal hard drive, however, this trick won't work, and you'll have to use the {{c|efibootmgr}} utility to change your boot order, when you wish to boot to Windows (the use of this software was [[../Configuring_Secure_Boot_under_OpenRC#use_efibootmgr{{!}}described earlier]]).}}
+** All your Linux data is ultimately held within an encrypted LUKS partition, and so cannot be 'snooped' by malware running in Windows. Nor can Windows software read your {{c|gpg}} keyfile or kernel, as the boot USB key is not physically present when Windows is running.
+** Windows updates etc. should leave the LUKS partition entirely unaffected (and cannot access the boot USB key either, assuming you don't insert it mid-session).
+** If you <span id="win8_to_linux">are running Windows</span>, and wish to reboot into Linux instead, be sure to ''restart'' the machine from Windows (''not'' shut it down - unless you have disabled [http://www.howtohaven.com/system/how-to-shutdown-windows-8.shtml hybrid shutdown] as was recommended at the [[../Preparing_Windows_for_Dual-Booting#disable_fast_boot{{!}}start of the tutorial]]).<ref>Windows Secrets: [http://windowssecrets.com/langalist-plus/with-windows-8-off-isnt-really-off/ "With Windows 8, 'off' isn't really ''off''"]</ref> Insert the boot USB key while the system is closing down prior to the reboot. Then, immediately the machine commences restarting, enter the BIOS (the key combination needed to do this varies from machine to machine, it is {{Key|F2}} on the CF-AX3). If you [[../Configuring_Secure_Boot_under_OpenRC#set_bios_pw|set one earlier]], you'll need to enter your BIOS password at this point. Then, choose "{{c|Gentoo Linux (USB Key)}}" as the highest priority EFI boot entry, save changes and restart (if the BIOS does not immediately recognize the USB key, you may need to do the 'save changes and restart' cycle twice). A more detailed exposition of how to do this on the CF-AX3 was presented [[../Configuring_Secure_Boot_under_OpenRC#reboot_from_win8_to_linux|earlier in the text]]. The machine should then restart into Linux as usual. {{Note|There is some evidence that more modern versions of Windows 10 do ''not'' auto-rewrite the EFI boot list. If this is true on your target PC, then the dual-boot process is greatly simplified - just start up your machine with the boot USB key inserted, to run Gentoo, or with it absent, to run Windows.}}{{Note|As mentioned [[../Configuring_Secure_Boot_under_OpenRC#win_restart_use_a_device{{!}}previously]], <span id{{=}}"win8_use_a_device">there is another way</span> to boot to Linux from Windows, without needing to go through the BIOS, as follows. <br>While running Windows,  hit {{Key|Ctrl}}{{Key|Alt}}{{Key|Delete}}, then click on the power icon at the bottom right of the screen, and then ''while holding down'' {{Key|Shift}}, click 'Restart' from the pop-up menu. This will pass you into the Windows boot options menu. Once this comes up (and asks you to 'Choose an option'), click on the 'Use a device' tile. This will show another page, on which you will see a tile entitled 'Gentoo Linux (USB Key)' (and possibly some others). Insert the boot USB key, click the tile, and you should find that the system restarts and that Linux is loaded (and you then get the usual {{c|plymouth}} passphrase screen, etc.). <br>So far, so good, since this way of working avoids going through the BIOS. However, when you do this, Windows has only really set the (one-time) 'boot next' value in EFI, which means that once you restart ''again'' from Gentoo (even with the boot USB key still inserted), Windows will start up. To get around this, you need to set the boot order using the {{c|efibootmgr}} tool in Gentoo, as [[../Configuring_Secure_Boot_under_OpenRC#use_efibootmgr{{!}}described previously]]. This can easily be automated, for convenience.}}
+* Now, if you are running '''Linux''', and then power down the machine, then power it back up with the USB key inserted, it should start up Linux again automatically (you'll have to enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]) to gain access of course). It is '''entirely safe to remove the boot USB key once you get to the GNOME login screen''' (and indeed, it is recommended that you do so, for security). You can do any work you like under Linux, power the machine down, suspend or hibernate it, ''without'' needing to re-insert the boot USB key. Then:
+** If you suspend (sleep) the machine from Linux, you can come back out of suspend without needing to re-insert the key (just slide the power button).
+** If you hibernate the machine from Linux, insert the boot USB key immediately before powering up again. Upon restart, you'll have to enter the GPG-encrypted LUKS keyfile passphrase, and should then be presented with a GNOME login prompt (as before, you can remove the boot USB key at this point). Log in, and you'll find your desktop the way you left it on hibernation.
+** If you power the machine off from Linux, simply remember to insert the USB key before sliding the power key again (otherwise you'll reboot into Windows, as above).
+** Similarly, if you have hibernated from Linux, and power back up ''without'' re-inserting the boot USB key, your machine will come up in Windows. This isn't a problem (unless you had any of the Windows partitions deliberately mounted in your Linux session!), because you can use Windows as necessary and then, when done, follow the process [[#win8_to_linux|above]] to restart back into Linux again (it'll remember that you hibernated, and come back into your old session).
+
+The whole process is easier to do in practice than it is to describe! It has the advantage of not requiring multiple EFI system partitions on the machine's main drive (something which Microsoft specifically cautions is unsupported under Windows<ref name="how_many_sys_partitions">SuperUser Forum: [http://superuser.com/questions/688617/how-many-efi-system-partitions-esp-can-a-computer-have#688758 "How many EFI System Partitions (ESP) can a computer have?"]</ref>), nor a separate bootloader. Furthermore, Windows will sometimes overwrite the EFI boot list anyway, even when a bootloader is used, so taking that approach doesn't necessary buy you anything.<ref>ZDNet: [http://www.zdnet.com/seven-ways-to-set-up-multi-booting-with-windows-8-and-linux-7000026392/ "Seven ways to set up multi-booting with Windows 8 and Linux"]</ref>
+
+If you would like to use Windows' EFI system partition (the one on the internal drive) to store your kernel (or even dispense with the need for a USB key during boot altogether), instructions for doing so will be provided [[#migrating_off_usb_key|later in this chapter]].
+
+{{Note|If you should forget the {{c|gpg}} keyfile passphrase, but have setup a fallback passphrase on the LUKS partition [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#add_fallback_luks_passphrase{{!}}earlier in the tutorial]], you can use this by renaming the file {{c|luks-key.gpg}} (at the top level on the boot USB key) to {{c|luks-key.gpg.old}}. Then, when prompted for the password on boot (at the 'bunch of keys' prompt), type in your fallback passphrase, and you should be able to gain access. Since the boot key is formatted with {{c|fat32}}, you should be able to insert it into pretty much any Windows or Linux box to do the rename.}}
+
+== <span id="updating_software">Keeping Your Machine Up to Date</span> ==
+
+The {{c|genup}} tool makes it easy to keep your machine (kernel and packages) up to date. To perform a full update at any time, first open a root terminal in GNOME (if you don't already have one open): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Ensure that your boot USB key is inserted (this will be required if there is a kernel upgrade). Then, in this terminal, issue:
+{{RootCmd
+|genup --dispatch-conf --deploy-from-staging
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and the update will proceed automatically (the {{c|--dispatch-conf}} option means that, although not running in interactive mode per se, you ''will'' be prompted to resolve clashing changes to configuration files, should any arise, and the {{c|--deploy-from-staging}} will copy over any new kernel to the boot USB key, once built). When the process completes (you get the message "{{c|All done}}"), remove the boot USB key again, and close out the terminal.
+
+{{Note|Should <span id{{=}}"troubleshooting_genup">errors occur</span> during the process, here are some hints that may be useful.
+
+First, if the problem has occurred when building a new kernel, try working through the process manually. In the root terminal, issue:
+{{RootCmd
+|cd /usr/src/linux
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+then:
+{{RootCmd
+|make clean
+|make olddefconfig
+|make
+|prompt=koneko <span style{{=}}"color:royalblue;">linux #</span>
+}}
+and note what errors are reported. You can then do an internet search etc. to see how to resolve them.
+
+If, instead, problems occur during the main {{c|emerge}} phase, review the {{c|genup}} output for details. Most often, the issue will be caused by missing USE flags, license permissions or circular dependencies (in all of which cases, {{c|emerge}} will have printed a helpful, self-explanatory message about what to do).
+
+If the problem appears more gnarly that that, see the [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build{{!}}"Troubleshooting a Failed Build"]] section earlier for some hints as to how to proceed. Then, when ready, ensure your boot USB key is inserted, and simply issue:
+{{RootCmd
+|genup --dispatch-conf --deploy-from-staging
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+to try again.
+}}
+
+If the output of {{c|genup}} informed you that a new kernel has been built, you should reboot your machine at this point to start using it.
+
+{{Note|A more detailed overview of {{c|genup}} may be found [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#ensure_system_up_to_date{{!}}earlier in the tutorial]], together with instructions for using [[../Building_the_Gentoo_Base_System_Minus_Kernel#using_dispatch_conf{{!}}{{c|dispatch-conf}}]].}}
+
+=== <span id="automating_genup">Automating {{c|genup}} (Optional)</span> ===
+
+To ensure you don't forget updates, you can schedule {{c|genup}} to run automatically (this is entirely optional, of course). One simple approach is to use {{Path|/etc/cron.daily}} to have it executed every night (at around 3am on most systems; check {{Path|/etc/crontab}} for details<ref>ServerFault Forum: [http://serverfault.com/questions/135906/when-does-cron-daily-run#135940 "When does `cron.daily` run?"]</ref>).
+
+To set this up, first open a root terminal in GNOME (if you don't already have one available): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Then issue:
+{{RootCmd
+|nano -w /etc/cron.daily/genup
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Then <span id="genup_cron_file">put the following</span> text in the file:
+{{FileBox|filename=/etc/cron.daily/genup|title=Having genup run automatically|lang=bash|1=
+#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin"
+genup >/var/log/latest-genup-run.log 2>&1
+}}
+Save and exit the {{c|nano}} editor, and make the file executable:
+{{RootCmd
+|chmod -v +x /etc/cron.daily/genup
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+(You can now close out the root terminal if you have no further use for it.)
+
+<span id="overnight_genup">That's it!</span> Your system will now attempt to update each night, without requiring any input from you. Also, because you have ''not'' specified {{c|--deploy-from-staging}} here, there's no need to have your boot USB key inserted when the process runs (any new kernel will still be built, but then simply retained in the staging area at {{Path|/boot}}, until you issue {{c|buildkernel --copy-from-staging}}, as described [[#deploy_batch_kernel|shortly]]).
+
+Although this is automatic, you ''do'' need to do a bit of checking periodically that this worked OK (each morning, say). To do this, open a root terminal in GNOME (as just described), and issue:
+{{RootCmd
+|tail --lines{{=}}20 /var/log/latest-genup-run.log
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+If the tail of the log just printed contains text similar to the below:
+{{GenericCmd|<pre>
+* genup: Warning: There are configuration file changes pending review!
+* genup: Warning: Please run dispatch-conf to interactively resolve them.
+</pre>
+}}
+then, as instructed, you need to run {{c|dispatch-conf}}; so do so now:
+{{RootCmd
+|dispatch-conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+See the [[../Building_the_Gentoo_Base_System_Minus_Kernel#using_dispatch_conf|explanation earlier in this tutorial]] for how to use {{c|dispatch-conf}}.
+
+<span id="deploy_batch_kernel">Next, if the tail of the log contains</span> text similar to the below:
+{{GenericCmd|<pre>
+* An updated kernel has been successfully built in the staging area!
+* You can install it to your EFI system partition by issuing:
+*  buildkernel ----copy-from-staging
+</pre>
+}}
+then you need to copy it across (it has already been built in the staging area). Insert your boot USB key, then issue:
+{{RootCmd
+|buildkernel --copy-from-staging
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+When this completes (it shouldn't take long), remove the boot USB key, and close out the root terminal if you have no further use for it (or, alternatively, leave the key inserted and reboot, to start using your new kernel immediately).
+
+{{Note|If the {{c|genup}} process exited with an error (as shown in {{Path|/var/log/latest-genup-run.log}}), refer to the [[#troubleshooting_genup{{!}}troubleshooting notes above]].}}
+
+== <span id="migrating_off_usb_key">Migrating Off the Boot USB Key (Optional)</span> ==
+
+Up until now, we have been using a boot USB key to hold your (stub EFI) kernel and GPG-encrypted LUKS keyfile. This approach has a number of advantages:
+* It let us get around the 'EFI chicken and egg' problem - namely that it is only possible to modify the EFI boot list when ''already'' booted under EFI - by exploiting the exception that most UEFI BIOSes will boot specially named EFI images on removable drives. Of course, now we have an EFI system running, this advantage is moot.
+* It provides dual factor security - you need both the keyfile ''and'' its passphrase to access the LUKS partition. This confers a degree of protection against hardware keyloggers etc., which a 'passphrase only' (or, indeed, 'keyfile only') LUKS approach would lack.
+** Similarly, if you physically destroy the USB key and all backups, your LUKS data will be gone forever. Even someone with your GPG passphrase would be unable to recover it. Of course, this is a double-edged sword!
+* If the system is booted without the key inserted, it will automatically come up in Windows.
+* When Windows is running, malware is unable to see your kernel image (assuming you leave the USB key unplugged) nor can it copy your GPG-encrypted keyfile.
+** Similarly, there is no risk of Windows accidentally (during an upgrade, for example) overwriting your kernel, or experiencing problems because your kernel has consumed too much space in the (internal hard drive) EFI system partition.
+* You can use a large-capacity USB key, with plenty of room for snapshot backups etc.
+
+Nevertheless, some users may prefer to use their internal hard drive's EFI system partition to store the kernel (retaining the USB key for GPG-encrypted keyfile only, to preserve dual-factor security). Others may like to go even further, and remove the need for the USB key altogether on boot (relying on a passphrase only, Ubuntu-style<ref>EFF: [https://www.eff.org/deeplinks/2012/11/privacy-ubuntu-1210-full-disk-encryption "Privacy in Ubuntu 12.10: Full Disk Encryption"]</ref>). While there are six logical possibilities here (and all are simple to achieve via {{c|buildkernel --easy-setup}}), not all make sense, as the table below demonstrates:
+
+{| class="wikitable"
+|-
+! rowspan="2" colspan="2" | !! colspan="3" | GPG-Encrypted LUKS Keyfile Location
+|-
+! USB Key || Internal Drive || None (Fallback Passphrase Only)
+|- valign="top"
+! rowspan="2" | Kernel Location || USB Key
+| bgcolor="PaleGreen" | (Option 1)<br>You have this now:
+* maximum security (assuming no fallback passphrase set)
+* ample storage capacity (with appropriate USB key)
+* but, slightly fiddly, USB key needed for boot
+| bgcolor="PeachPuff" | (Option 2)<br>Pointless:
+* if machine stolen so is keyfile
+| bgcolor="PeachPuff" | (Option 3)<br>Pointless:
+* dual-factor security lost
+* but, USB key still needed to boot
+|- valign="top"
+! Internal Drive
+| bgcolor="PaleGoldenRod" | (Option 4)<br>Reasonable option:
+* dual-factor security retained
+* faster boot
+* no need to insert USB key to deploy kernel (only to boot)
+* but, limited storage capacity may obviate kernel backups
+| bgcolor="PeachPuff" | (Option 5)<br>Pointless:
+* if machine stolen so is keyfile
+| bgcolor="PaleGoldenRod" | (Option 6)<br>Maximum convenience option:
+* no USB key required at all
+* faster boot
+* but, dual-factor security lost
+* limited storage capacity may obviate kernel backups
+|}
+
+Accordingly, instructions are provided below for migration from option 1 (which you have now) to options 4 and 6, below.
+
+{{Important|These are purely optional, and mutually exclusive, approaches! If the current, USB-based setup (option 1)  works fine for you, by all means retain it for day-to-day use.}}
+
+=== <span id="option_4_migration">Using the Internal Drive EFI System Partition for the Kernel (Option 4)</span> ===
+
+This <span id="option_4_comments">is a somewhat</span> attractive option. By using the (Windows) EFI system partition to store the kernel, boot times are reduced, and you can perform full upgrades (including any kernel deployment) without having to insert the USB key.
+{{Note|As [[#overnight_genup{{!}}described earlier]] however, even in an 'option 1' system, you can perform all but the final copy-kernel-from-staging step (using {{c|genup}}) ''without'' having to insert the boot USB key, so this is not a major problem.}} However, you may experience issues due to the lack of space in the internal drive EFI system partition, particularly if you have not slimmed down your kernel configuration (as described [[../Final_Configuration_Steps_under_OpenRC#cleaning_kernel_config|earlier]]).
+
+{{Note|To give some sense of scale about the 'free space' issue:
+* the internal drive EFI system partition is 100MB in size (approximately) on the CF-AX3 (and this is common for many Windows installs <ref name="ms_efi_faq">Microsoft: [http://msdn.microsoft.com/en-us/library/windows/hardware/dn640535%28v{{=}}vs.85%29.aspx#gpt_faq_how_big_esp "Windows and GPT FAQ: Answers about Windows GPT required partitions: EFI System Partition"]</ref>);
+* a 'default' kernel (with encapsulated initramfs, as per the instructions in this tutorial) will be around 40MB in size (as of Linux 3.12.21);
+* the same kernel after the {{c|localmodconfig}} treatment (see [[../Final_Configuration_Steps_under_OpenRC#using_localmodconfig|earlier]]) will be about 30MB;
+* a 'slimmed down configuration' version (done manually) of that same kernel will be around 15MB (with all firmware);
+* if you keep only the firmware you need, it should fall to <5MB (the easiest way to do this is to define the {{c|user_modify_initramfs}} hook function in {{Path|/etc/buildkernel.conf}}, adding code to delete unnecessary files from the {{c|initramfs}} filesystem);
+* Windows takes about 20MB on the EFI system partition for its own files; plus you probably need to allow the same again (for updates, backups, installations etc. that Windows may perform);
+* if you choose to store the GPG-encrypted LUKS key on the internal system partition as well (not required for either option 4 or 6), that will consume just over 8MB.}}
+{{Note|It is ''not'' recommended to create a second EFI system partition on your internal drive - while this ''is'' allowed under the EFI specifications, according to Microsoft, "such a configuration should not be created and is not supported in Windows".<ref name="ms_efi_faq"/>}}
+{{Note|If there is insufficient space on the target EFI system partition, {{c|buildkernel}} will automatically delete the old backup (if any), and skip the new backup, to save space; so for most systems the default, 'unslimmed' kernel ''should'' work even in an 'option 4' (or 6) configuration (however, remember that without backups, that you won't have a fallback in place should a configuration problem cause issues at boot time).}}
+
+When using the internal drive EFI system partition, Windows malware can read your kernel (and configuration), although it is protected against tampering by its cryptographic signature (of course, malware with access to the ''Microsoft'' private keys could modify your kernel and resign it...).
+
+A final point to bear in mind is that, whenever you wish to restart from Linux to Windows, you will have to change the EFI boot list ''explicitly'', using the {{c|efibootmgr}} tool (the use of which was [[../Configuring_Secure_Boot_under_OpenRC#use_efibootmgr|described previously]]). You can no longer simply restart the machine without the boot key present (as you can with 'option 1').
+
+With all that in mind, if you still wish to migrate to an 'option 4' configuration, proceed as follows.
+
+First, open a root terminal in GNOME (if you don't already have one available): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Next, use the {{c|buildkernel --easy-setup}} tool to make the necessary changes to {{Path|/etc/buildkernel.conf}}.
+{{Note|You can of course make the necessary changes to {{Path|/etc/buildkernel.conf}} with an editor, but using the menu-driven tool reduces the chances for error.}}
+
+Issue (the following session is an example only; the values output will obviously vary for your machine):
+
+{{RootCmd
+|buildkernel --easy-setup
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+ &nbsp;
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              gentoo.efi                         
+   Plymouth theme:             fade-in                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC                             
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|1}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ 
+ <span style{{=}}"color:green;">*</span> Please choose which EFI system partition to use (or GO BACK):
+ Num Partition UUID                       Path       USB Win Use
+ --- ------------------------------------ ---------- --- --- ---
+  1) 2498f874-ad8f-484e-8aba-81ac1c9665b6 /dev/sdb1   Y   N  [*]
+  2) f236e16c-ca97-4c36-b0d5-4196fa1e9930 /dev/sda2   N   Y  [ ]
+  3) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|2}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:royalblue;">(we want the Windows EFI system partition, from a non-USB drive)</span>
+ <span style{{=}}"color:green;">*</span> EFI system partition selected as follows:
+ Num Partition UUID                       Path       USB Win Use
+ --- ------------------------------------ ---------- --- --- ---
+  1) 2498f874-ad8f-484e-8aba-81ac1c9665b6 /dev/sdb1   Y   N  [ ]
+  2) f236e16c-ca97-4c36-b0d5-4196fa1e9930 /dev/sda2   N   Y  [*]
+ <span style{{=}}"color:green;">*</span> Previously, KEYFILEPARTUUID was unset, and so implicitly followed
+ <span style{{=}}"color:green;">*</span> the value of EFIPARTUUID (the EFI system partition).
+ <span style{{=}}"color:green;">*</span> Now you have changed EFIPARTUUID, you must choose what to do
+ <span style{{=}}"color:green;">*</span> about the keyfile.
+ <span style{{=}}"color:green;">*</span> Please choose your desired option:
+ 1) Keep keyfile in previous EFI system partition
+ 2) Move keyfile to new EFI system partition (retain implicit tracking)
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|1}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:royalblue;">(we want to leave the GPG-keyfile on the USB key)</span>
+ <span style{{=}}"color:green;">*</span> OK, explicitly defining KEYFILEPARTUUID now
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf - MODIFIED):
+
+  EFI system partition UUID:  f236e16c-ca97-4c36-b0d5-4196fa1e9930
+  LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+  GPG keyfile partition UUID: 2498f874-ad8f-484e-8aba-81ac1c9665b6
+  GPG keyfile (for LUKS):     luks-key.gpg                        
+  EFI boot directory:         /EFI/Boot                           
+  EFI boot file:              gentoo.efi                          
+  Plymouth theme:             fade-in                             
+  Boot-time keymap:           jp                                  
+  Init system:                OpenRC                             
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|9}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ 
+ <span style{{=}}"color:green;">*</span> Configuration saved to /etc/buildkernel.conf.
+ <span style{{=}}"color:green;">*</span> Be sure to run buildkernel, to rebuild the kernel with the new
+ <span style{{=}}"color:green;">*</span> settings, before rebooting.
+ &nbsp;
+}}
+
+Now rebuild the kernel (it will attempt to save the result to the internal EFI system partition now, not to the boot USB key):
+
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Important|This process also creates a ''new'' EFI boot entry, entitled "{{c|Gentoo Linux (Internal Drive)}}", and places it at the top of the EFI boot list for you. Note that, when e.g. [[../Configuring_Secure_Boot_under_OpenRC#set_boot_order_gentoo{{!}}using the UEFI BIOS GUI]] to reboot into Linux, having previously run Windows, you'll need to select this entry, and ''not'' the "{{c|Gentoo Linux (USB Key)}}" one (which is retained too, for convenience). Similarly, if you switch operating systems using the alternative approach of the Windows 10 (or 8) 'Use a device' menu (as described [[#win8_use_a_device{{!}}above]]), you'll need to click on the the tile entitled "{{c|Gentoo Linux (Internal Drive)}}".}}
+
+Once the build completes (make sure it works successfully, and that you get the prompt "{{c|All done!}}" at the end), ensure your USB (boot) key is inserted, and restart your machine (you can do this from within GNOME, by clicking on the 'power' icon (in the top right of the screen), clicking on the 'power' button in the dropdown menu that then appears, and then clicking on the 'Restart' button in the dialog).
+
+The machine should then power cycle (you will be cleanly logged out of GNOME first). When it restarts, as before, you will need to enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]), directly at the target machine keyboard to unlock the LUKS partition. You should then be able to log into GNOME as usual.
+
+{{Note|The (boot) USB key is now only needed for the GPG-encrypted keyfile. As before, the USB key can safely be removed once the GNOME login screen appears.
+
+In addition, the previous kernel and backup etc. is still present on the USB key (but unused), and you can delete these manually if you like - as the system now boots using the kernel stored on the internal EFI system partition.}}
+
+{{Note|If you use the internal EFI system partition in this manner, and have ''not'' slimmed down your kernel configuration, you will probably be unable to perform {{c|buildkernel --snapshot-backup}} operations, due to lack of space. Consider reducing your kernel image size, as described [[../Final_Configuration_Steps_under_OpenRC#cleaning_kernel_config{{!}}earlier]].}}
+
+=== <span id="option_6_migration">Completely Removing the Need for a Boot USB Key (Option 6)</span> ===
+
+This is the most convenient option for everyday use, since no USB key is required at all: the backup LUKS passphrase is prompted for at boot time, and the kernel is contained on the internal drive (Windows) EFI system partition. However, dual-factor security is lost with this approach. It is otherwise similar to option 4 above, so please [[#option_4_comments|read through the comments there]] before continuing.
+
+{{Important|You '''must''' have setup a fallback LUKS keyphrase to use an option 6 boot. Refer to the [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#add_fallback_luks_passphrase{{!}}earlier instructions]] as to how to do this, if you haven't already done so.}}
+
+{{Note|To reiterate one point: under 'option 6' (just as for 'option 4'), whenever you wish to restart from Linux to Windows, you will have to change the EFI boot list ''explicitly'', using the {{c|efibootmgr}} tool (the use of which was [[../Configuring_Secure_Boot_under_OpenRC#use_efibootmgr{{!}}described previously]]). You can no longer simply restart the machine without the boot key present (as you can with 'option 1').}}
+
+If you still wish to migrate to an 'option 6' configuration, proceed as follows.
+
+First, open a root terminal in GNOME (if you don't already have one available): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Next, use the {{c|buildkernel --easy-setup}} tool to make the necessary changes to {{Path|/etc/buildkernel.conf}}.
+{{Note|You can of course make the necessary changes to {{Path|/etc/buildkernel.conf}} with an editor, but using the menu-driven tool reduces the chances for error.}}
+
+Issue (the following session is an example only; the values output will obviously vary for your machine):
+{{RootCmd
+|buildkernel --easy-setup
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+ &nbsp;
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              gentoo.efi                         
+   Plymouth theme:             fade-in                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC                             
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|3}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ 
+ <span style{{=}}"color:green;">*</span> Current LUKS key settings:
+ <span style{{=}}"color:green;">*</span> Using a GPG-encrypted keyfile for LUKS:
+ <span style{{=}}"color:green;">*</span>  KEYFILEPARTUUID unset: assuming GPG keyfile on EFI system partition
+ <span style{{=}}"color:green;">*</span> Please choose your desired LUKS key setting (or GO BACK):
+ 1) Use GPG-encrypted keyfile on EFI system partition
+ 2) Use GPG-encrypted keyfile on specific USB partition...
+ 3) Use fallback passphrase (no keyfile)
+ 4) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|3}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:green;">*</span> New LUKS key settings:
+ <span style{{=}}"color:green;">*</span> Using no keyfile, but relying on fallback passphrase for LUKS
+ 
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf - MODIFIED):
+
+  EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+  LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+  GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+  GPG keyfile (for LUKS):     NONE (using fallback passphrase)                        
+  EFI boot directory:         /EFI/Boot                           
+  EFI boot file:              gentoo.efi                          
+  Plymouth theme:             fade-in                             
+  Boot-time keymap:           jp                                  
+  Init system:                OpenRC                             
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|1}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ 
+ <span style{{=}}"color:green;">*</span> Please choose which EFI system partition to use (or GO BACK):
+ Num Partition UUID                       Path       USB Win Use
+ --- ------------------------------------ ---------- --- --- ---
+  1) 2498f874-ad8f-484e-8aba-81ac1c9665b6 /dev/sdb1   Y   N  [*]
+  2) f236e16c-ca97-4c36-b0d5-4196fa1e9930 /dev/sda2   N   Y  [ ]
+  3) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|2}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:royalblue;">(we want the Windows EFI system partition, from a non-USB drive)</span>
+ <span style{{=}}"color:green;">*</span> EFI system partition selected as follows:
+ Num Partition UUID                       Path       USB Win Use
+ --- ------------------------------------ ---------- --- --- ---
+  1) 2498f874-ad8f-484e-8aba-81ac1c9665b6 /dev/sdb1   Y   N  [ ]
+  2) f236e16c-ca97-4c36-b0d5-4196fa1e9930 /dev/sda2   N   Y  [*]
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf - MODIFIED):
+
+  EFI system partition UUID:  f236e16c-ca97-4c36-b0d5-4196fa1e9930
+  LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+  GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+  GPG keyfile (for LUKS):     NONE (using fallback passphrase)                         
+  EFI boot directory:         /EFI/Boot                           
+  EFI boot file:              gentoo.efi                          
+  Plymouth theme:             fade-in                             
+  Boot-time keymap:           jp                                  
+  Init system:                OpenRC                             
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|9}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ 
+ <span style{{=}}"color:green;">*</span> Configuration saved to /etc/buildkernel.conf.
+ <span style{{=}}"color:green;">*</span> Be sure to run buildkernel, to rebuild the kernel with the new
+ <span style{{=}}"color:green;">*</span> settings, before rebooting.
+ &nbsp;
+}}
+
+Now rebuild the kernel (it will attempt to save the result to the internal EFI system partition now, not to the boot USB key):
+
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Important|As with option 4, this process also creates a ''new'' EFI boot entry, entitled "{{c|Gentoo Linux (Internal Drive)}}", and places it at the top of the EFI boot list for you. Note that, when e.g. [[../Configuring_Secure_Boot_under_OpenRC#set_boot_order_gentoo{{!}}using the UEFI BIOS GUI]] to reboot into Linux, having previously run Windows, you'll need to select this entry, and ''not'' the "{{c|Gentoo Linux (USB Key)}}" one (which is retained too, for convenience). Similarly, if you switch operating systems using the alternative approach of the Window 8 'Use a device' menu (as described [[#win8_use_a_device{{!}}above]]), you'll need to click on the the tile entitled "{{c|Gentoo Linux (Internal Drive)}}".}}
+
+Once the build completes (make sure it works successfully, and that you get the prompt "{{c|All done!}}" at the end), remove your USB (boot) key (you won't need it any more!), and restart your machine (you can do this from within GNOME, by clicking on the 'power' icon (in the top right of the screen), clicking on the 'power' button in the dropdown menu that then appears, and then clicking on the 'Restart' button in the dialog).
+
+The machine should then power cycle (you will be cleanly logged out of GNOME first). When it restarts, as before, you will need to enter your LUKS ''fallback'' passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#add_fallback_luks_passphrase|earlier]]), directly at the target machine keyboard to unlock the LUKS partition. You should then be able to log into GNOME as usual.
+
+{{Note|The boot USB key can now be recycled if you like - the system now boots using a kernel stored on the internal EFI system partition, and the GPG-encrypted keyfile is not used. Any time you are restarting your machine and are prompted for a LUKS passphrase (at the 'bunch of keys' prompt in Plymouth), be sure to use the LUKS fallback passphrase.}}
+
+{{Note|Just as with option 4, if you use the internal EFI system partition in this manner, and have ''not'' slimmed down your kernel configuration, you will probably be unable to perform {{c|buildkernel --snapshot-backup}} operations, due to lack of space. Consider reducing your kernel image size, as described [[../Final_Configuration_Steps_under_OpenRC#cleaning_kernel_config{{!}}earlier]].}}
+
+== <span id="tweaking_gnome">Tweaking GNOME</span> ==
+
+One of the saving graces of the GNOME 3 shell interface (the desktop GUI) is its extensibility. By using [[:Wikipedia:Javascript|JavaScript]]-based plug-ins known as [https://extensions.gnome.org/about/ shell extensions], you can modify the behaviour of your system considerably (changing the way window placement works, adding things like weather and system performance applets, changing app search options etc.).
+
+The simplest way to get plugins is via the {{c|Gnome Tweak Tool}} application. From within your GNOME desktop, press {{Key|Windows Key}}, then type {{c|tweak}} and press {{Key|Enter}}. The tool that appears allows you to change many of the default GNOME behaviours that you may find annoying (such as attached modal dialogs!), add startup applications, etc., so its well worth browsing through the options.
+
+To install extensions, however, click on the 'Extensions' tab on the left side of the app, and then navigate to the extension you want on the right (simply move the slider to "ON" for any you wish to enable). If you scroll to the bottom of this list, you'll see a link entitled "{{c|Get more extensions}}". Click on this, and a web page will open with a list of downloadable plug-ins. You can search the list for topics of interest. Again, if you want to use a plug-in, simply click on it to open its detail page, move its slider to "ON", and it should download and start running automatically:
+
+[[File:Gnome_tweak_extensions.jpg|thumb|none|400px|Adding GNOME Shell Extensions via the Tweak Tool]]
+
+{{Important|Do take care with plug-ins, however, as they are third-party code. Shell extensions on the GNOME website have been reviewed for malware. If you want to write your own extensions, a good place to start is [https://wiki.gnome.org/Projects/GnomeShell/Extensions/StepByStepTutorial#knowingJavascript this tutorial]. See also [https://wiki.gnome.org/Projects/GnomeShell/Extensions this GNOME wiki page].}}
+
+{{Note|It may be worth emerging {{Package|sys-apps/gnome-disk-utility}} if you want to mount the boot USB key (or internal hard drive EFI system partition) from within GNOME, without resorting to the command line. For clarity, GNOME ''will'' by default automount the partitions of removable drives when you insert them, but it will ''not'' automount EFI system partitions. The GNOME disk utility provides you with a nice graphical way to do this.}}
+
+=== <span id="misc_gnome">Miscellaneous GNOME Points</span> ===
+
+The following are a few GNOME setup questions that come up frequently by email (but which don't really fit into the main flow of this guide). For any other GNOME issues, your first point of call should be the [https://www.gnome.org/ gnome.org] website (and failing that, the Gentoo [http://forums.gentoo.org/viewforum-f-13.html Desktop Environments] discussion forum).
+
+==== <span id="use_printer_in_gnome">Using a Printer in GNOME</span> ====
+
+Depending on what version of GNOME you have, and which other applications you have installed, you may find that you are initially unable to print from GNOME, and cannot use the 'Printers' control panel.
+
+To enable printing, you need to install the {{Package|net-print/libgnomecups}} package, and then start the {{c|[[:Wikipedia:CUPS|CUPS]]}} service in {{c|systemd}}.
+
+To set this up, first open a root terminal in GNOME (if you don't already have one available): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Then issue:
+{{RootCmd
+|emerge --ask --verbose --noreplace net-print/libgnomecups
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ... assuming no errors you will see ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+{{Note|If you already have the package installed as a dependency of something else, it will not be reinstalled (because of the {{c|--noreplace}} option), but you ''will'' be asked whether to add the package to your [[World set (Portage){{!}}{{c|@world}}]] set; you should answer {{c|n}} in this case.}}
+Next, enter:
+{{RootCmd
+|rc-update add cupsd default
+|openrc
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+after which you should be able to go to the 'Printers' control panel, click on the 'plus' icon, and setup your printer.
+You can also close out the {{c|root}} terminal if you have no further need for it.
+
+==== <span id="use_vpn_in_gnome">Using a VPN in GNOME</span> ====
+
+To be able to use a Virtual Private Network ([[:Wikipedia:Virtual_private_network|VPN]]) with {{c|NetworkManager}} in GNOME, you have to install the 
+{{Package|net-misc/networkmanager-openvpn}} package.
+
+To do this, open a {{c|root}} terminal (per the instructions [[#use_printer_in_gnome|above]]), and then issue:
+{{RootCmd
+|echo -e "# show the VPN interface in GNOME\n>{{=}}net-misc/networkmanager-openvpn-1.0.2 gtk" >> /etc/portage/package.use/networkmanager-openvpn
+|emerge --ask --verbose net-misc/networkmanager-openvpn
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ... assuming no errors you will see ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+Once this completes, you should now be able to go to the 'Network' control panel, click on the 'plus' icon, and add a new VPN connection.
+(As before, close out the {{c|root}} terminal now, if you have no further need for it.)
+
+==== <span id="play_mp4_in_gnome">Playing MP4 Videos (using {{c|Totem}}) in GNOME</span> ====
+
+If you find that you are unable to play MP4 videos using GNOME's default ({{c|Totem}}) media player (and it complains about a missing H264 codec), then you'll need to install the {{Package|media-plugins/gst-plugins-libav}} package.
+
+{{Note|Another symptom, indicating that you may need to install this package, is if you have audio, but no picture, when playing videos on sites like YouTube from within your web browser.}}
+
+To do this, open a {{c|root}} terminal (per the instructions [[#use_printer_in_gnome|above]]), and then issue:
+{{RootCmd
+|emerge --ask --verbose media-plugins/gst-plugins-libav
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ... assuming no errors you will see ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+Once this completes, the problem should be fixed.
+(As before, close out the {{c|root}} terminal now, if you have no further need for it.)
+{{Note|You will need to restart any application ({{c|Totem}}, web browser etc.) in order to use the new plug-in, but there is no need to reboot.}}
+
+== <span id="install_firewall_etc">Installing Other Applications, Including a Firewall etc.</span> ==
+
+As currently configured, your machine is not running a [[:Wikipedia:Firewall_(computing)|firewall]] - but I'd definitely recommend installing one! Configuring a firewall is beyond the scope of this tutorial, but a good place to start is Chapter 1 of Michael Rash's book ''Linux Firewalls''.<ref>Rash, Michael ''Linux Firewalls: Attack Detection and Response with {{c|iptables}}, {{c|psad}}, and {{c|fwsnort}}'' No Starch Press, 2007</ref> The ArchLinux wiki also has some useful information on using [[Iptables|{{c|iptables}}]] (the Linux kernel firewall based on {{c|netfilter}}) (albeit under {{c|systemd}}).<ref>ArchLinux Wiki: [https://wiki.archlinux.org/index.php/iptables "iptables"]</ref>
+
+{{Note|If you do choose to use {{c|iptables}}, you'll need to do a {{c|buildkernel --menuconfig}} run, and turn on {{c|CONFIG_NETFILTER}} and appropriate sub-options. Michael Rash's book gives a good overview (albeit a little dated now) of which options you may need.}}
+
+Other than that, what you install on your machine is now up to you! It's worth reading [[Handbook:AMD64/Working/Portage#Maintaining_software|this introduction]] in the Gentoo handbook regarding searching for and installing software. The basic process, of course, is straightforward. Suppose, for example, that you'd like to install the Firefox web browser...
+
+{{Note|At the time of writing, Firefox will silently auto-download a Gecko Media Plugin binary blob on first use, unless you have the {{c|gmp-autoupdate}} USE flag unset.<ref>Gentoo Forums: [https://forums.gentoo.org/viewtopic-t-1019906.html "Policy question re Firefox binary blob auto-download"]</ref> As such, you may wish to create an entry in {{Path|/etc/portage/package.use/firefox}} to unset this flag, before proceeding.}}
+
+To do this, first, open a root terminal in GNOME (if you don't already have one available): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Cmd
+|su --login root
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+|output=<pre>
+Password: <enter root password>
+</pre>
+}}
+The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
+
+Next, search for the application. You can use {{c|eix}} to do this: for example:
+{{RootCmd
+|eix firefox
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Reviewing {{c|eix}}'s output, you can see that the package you want is {{Package|www-client/firefox}}. To install it, use the familiar {{c|emerge}} rubric:
+{{RootCmd
+|emerge --ask --verbose www-client/firefox
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ... assuming no errors you will see ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+If there are any USE flag problems or license issues reported, edit {{Path|/etc/portage/package.use}} or {{Path|/etc/portage/package.license}} accordingly (see [[../Installing_the_Gentoo_Stage_3_Files#about_package_use|text earlier]] for a description of these), then try again.
+
+Note that if you ''are'' planning to use {{c|firefox}} as your daily web browser, it is well worth ''sandboxing'' it for security. A full mini-guide covering this topic is now available (see list, [[#additional_mini_guides|immediately below]]).
+
+== <span id="additional_mini_guides">Additional Mini-Guides</span> ==
+
+Listed below is a short set of 'mini-guides', covering additional set-up topics that may be of interest to some users, but which do not fit within the main flow of the text:
+* [[../Extending_LUKS_to_Protect_an_Additional_Drive|Extending LUKS to Protect an Additional Drive]] (NB, this particular mini-guide is currently {{c|systemd}}-specific)
+* [[../Disabling_the_Intel_Management_Engine|Disabling the Intel Management Engine]] (For both {{c|systemd}} and {{c|OpenRC}} users)
+* [[../Sandboxing_the_Firefox_Browser_with_Firejail|Sandboxing the Firefox Browser with Firejail]] (For both {{c|systemd}} and {{c|OpenRC}} users)
+
+== <span id="sayonara">Sayonara ^-^</span> ==
+
+Well, that's it! You now have a fully operational Gentoo dual-boot system, with {{c|OpenRC}} and {{c|GNOME}}!
+
+Enjoy!
+
+(Click [[../|here]] to go back up to the top-level page.)
+
+{{Note|As mentioned at the beginning, comments, suggestions and feedback about this guide are welcomed! You can use the "Discussion" tab (of whatever is the most relevant page) for this purpose. On most browsers, you can use {{Key|Shift}}{{Key|Alt}}{{Key|t}} as a shortcut to access this.}}
+
+== <span id="notes">Notes</span> ==
+{{reflist}}
+
+{| class="wikitable" style="margin: 1em auto 1em auto;"
+|-
+| [[../Final_Configuration_Steps_under_OpenRC|< Previous]]
+| [[../|Home]]
+| <span style{{=}}"color:gray;">Next ></span>
+|}
+
+[[Category:Bootloaders]]
+[[Category:Core system]]
+[[Category:GNOME]]
+[[Category:Kernel]]
+[[Category:Portage]]
+[[Category:Power management]]
+[[Category:Security]]
+
