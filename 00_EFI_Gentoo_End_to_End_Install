@@ -96,6 +96,8 @@ Ready? Then [[/Installation_Prerequisites|click here]] to go to the first chapte
 
 {{Note|Comments, suggestions and feedback about this guide are welcomed! You can use the "Discussion" tab (of whatever is the most relevant page) for this purpose. On most browsers, you can use {{Key|Shift}}{{Key|Alt}}{{Key|t}} as a shortcut to access this.}}
 
+{{Tip|While the [https://mediawiki.org/ MediaWiki] ''source'' for individual pages of this guide may most easily be edited or viewed on the Gentoo Wiki directly, for ease of download the full page set is also maintained on GitHub, [https://github.com/sakaki-/efi-install-guide-source here]. }}
+
 == <span id="notes">Notes</span> ==
 {{reflist}}
 
