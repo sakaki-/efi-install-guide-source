@@ -595,7 +595,7 @@ Right, so now we're ready to build the kernel, using the {{c|buildkernel}} scrip
 {{Note|If you're interested in what this script does, read on, otherwise you can [[#build_using_buildkernel{{!}}skip over to the next section]] and get building right away!}}
 
 The {{c|buildkernel}} script carries out the following steps in order:
-# Reads your {{c|genkernel.conf}} file;
+# Reads your {{c|buildkernel.conf}} file;
 # Mounts the EFI partition if not already mounted (to {{Path|/boot/efi}});
 # Enters the {{Path|/usr/src/linux}} directory;
 # Copies a {{c|.config}} file from the currently running kernel (via {{Path|/proc/config.gz}}) if no config already exists in {{Path|/usr/src/linux}}, and sanitizes/updates it with {{c|make olddefconfig}};

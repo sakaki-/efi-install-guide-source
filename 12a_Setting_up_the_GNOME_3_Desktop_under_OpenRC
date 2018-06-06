@@ -346,7 +346,7 @@ So, now that we have set {{c|DRM}}, we can proceed to enable {{c|DRM_I915}} itse
 |[[File:Menuconfig_303.png|thumb|none|400px|...Such as the Intel i915 Driver]]
 |}
 
-You can verify that this is indeed the {{c|DRM_I915}} item, by using using {{Key|?}} if you like; then, press {{Key|y}} to enable it:
+You can verify that this is indeed the {{c|DRM_I915}} item, by using {{Key|?}} if you like; then, press {{Key|y}} to enable it:
 {|style="background:transparent; color:black" 
 |[[File:Menuconfig_304.png|thumb|none|400px|Finally, Select HD Graphics Driver (DRM_I915)]]
 |}
