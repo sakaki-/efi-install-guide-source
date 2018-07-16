@@ -42,7 +42,7 @@ Next, <span id="setup_gentoo_dot_conf">setup</span> a {{Path|/mnt/gentoo/etc/por
 |nano -w /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
-and edit the file ('''removing''' any {{c|sync-uri}} line, if present, and changing {{c|auto-sync}} value to '''{{c|no}}''') so it reads:
+and edit the file ('''deleting''' any {{c|sync-uri}} line, if present, and changing {{c|auto-sync}} value to '''{{c|no}}''') so it reads:
 {{FileBox|filename=/mnt/gentoo/etc/portage/repos.conf/gentoo.conf|title=Setting up repository information for Portage|lang=ini|1=
 [DEFAULT]
 main-repo = gentoo
@@ -51,14 +51,26 @@ main-repo = gentoo
 location = /usr/portage
 sync-type = rsync
 auto-sync = no
+
+sync-rsync-verify-jobs = 1
+sync-rsync-verify-metamanifest = no
+sync-rsync-verify-max-age = 24
+sync-openpgp-key-path = /usr/share/openpgp-keys/gentoo-release.asc
+sync-openpgp-key-refresh-retry-count = 40
+sync-openpgp-key-refresh-retry-overall-timeout = 1200
+sync-openpgp-key-refresh-retry-delay-exp-base = 2
+sync-openpgp-key-refresh-retry-delay-max = 60
+sync-openpgp-key-refresh-retry-delay-mult = 4
+
 }}
-Save and exit {{c|nano}}.
+Any additional commented lines (e.g., regarding {{c|squashfs}} snapshots) present in the original file may be deleted or retained, at your option. Save and exit {{c|nano}}.
 
 The above simply says that:
 * The main repository is set to be {{c|gentoo}}, for all other repositories (such as overlays) that do not specify masters;
 * The repository location is set to be {{Path|/usr/portage}} (within the {{c|chroot}}, that is);
 * The repository will '''not''' be synced during {{c|emerge --sync}} and {{c|emaint sync --auto}} runs;
 * The repository is set to synchronize using the {{c|rsync}} protocol (this is unauthenticated, but don't worry, in this tutorial, we won't actually call for any syncs to be performed in this manner, and have specified changing the {{c|auto-sync}} value to {{c|no}} in the above, to prevent it happening inadvertently).
+* The remaining settings in the above (from {{c|sync-rsync-verify-jobs...}} onward) are for use with the {{Package|app-portage/gemato}}-based cryptographic verification scheme that is being rolled out within Portage. They are not relevant at the moment (as this new approach is in the process of being stabilized, at the time of writing), so you do not need to concern yourself with them now, but we retain them here for use in the future.
 
 Next, we must specify the {{c|sync-uri}} variable, which tells Portage where to look for the {{c|rsync}} server, when bringing your Portage tree of ebuilds up to date. 
 {{Note|This replaces the setting of the {{c|SYNC}} variable in {{c|make.conf}}, which is now deprecated (although still present in some versions of the handbook).}}
@@ -140,6 +152,7 @@ The next step is to install a Portage (repository tree) ''snapshot'', a set of f
 For security, Portage snapshots are digitally signed by Gentoo Release Engineering. However, because (at the time of writing) {{c|gpg}} is ''not'' one of the pre-installed stage 3 binaries, after downloading the latest snapshot, we will have to verify its signature ''outside'' of the chroot (where {{c|gpg}} ''is'' available), and then (once verified) install it (inside the chroot again).
 
 {{Warning|The default Handbook flow suggests (and, to be fair, earlier versions of this guide also suggested) that you [https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base#Installing_an_ebuild_repository_snapshot_from_the_web first] perform a 'vanilla' (no-signature-verification) {{c|emerge-webrsync}}, [https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base#Optional:_Updating_the_Gentoo_ebuild_repository  followed optionally] by an {{c|emerge --sync}}, to download and install the Portage repository tree, at this stage in the installation process.<br>However, doing so will update the repo using ''unauthenticated'' protocols (viz., an unchecked tarball fetched (usually) via [[:Wikipedia:Hypertext_Transfer_Protocol|HTTP]], and [[:Wikipedia:Rsync|rsync]], respectively). Doing so makes it possible for a [[:Wikipedia:Man-in-the-middle_attack|'man-in-the-middle']] attacker to tamper with the repo without your knowing, and to cause arbitrary code to be executed with root privileges on your machine thereby (see e.g. {{Bug|597804}}).<br>As such, in this guide we will stick only to using ''authenticated'' snapshots.<br>If you still wish to use 'vanilla' {{c|emerge-webrsync}} or [[:Wikipedia:Rsync|rsync]], do so at your own risk.}}
+{{Note|At the time of writing this (July 2018) Portage is transitioning<ref>Gentoo News: [https://www.gentoo.org/support/news-items/2018-01-30-portage-rsync-verification.html "Portage rsync tree verification"]</ref><ref>Gentoo News: [https://www.gentoo.org/support/news-items/2018-03-13-portage-rsync-verification-unstable.html "Portage rsync tree verification unstable"]</ref> to the use of {{Package|app-portage/gemato}} for cryptographic verification of the Portage tree. When the latest changes &mdash; which ensure that repo deltas are applied atomically and only if signature verification succeeds<ref>Gentoo News: [https://www.gentoo.org/support/news-items/2018-07-11-portage-sync-allow-hardlinks.html "Portage rsync hardlink support"]</ref> &mdash; are stabilized, this guide will be updated accordingly. For now, however, users are advised to stick with {{c|webrsync-gpg}}-based updates only (as described below), for security.}}
 
 Begin by fetching a signed snapshot. To do so, issue:
 {{RootCmd
@@ -245,7 +258,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 
 The {{c|emerge}} command, without special options, asks Portage to (as necessary) fetch the source for, then patch, build, and install the latest version of the package specified, in this case the Portage system itself. The {{c|--oneshot}} option informs Portage not to add itself to the set of 'explicitly-user-requested' packages in the [[World set (Portage)|'world']] file ({{Path|/var/lib/portage/world}}) (Portage is already part of the [[System set (Portage)|@system]] set, via the {{Package|virtual/package-manager}} package, so it would be redundant to add it here). The {{c|--ask --verbose}} flag set makes {{c|emerge}} '''a'''sk you before making any changes to your system, and produce '''v'''erbose output (generally useful, and may be abbreviated to {{c|-av}}). 
 
-Now, if that {{c|emerge}} worked OK, (you eventually see "Jobs: 1 of 1 complete" in the output after you pressed {{Key|y}} and {{Key|Enter}}), congratulations: your Portage system is functional, and you should be able to proceed.
+Now, if that {{c|emerge}} worked OK, (you eventually see "Jobs: ''n'' of ''n'' complete" in the output after you pressed {{Key|y}} and {{Key|Enter}}), congratulations: your Portage system is functional, and you should be able to proceed.
 
 {{Tip|As a shortcut, you can generally just press {{Key|Enter}}, rather than {{Key|y}} then {{Key|Enter}}, when confirming that you want to proceed with an {{c|emerge}} command.}}
 
@@ -390,6 +403,7 @@ Assuming that completes successfully, you then must then specify the default loc
 </pre>
 }}
 {{Note|Your output will probably differ from the above, depending on what entries you uncommented or added to {{Path|/etc/locale.gen}}.}}
+{{Note|You may also see some warnings output such as <code>Cannot set LC_CTYPE to default locale</code>; these may safely be ignored, as the next command will fix the issue.}}
 
 <span id="set_C_locale">Choose the appropriate</span> value from the list. At this stage, you should use the 'C' (default) locale (other setups can cause issues with the indirect {{c|ssh}}/{{c|screen}} remote connection); we'll switch to your actual locale later on. Issue:
 {{RootCmd
@@ -555,9 +569,9 @@ Here is a brief summary of what the above (whitelisted) ebuilds are, and what th
 |-
 | {{Package|app-portage/showem}} || {{Path|/usr/local/portage/sakaki-tools/app-portage/showem/showem-1.0.3.ebuild}} || Provides a simple utility script ({{c|showem}}), which enables you to monitor the progress of a parallel {{c|emerge}}. A manpage is provided. The underlying source is available on [https://github.com/sakaki-/showem GitHub].
 |-
-| {{Package|sys-kernel/buildkernel}} || {{Path|/usr/local/portage/sakaki-tools/sys-kernel/buildkernel/buildkernel-1.0.30.ebuild}} || <span id="buildkernel_script">Provides a script</span> ({{c|buildkernel}}) to build a kernel suitable for booting from a USB key in UEFI mode, together with an integral initramfs. Automatically sets the necessary kernel configuration parameters, including the command line, and signs the resulting kernel if possible. Has a interactive and non-interactive (batch) mode. (Will be used [[../Configuring_and_Building_the_Kernel#first_buildkernel|later in the tutorial]].) On installation, attempts to automatically configure the {{Path|/etc/buildkernel.conf}} settings file (to set the two variables {{c|EFIPARTUUID}} and {{c|CRYPTPARTUUID}}, which ''must'' be assigned before {{c|buildkernel}} is run). Manpages for the script and the configuration file are provided. The underlying source is available on [https://github.com/sakaki-/buildkernel GitHub].
+| {{Package|sys-kernel/buildkernel}} || {{Path|/usr/local/portage/sakaki-tools/sys-kernel/buildkernel/buildkernel-1.0.30-r1.ebuild}} || <span id="buildkernel_script">Provides a script</span> ({{c|buildkernel}}) to build a kernel suitable for booting from a USB key in UEFI mode, together with an integral initramfs. Automatically sets the necessary kernel configuration parameters, including the command line, and signs the resulting kernel if possible. Has a interactive and non-interactive (batch) mode. (Will be used [[../Configuring_and_Building_the_Kernel#first_buildkernel|later in the tutorial]].) On installation, attempts to automatically configure the {{Path|/etc/buildkernel.conf}} settings file (to set the two variables {{c|EFIPARTUUID}} and {{c|CRYPTPARTUUID}}, which ''must'' be assigned before {{c|buildkernel}} is run). Manpages for the script and the configuration file are provided. The underlying source is available on [https://github.com/sakaki-/buildkernel GitHub].
 |-
-| {{Package|app-portage/genup}} || {{Path|/usr/local/portage/sakaki-tools/app-portage/genup/genup-1.0.15.ebuild}}|| Provides the {{c|genup}} script, to simplify the process of keeping your Gentoo system up-to-date. {{c|genup}} can automatically update the Portage tree (using {{c|gpg}} authentication, where enabled), all installed packages, and kernel. Has interactive and non-interactive (batch) modes. (Will be used later in the tutorial ([[../Configuring_systemd_and_Installing_Necessary_Tools#ensure_system_up_to_date|{{c|systemd}}]], [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#ensure_system_up_to_date|{{c|OpenRC}}]]).) A manpage is provided. The underlying source is available on [https://github.com/sakaki-/genup GitHub].
+| {{Package|app-portage/genup}} || {{Path|/usr/local/portage/sakaki-tools/app-portage/genup/genup-1.0.16.ebuild}}|| Provides the {{c|genup}} script, to simplify the process of keeping your Gentoo system up-to-date. {{c|genup}} can automatically update the Portage tree (using {{c|gpg}} authentication, where enabled), all installed packages, and kernel. Has interactive and non-interactive (batch) modes. (Will be used later in the tutorial ([[../Configuring_systemd_and_Installing_Necessary_Tools#ensure_system_up_to_date|{{c|systemd}}]], [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#ensure_system_up_to_date|{{c|OpenRC}}]]).) A manpage is provided. The underlying source is available on [https://github.com/sakaki-/genup GitHub].
 |-
 | {{Package|app-crypt/staticgpg}} || {{Path|/usr/local/portage/sakaki-tools/app-crypt/staticgpg/staticgpg-1.4.16.ebuild}}|| <span id="staticgpg_first_intro">The {{c|buildkernel}} tool (above)</span> needs to be able to be able to place a copy of the {{c|gpg}} tool into the initramfs, so that the keyfile (which we created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]) can be decrypted.
 
@@ -991,15 +1005,15 @@ First, remove any installed packages that are ''not'' part of the dependency tre
 Let this process run through to completion (it may take a little while). Then issue:
 
 {{RootCmd
-|find / -type d -path /boot/efi -prune -o -type f -executable -not -newer /tmp/prebuild_checkpoint -print0 2>/dev/null {{!}} xargs -0 file --no-pad --separator{{=}}"@@@" {{!}} grep -iv '@@@.* text'
+|find / -type d -path /boot/efi -prune -o -path /proc -prune -o -type f -executable -not -newer /tmp/prebuild_checkpoint -print0 2>/dev/null {{!}} xargs -0 file --no-pad --separator{{=}}"@@@" {{!}} grep -iv '@@@.* text'
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
 
-This command [http://man7.org/linux/man-pages/man1/find.1.html finds] all ''executable'' files (except beneath the EFI mountpoint at {{Path|/boot/efi}}; which will host a FAT filesystem - in which ''all'' files appear executable - when mounted (it currently ''shouldn't'' be mounted though, assuming you've been following the tutorial flow, but the {{c|prune}} is there for robustness)), which ''aren't'' newer than the checkpoint file, then tests their file type using [http://man7.org/linux/man-pages/man1/file.1.html {{c|file}}], and prints them if they are not recognized as some form of text file (script, source code etc.). '''It should produce no output''' (as all files of this type should have been recreated, if our bootstrap was complete).
+This command [http://man7.org/linux/man-pages/man1/find.1.html finds] all ''executable'' files (except beneath the EFI mountpoint at {{Path|/boot/efi}}; which will host a FAT filesystem &mdash; in which ''all'' files appear executable &mdash; when mounted, and the special {{Path|/proc}} pseudo-filesystem)), which ''aren't'' newer than the checkpoint file, then tests their file type using [http://man7.org/linux/man-pages/man1/file.1.html {{c|file}}], and prints them if they are not recognized as some form of text file (script, source code etc.). '''It should produce no output''' (as all files of this type should have been recreated, if our bootstrap was complete).
 
 So much for executable binaries - what about libraries (shared or static)?<ref>Ippolito, Greg. [http://www.yolinux.com/TUTORIALS/LibraryArchives-StaticAndDynamic.html "Static, Shared Dynamic and Loadable Linux Libraries"]</ref> On Gentoo, we'll have already checked most shared ('.so') libraries, since they have their execute bits set. However, this is not true for all flavours of Linux, and furthermore, static ('.a') libraries (and '.o' object files) do not have the execute bits set.<ref>Unix & Linux Stack Exchange Forum: [http://unix.stackexchange.com/questions/61646/why-are-so-files-executable "Why are .so files executable?"]</ref> Therefore, to be double-sure, we'll run another test (this may take some time to complete):
 {{RootCmd
-|find / -type d -path /boot/efi -prune -o -type f -not -executable -not -newer /tmp/prebuild_checkpoint -print0 2>/dev/null {{!}} xargs -0 file --no-pad --separator{{=}}"@@@" {{!}} grep  '@@@.*\( ELF\{{!}} ar archive\)'
+|find / -type d -path /boot/efi -prune -o -path /proc -prune -o -type f -not -executable -not -newer /tmp/prebuild_checkpoint -print0 2>/dev/null {{!}} xargs -0 file --no-pad --separator{{=}}"@@@" {{!}} grep  '@@@.*\( ELF\{{!}} ar archive\)'
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
 This looks for any files which ''aren't'' newer than our checkpoint file, and which are recognized by {{c|file}} as [[:Wikipedia:Executable_and_Linkable_Format|ELF]] or [[:Wikipedia:Ar_(Unix)|ar archives]]; it may take some time to complete (as there are a lot of files to check). Again, it should produce no output. If so, and the previous check also worked, then congratulations, you have fully rebuilt all executable binaries and libraries on your machine!
@@ -1008,6 +1022,7 @@ This looks for any files which ''aren't'' newer than our checkpoint file, and wh
 
 Now that the bootstrapping process is out of the way, we can (shadowing [https://wiki.gentoo.org/wiki/Handbook:AMD64/Working/Features#Validated_Gentoo_repository_snapshots these instructions] from the official Handbook) set up the target system to use {{Highlight|authenticated snapshots by default}}. As a convenience, we will make use of the {{Package|app-crypt/gentoo-keys}} package, which will maintain a {{c|gpg}} keyring of sanctioned Release Engineering keys automatically for us. To install it, together with the {{Package|app-crypt/gnupg}} package (which supplies {{c|gpg}}), issue:
 {{RootCmd
+|echo "app-crypt/gentoo-keys ~amd64" >> /etc/portage/package.accept_keywords/gentoo-keys
 |emerge --ask --verbose --noreplace app-crypt/gentoo-keys app-crypt/gnupg
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 |output=<pre>
@@ -1017,6 +1032,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 </pre>
 }}
 {{Note|We specify the {{c|--noreplace}} option here, as when you installed {{Package|dev-vcs/git}} [[#prep_for_parallel_emerge|earlier]], this ''should'' have already emerged {{Package|app-crypt/gnupg}} as a dependency (enabled via the default [https://packages.gentoo.org/useflags/gpg {{c|gpg}} USE flag]). If so, {{c|--noreplace}} will not rebuild it, but simply ensure you have it as a 'top-level' package in your [[World set (Portage){{!}}{{c|@world}}]] set (the file {{Path|/var/lib/portage/world}}). If however the package is ''not'' installed for some reason, {{c|emerge --noreplace}} will build it as normal. It's a useful idiom to be aware of.}}
+{{Note|As, at the time of writing, {{Package|app-crypt/gentoo-keys}} was not yet marked as stable for {{c|amd64}}, we add a {{c|package.accept_keywords}} entry for it above. See [[../Installing_the_Gentoo_Stage_3_Files#about_package_accept_keywords|these earlier notes]] for further details.}}
 
 This will install its keys into the {{Path|/var/lib/gentoo/gkeys/keyrings/gentoo/release}} directory.
 {{Note|''Pace'' the [https://wiki.gentoo.org/wiki/Handbook:AMD64/Working/Features#Validated_Gentoo_repository_snapshots official instructions], it is ''not'' necessary to 'trust' the keys in the {{Path|/var/lib/gentoo/gkeys/keyrings/gentoo/release}} keyring, in order to be able to use them for snapshot verification. As such we will not do so.}}

@@ -429,8 +429,8 @@ Per {{Bug|406623}}, we need to make a [http://forums.gentoo.org/viewtopic-t-9174
 
 Now start it up (and enable at boot):
 {{RootCmd
-|systemctl enable syslog-ng
-|systemctl start syslog-ng
+|systemctl enable syslog-ng@default
+|systemctl start syslog-ng@default
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 {{Note|You can omit the installation of {{c|syslog-ng}} if you are comfortable with the binary {{c|journald}} logs. Or, select a different logger - the choice is yours.}}
@@ -571,6 +571,16 @@ main-repo = gentoo
 location = /usr/portage
 sync-type = rsync
 auto-sync = no
+
+sync-rsync-verify-jobs = 1
+sync-rsync-verify-metamanifest = no
+sync-rsync-verify-max-age = 24
+sync-openpgp-key-path = /usr/share/openpgp-keys/gentoo-release.asc
+sync-openpgp-key-refresh-retry-count = 40
+sync-openpgp-key-refresh-retry-overall-timeout = 1200
+sync-openpgp-key-refresh-retry-delay-exp-base = 2
+sync-openpgp-key-refresh-retry-delay-max = 60
+sync-openpgp-key-refresh-retry-delay-mult = 4
 
 sync-uri = rsync://rsync.uk.gentoo.org/gentoo-portage
 </pre>
