@@ -128,17 +128,21 @@ We need to set two additional USE flags for {{Package|media-libs/mesa}} (an Open
 |echo -e "# required by standard X-server installation\nmedia-libs/mesa xa" >> /etc/portage/package.use/mesa
 |echo -e "# required by GNOME\nmedia-libs/mesa gles2" >> /etc/portage/package.use/mesa
 |echo -e "# required by GNOME\nmedia-libs/cogl gles2" >> /etc/portage/package.use/cogl
+|echo -e "# required by GNOME\nmedia-libs/libsdl2 gles" >> /etc/portage/package.use/libsdl2
 |echo -e "# required by GNOME\nmedia-libs/clutter egl" >> /etc/portage/package.use/clutter
 |echo -e "# required by GNOME\nmedia-libs/gegl jpeg2k raw" >> /etc/portage/package.use/gegl
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Followed by:
+{{RootCmd
 |echo -e "# required by GNOME\nnet-fs/samba client" >> /etc/portage/package.use/samba
 |echo -e "# required by GNOME\nsys-libs/tevent python" >> /etc/portage/package.use/tevent
 |echo -e "# required by GNOME\nsys-libs/tdb python" >> /etc/portage/package.use/tdb
-
 |echo -e "# required by GNOME\nmedia-plugins/grilo-plugins upnp-av youtube" >> /etc/portage/package.use/grilo-plugins
-
 |echo -e "# required by GNOME 3.16+\n>{{=}}gnome-base/gnome-control-center-3.16 networkmanager" >> /etc/portage/package.use/gnome-control-center
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
+
 
 Here's what those flags do:
 
@@ -151,6 +155,8 @@ Here's what those flags do:
 | {{c|gles2}} || This enables [[:Wikipedia:OpenGL_ES|OpenGL for Embedded Systems]] (version 2) support.
 |-
 | {{Package|media-libs/cogl}} || {{c|gles2}} || Ditto.
+|-
+| {{Package|media-libs/libsdl2}} || {{c|gles}} || Ditto (but unversioned; required by {{c|wayland}}).
 |-
 | {{Package|media-libs/clutter}} || {{c|egl}} || Enables the [[:Wikipedia:EGL_(API){{!}}EGL]] backend (required by {{c|wayland}}).
 |-
