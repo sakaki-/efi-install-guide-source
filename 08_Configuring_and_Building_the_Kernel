@@ -817,6 +817,13 @@ That concludes our brief tour through some of the internals of {{c|buildkernel}}
 So, without further ado, let's <span id="first_buildkernel">build the kernel</span>.
 {{Note|The kernel build system is separate from the main Gentoo {{c|emerge}} process, so the {{c|showem}} utility cannot be used here.}}
 
+{{Note|If you have booted the minimal install image under UEFI, rather than legacy, boot (possible since August 2018), then you should issue the following command before running {{c|buildkernel}}:
+{{RootCmd
+|if [ -d /sys/firmware/efi/efivars ]; then mount -o remount,rw /sys/firmware/efi/efivars; fi
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+That's because the image uses {{c|OpenRC}}, which, unlike {{c|systemd}}, mounts the special {{Path|/sys/firmware/efi/efivars}} filesystem read-only, but {{c|buildkernel}} needs write access to it, if it exists (it will be absent for the more usual case of legacy boot).<br>For avoidance of doubt, there's no harm in running the above command, even on a legacy-booted system.
+}}
 Make sure your boot USB key is plugged into the target machine, then issue:
  
 {{RootCmd
