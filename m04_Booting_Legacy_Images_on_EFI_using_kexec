@@ -1,0 +1,781 @@
+{{Warning|September 2018: this is a draft article, currently under review / testing, and is subject to change. Please be cautious if using it!}}
+
+Some modern PC systems &mdash; particularly tablets and ultra-compacts &mdash; support ''only'' UEFI booting, and have no 'legacy'/'CSM' boot option available in their BIOS GUIs.<ref name="class_3">So-called 'class-3' UEFI systems, see e.g. Microsoft Docs: [https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-8.1-and-8/hh824898(v=win.10) "UEFI Firmware"]</ref> As such, bootable images ''without'' EFI support (for example, Gentoo minimal install images issued prior to August 2018<ref name="min_install_no_efi">Gentoo Forums: [https://forums.gentoo.org/viewtopic-t-1041178.html "The Gentoo minimal installation CD doesn't boot in UEFI"]</ref>) ''cannot'' be used in native form with such machines.
+
+Fortunately, we can easily surmount this problem, ''without'' using a third-party bootloader, by appending an [[:Wikipedia:EFI_system_partition|EFI system partition]] to the target image, within which is placed both an [[EFI_stub_kernel|EFI stub]] kernel (containing a simple {{c|busybox}}-based init script in its integral [[initramfs|initramfs]]), and an appropriate startup script fragment ({{Path|/kexec.sourceme}}, which the init script invokes).
+
+This done, it becomes possible to select the kernel as a boot target on a UEFI-only PC (since it ''is'' an EFI executable, placed at the 'magic' {{Path|/EFI/Boot/bootx64.efi}} path within an EFI system partition). Booting it causes (in due course) the script fragment {{Path|/kexec.sourceme}} to be run, which then:
+* locates and mounts the 'real' (i.e., legacy image's original) boot partition's filesystem read-only;
+* loads the kernel, command line and initramfs (if any) from this filesystem; then
+* invokes them, using [[:Wikipedia:Kexec|{{c|kexec}}]] (a kernel facility which, together with some paired userland tools, allows a system running one Linux kernel to boot another, analogous to the manner in {{c|exec}} allows one userland process to replace its current process image).
+
+From this point, the target system runs exactly as if started via a legacy boot.<ref name="efi_boot_detectable">Actually, this is not ''quite'' the case &mdash; since the system has been booted under EFI, it will have the {{Path|/sys/firmware/efi/efivars}} {{c|efivarfs}} filesystem mounted, but this will have no practical implication for most users.</ref> Furthermore, images modified in this way are ''still'' bootable in legacy mode on compatible systems, so no functionality is lost.
+
+{{Note|So in effect, in this mini-guide we're going to be building our own bootloader from scratch, using {{c|kexec}}. For avoidance of doubt, there is no requirement for the version, or configuration, of the ''kernel'' used as a 'kexec-bootloader' in this fashion, to match those of any kernel it ''launches'' from a legacy image.}}
+
+The contents of the appended EFI system partition's filesystem may be packaged as a [[:Wikipedia:Tarball|tarball]] for future reuse (and indeed an exemplar tarball [https://isshoni.org/downloads/efi.tar.xz is provided], for convenience, for the specific case of EFI booting pre-August 2018 Gentoo minimal install system images). Once such a tarball has been created, it may be easily adapted for use with other target legacy images, simply by editing the {{Path|./kexec.sourceme}} script fragment within it as required (i.e., no 'bootloader kernel' recompilation is required).
+
+Accordingly, in this mini-guide, we will run through the following steps:
+# We'll begin by ensuring your existing ('helper') Gentoo PC has the necessary packages, and kernel configuration, to allow efficient manipulation of disk image files via [[:Wikipedia:Loop_device|loop mounting]]. (The existence of a Gentoo-based helper is assumed for simplicity; the procedure in this guide ''can'' of course be carried out on other distros, with a little translation.)
+# Next, we'll build (on the helper machine) statically-linked versions of {{Package|sys-apps/kexec-tools}} (which provides userland utilities to interface with the kernel's {{c|kexec}} functionality), and {{Package|sys-apps/busybox}} (a portmanteau application that provides a baseline set of Linux applications ({{c|cat}}, {{c|mount}} etc.) packaged as a single executable for convenience). We'll install these to a dummy root directory ({{Path|/root/bbroot-staging}}), to avoid polluting your helper.
+# We'll then create a skeleton [[:Wikipedia:Initial_ramdisk|initramfs]] file tree (at a marshalling location, {{Path|/root/initramfs-staging}}) on the helper, and copy these two statically-linked applications to appropriate locations within it.
+# Then, we'll add a baseline {{Path|/bin/init}} script into this tree, the sole function of which is, when executed, to locate and mount the EFI system partition's filesystem read-only, and then invoke the {{Path|/kexec.sourceme}} script fragment from within it.
+# We'll next download a ''current'' Gentoo minimal install image, and loop-mount it read-only. We'll use this to provide a sane baseline kernel configuration for our 'bootloader' kernel in the next step &mdash; it isn't to be confused with the target image we want to adapt!
+# Then, we'll install a kernel source tree (to the dummy root) via the {{Package|sys-kernel/gentoo-sources}} package, enter the resulting {{Path|/root/bbroot-staging/usr/source/linux}} directory, and then create a {{Path|.config}} based upon the above minimal-install image kernel's configuration, but with EFI stub booting, {{c|kexec}} and an integral initramfs enabled (the latter pointed at the marshalling initramfs file tree created in step 3).
+# We'll next build the kernel modules and install them into the staging initramfs filesystem tree, then build the kernel itself as a [[:Wikipedia:Vmlinux#bzImage|bzImage]] (which will thereby incorporate the initramfs, including the full module set).
+# Next, we'll create a marshalling EFI filesystem tree on the helper, and copy the bootloader kernel's bzImage to the 'magic' path {{Path|/EFI/Boot/bootx64.efi}} within it.
+# We'll then install an (exemplar) {{Path|/kexec.sourceme}} {{c|ash}} shell fragment into the EFI tree. This script, which you can customize as required, when executed will locate and mount the legacy image boot partition's filesystem, load the kernel, command line, and initramfs from it, and then boot this kernel using {{c|kexec}}.<br>We'll also create a tarball of the (at this point, completed) EFI filesystem tree, for re-use in the future.
+# At your option, we'll then clean up the various staging file trees, to prevent clutter on the helper.
+# We'll then be ready to update a target legacy image! In this tutorial, I'll demonstrate adapting a pre-August 2018 Gentoo minimal install image. To do so, we'll first download it, and then append an additional block (here, 100MiB) of zeroed data, for subsequent use as an EFI system partition. Next, we'll use {{c|fdisk}} to add that partition to the image(of type {{c|ef}}, as it is [[:Wikipedia:Master_boot_record|MBR]]; instructions will also be given for dealing with [[:Wikipedia:GUID_Partition_Table|GPT]] images), format it FAT32, and loop mount it. We'll then untar the step 9 tarball into this filesystem, and then dismount.
+# Finally, we will write the modified image to a USB stick, and check that it can indeed be booted in UEFI mode on a target PC (with secure boot off).
+
+Once you've run through this process the first time, you can then just skip directly to step 11 to convert other (legacy boot) Gentoo minimal install images in future. Furthermore, even if you subsequently want to adapt a ''completely different'' legacy image for EFI boot, you will generally only need to modify the {{Path|./kexec.sourceme}} shell script fragment within the untarred filesystem &mdash; no recompilation will be required.
+
+{{Note|If you have a legacy image you need to convert for EFI booting ASAP, and you already have an [[#setup_helper_pc{{!}}appropriately configured helper PC]] available, you can skip directly to step 11, and just use my pre-created tarball (download link provided in the text). To do so, click [[#modify_existing_image|here]].}}
+
+Now, if you are ready to build your own {{c|kexec}}-based bootloader from scratch, let's go!
+
+== <span id="prerequisites">Prerequisites</span> ==
+
+For simplicity, this tutorial assumes you have access to a 'helper' PC that is ''already'' running Gentoo Linux, together with a second, 'target' machine (the UEFI-only one) on which you wish to boot a legacy image. As outlined above, the 'helper' PC will be used to create the 'kexec-bootloader' kernel itself, to download and modify the desired legacy image (a pre-EFI Gentoo minimal install image is used in the text, for concreteness), and to write this modified image to a USB stick, for booting on the target.
+
+{{Note|The same steps can of course be carried out using a 'helper' machine running another Linux distribution, with a little translation of package names etc. However doing so is beyond the scope of this guide.}}
+
+For avoidance of doubt, if you have installed a GNOME-based Gentoo system using the other instructions included in this EFI Install Guide &mdash; whether under {{c|systemd}} or {{c|OpenRC}} &mdash; your system is suitable for use as a 'helper' (subject to the [[#setup_helper_pc|setup steps below]]).
+
+{{Tip|If you don't want to use loop-mounting ({{c|kpartx}} etc.), it is perfectly possible to write the target image to a USB stick, and then perform all modification steps (adding an EFI system partition etc.) ''directly'' on that device &mdash; we only use loop mounting in this tutorial for efficiency (and because it is a useful technique to be aware of).}}
+
+== <span id="setup_helper_pc">Setting Up the Helper PC</span> ==
+
+We'll begin by ensuring that your 'helper' Gentoo PC has the necessary kernel configuration &mdash; and installed userland packages &mdash; to allow the direct (aka [[:Wikipedia:Loop_device|'loop mounted']]) manipulation of disk image files called for in this tutorial.
+
+=== <span id="kernel">Kernel</span> ===
+
+{{Important|In what follows, I am assuming that you know how to use the {{c|make menuconfig}} kernel configuration tool (which {{c|buildkernel}} invokes). You can find a short overview of {{c|make menuconfig}} in an earlier section of this tutorial ([[../Setting_up_the_GNOME_3_Desktop#make_menuconfig_intro{{!}}{{c|systemd}}]], [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro{{!}}{{c|OpenRC}}]]); if you skipped over it before, you may wish to review it now (or at least, read the sub-section regarding "implementing a shorthand configuration fragment in {{c|make menuconfig}}" ([[../Setting_up_the_GNOME_3_Desktop#kernel_config_shorthand_note{{!}}{{c|systemd}}]], [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#kernel_config_shorthand_note{{!}}{{c|OpenRC}}]])), before proceeding. You may also find the material in the "Final Configuration Steps" chapter useful to review ([[../Final_Configuration_Steps{{!}}{{c|systemd}}]], [[../Final_Configuration_Steps_under_OpenRC{{!}}{{c|OpenRC}}]]). Greg Kroah-Hartman's ''Linux Kernel in a Nutshell'' is also highly recommended.<ref name{{=}}"kernel_in_nutshell">Kroah-Hartman, Greg. [http://www.kroah.com/lkn/ ''Linux Kernel in a Nutshell'' (ebook)]. O'Reilly, 2006</ref>}}
+
+If you are using one, ensure that your boot USB key is inserted. Then, open a terminal window, become root, and issue:
+
+{{RootCmd
+|buildkernel --menuconfig
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|The host name you see when running these commands will obviously reflect the settings on your target PC.}}
+
+Or, if you use {{c|genkernel}} rather than {{c|buildkernel}}, issue:
+{{RootCmd
+|genkernel <your normal genkernel options> --menuconfig
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+instead of the above.
+
+Or again, if you prefer to build your kernels ''manually'', ensure that you have a current version of the kernel source tree in {{Path|/usr/src/linux}}, and then issue:
+{{RootCmd
+|cd /usr/src/linux
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+followed by:
+{{RootCmd
+|make distclean
+|modprobe configs # not all users will require this
+|zcat /proc/config.gz > .config
+|make olddefconfig && make menuconfig
+|prompt=koneko <span style{{=}}"color:royalblue;">/usr/src/linux #</span>
+}}
+
+Whichever workflow you use, once the menu configuration tool appears, ensure that the following kernel options are set, to allow loop-mounting of multi-partition disk images using the device mapper on your helper PC:
+
+{{KernelBox
+|title=Additional kernel configuration changes to support user namespaces
+|<pre>
+   Device Drivers  --->
+      Multiple devices driver support (RAID and LVM)  --->
+          <*> Device mapper support
+              <*> Multipath target
+</pre>
+}}
+
+{{Important|Some of the options in the above list may not be immediately visible to you, if they have dependencies (also from the list) that are not initially satisfied. Accordingly, if you can't find a particular option in the location specified, try in the first instance setting all the other options that ''are'' visible to you, then come back to look for it again. Repeat this process as necessary, until all the required options have been set.}}
+
+{{Important|These modifications assume that you have a 'sane' baseline kernel configuration on your helper PC to begin with, for example, one that was derived from the Gentoo Minimal Install system kernel, and then suitably augmented to allow a graphical desktop system to run successfully.}}
+
+Once you have made the necessary changes, save the kernel configuration and exit the {{c|kconfig}} tool, after which &mdash; if you are using either the {{c|buildkernel}} or (with appropriate options) {{c|genkernel}} scripts &mdash; the kernel should automatically build and install.
+
+However, if working manually, you'll have to perform the build yourself:
+{{RootCmd
+|nice make -j $(nproc) && make modules_install && make install
+|cd
+|prompt=koneko <span style{{=}}"color:royalblue;">/usr/src/linux #</span>
+}}
+
+{{Tip|For further notes on building custom kernels, please see the [[Handbook:AMD64/Installation/Kernel|Gentoo Handbook]].
+}}
+
+Once the kernel build has successfully completed, reboot your system, then follow the usual steps to unlock the LUKS partition and log in again (using GNOME) as your regular user.
+
+=== <span id="emerge">Userspace Packages</span> ===
+
+Next, we will ensure that the necessary userspace applications are in place on the helper. 
+
+First, to ensure that we can format [[:Wikipedia:File_Allocation_Table#FAT32|FAT32]] partitions (necessary for EFI), open a terminal window, become root, and issue:
+
+{{RootCmd
+|emerge --noreplace --verbose sys-fs/dosfstools
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Tip|We don't use the <code>--ask</code> option to {{c|emerge}} here, as <code>--noreplace</code> will ensure nothing gets done if the package specified is already installed.}}
+
+You should also install:
+* {{Package|sys-fs/multipath-tools}}, which provides {{c|kpartx}}, a tool that creates device maps from partition tables; and
+* {{Package|sys-block/parted}}, which provides {{c|partprobe}}, a tool that informs the OS of partition table changes; and
+* {{Package|app-text/tree}}, which provides an easy-to-read recursive directory listing (useful for checking staging filestructures).
+
+To do so, issue:
+
+{{RootCmd
+|emerge --noreplace --verbose sys-fs/multipath-tools sys-block/parted app-text/tree
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Lastly, install {{Package|net-misc/curl}}, used (''inter alia'') to download files to {{c|stdout}}. Issue:
+{{RootCmd
+|emerge --noreplace --verbose net-misc/curl
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+== <span id="creating_kexec_bootloader">Creating the {{c|kexec}} Bootloader</span> ==
+
+With the helper machine prepared, we are ready to start building the kexec-based bootloader itself!
+
+=== <span id="statically_linked_binaries">Userspace Packages</span> ===
+
+Our first task is to emerge some [[:Wikipedia:Static_build|statically-linked]] executables, namely {{c|busybox}} and {{c|kexec}}, for use in the bootloader-kernel's integral initramfs. To avoid polluting your helper system (which may ''not'' be using static libraries<ref name="static_libs">If a statically linked executable relies on libraries from another package, that other package must provide its libraries in static form. However, many systems do ''not'' have the requisite static <code>static-libs</code> <var>USE</var> flag set, so forcing this on globally in the helper could cause significant (and unwanted) package rebuilds.</ref>) we'll install to a temporary root, {{Path|/root/bbroot-staging}}. Issue:
+
+{{RootCmd
+|rm -rf /root/bbroot-staging
+|mkdir -pv /root/bbroot-staging
+|USE{{=}}"static mdev" ROOT{{=}}"/root/bbroot-staging" emerge --oneshot --verbose sys-apps/busybox
+|USE{{=}}"static-libs" ROOT{{=}}"/root/bbroot-staging" emerge --oneshot --verbose sys-libs/zlib
+|USE{{=}}"zlib" LDFLAGS{{=}}"-static" ROOT{{=}}"/root/bbroot-staging" emerge --oneshot --verbose sys-apps/kexec-tools
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|We have to create a statically-linked {{c|zlib}} library within our temporary root ({{Path|/root/bbroot-staging}}), so that the {{c|kexec}} binary can be linked statically. Also, note that although {{Package|sys-apps/kexec-tools}} does not support the <code>-static</code> <var>USE</var> flag natively (as {{Package|sys-apps/busybox}} does, for example), we ''can'' still force it to link statically through the use of the <var>LDFLAGS</var> variable.}}
+
+The resulting applications we need from this are {{Path|/root/bbroot-staging/bin/busybox}} and {{Path|/root/bbroot-staging/sbin/kexec}}, both of which are statically linked (i.e., can be deployed to an initramfs ''without'' any additional shared libraries).
+
+=== <span id="create_initramfs_filestructure">Initramfs Tree</span> ===
+
+Next, we'll create a 'staging' tree on the helper PC for the initramfs. This is a skeleton [[:Wikipedia:Filesystem_Hierarchy_Standard|Filesystem Hierarchy Standard]] structure, which we will only populate minimally. Issue:
+
+{{RootCmd
+|rm -rf /root/initramfs-staging
+|mkdir -pv /root/initramfs-staging/{bin,boot,lib,dev/pts,etc,mnt/target,proc,root,sbin,sys,usr/sbin}
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+With the core directory layout in place, create some basic [[:Wikipedia:Device_file#Unix_and_Unix-like_systems|device nodes]] in {{Path|/root/initramfs-staging/dev}}. Issue:
+
+{{RootCmd
+|mknod -m 600 /root/initramfs-staging/dev/console c 5 1
+|mknod -m 666 /root/initramfs-staging/dev/null c 1 3
+|mknod -m 666 /root/initramfs-staging/dev/tty c 5 0
+|chown -v root:tty /root/initramfs-staging/dev/{console,tty}
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|Yes, {{c|busybox}}'s mini-udev should populate {{Path|/dev}} automatically upon startup, but a small number of 'seed' nodes are still required, to allow {{c|init}} to output to the console,<ref name{{=}}"lfs_mknod">Linux from Scratch: [http://www.linuxfromscratch.org/lfs/view/6.1/chapter06/devices.html "Populating /dev"]. Note that while it ''is'' possible to set these nodes up within the init script itself, you will not see any output from the init script if you do.</ref> and to enable {{c|mdev}} itself to start.<ref name{{=}}"mdev_mknod">maus.log [http://quirk.ch/2010/01/how-to-set-up-mdev-rules-for-busybox "How to set up mdev rules for busybox"]</ref>)}}
+
+Lastly, copy the statically-linked binaries we [[#statically_linked_binaries|just created]] into the staging filestructure:
+
+{{RootCmd
+|cp -v /root/bbroot-staging/bin/busybox /root/initramfs-staging/bin/
+|cp -v /root/bbroot-staging/usr/sbin/kexec /root/initramfs-staging/usr/sbin/
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+=== <span id="create_init_script">Init Script</span> ===
+
+Next, we will create a simple [[:Wikipedia:Linux_startup_process#Init_process|init script]] in the root directory of the staging initramfs tree. The purpose of this script is, when run, to:
+# set up the special {{Path|/proc}}, {{Path|/sys}} and {{Path|/dev/pts}} pseudo-filesystems;
+# setup {{c|busybox}}'s symbolic links (so calls to apps like {{Path|/bin/ls}} redirect to it);
+# load any necessary kernel modules for USB support;
+# startup {{c|busybox}}'s 'mini-udev' (which takes over automatic population of device nodes in {{Path|/dev}});
+# locate the EFI system partition itself;
+# mount this read-only; and finally,
+# source the script {{Path|/kexec.sourceme}} from within it.
+
+{{Note|It is this last {{Path|/kexec.sourceme}} script fragment &mdash; which we place ''outside'' the initramfs for ease of later modification &mdash;  that has the responsibility for loading, and ultimately {{c|kexec}}-ing, the target kernel itself. We'll get back to it [[#kexec_sourceme{{!}}shortly]].}}
+
+Issue:
+{{RootCmd
+|nano -w /root/initramfs-staging/init
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Then put the following text in that file:
+
+{{FileBox|filename=/root/initramfs-staging/init|title=Minimal init script for initramfs|lang=bash|1=
+#!/bin/busybox sh
+# Attempt to mount boot partition r/o and source KSCRIPT within it.
+# Copyright (c) 2016-8 sakaki <sakaki@deciban.com>
+# License: GPL 3.0+
+# NO WARRANTY
+
+# Simple init script to source /boot/kexec.sourceme
+# (the sourced script should setup and then kexec -e the final
+# target kernel)
+# If the specified partition cannot be found, starts recovery console
+
+BOOT_FILESYSTEM_LABEL="gen-kexec"
+DELAY=5
+# We will try and exec the following script on the boot partition
+KSCRIPT="/boot/kexec.sourceme"
+
+start_mini_udev() {
+    echo "Starting mini udev..."
+    echo "/sbin/mdev" > /proc/sys/kernel/hotplug
+    mdev -s
+}
+
+error_exit() {
+    # exit to an interactive shell with job control
+    exec setsid cttyhack sh
+}
+
+# Mount the /proc and /sys filesystems.
+/bin/busybox mount -t proc none /proc
+/bin/busybox mount -t sysfs none /sys
+/bin/busybox mount -t devpts none /dev/pts
+
+# ensure all symlinks are present
+/bin/busybox --install -s
+
+# ensure we have at least USB access
+modprobe ehci_pci
+modprobe xhci_pci
+modprobe usb_storage
+
+# start minimal device event management
+start_mini_udev
+sleep "${DELAY}"
+
+# hand over control to user script
+echo "Trying to locate filesystem ${BOOT_FILESYSTEM_LABEL}..."
+if ! BOOT_PATH="$(findfs LABEL="${BOOT_FILESYSTEM_LABEL}")"; then
+    echo "Error - could not find ${BOOT_FILESYSTEM_LABEL}!" >&2
+    error_exit
+fi
+echo "Mounting boot filesystem (read only)..."
+if ! mount -o ro "${BOOT_PATH}" /boot; then
+    echo "Error - failed to mount ${BOOT_PATH}!" >&2
+    error_exit
+fi
+if [ -f "${KSCRIPT}" ]; then
+    echo "Sourcing ${KSCRIPT}..."
+    source "${KSCRIPT}"
+else
+    echo "Error - ${KSCRIPT} not found!" >&2
+    error_exit
+fi
+# should not get here, KSCRIPT should have kexec'd a new kernel
+echo "Error - ${KSCRIPT} has returned!" >&2
+error_exit
+}}
+
+Save, and exit {{c|nano}}.
+
+Make it executable:
+{{RootCmd
+|chmod +x /root/initramfs-staging/init
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+=== <span id="create_stub_kernel">EFI-Bootable Kernel</span> ===
+
+Next, we'll create an EFI-bootable (aka [[EFI_stub_kernel|"EFI stub"]]) kernel. We'll use the standard {{Package|sys-kernel/gentoo-sources}} here, installing the kernel tree to our temporary working root to avoid pollution. However, since this package has a number of build-time dependencies, we won't ''directly'' emerge it into {{Path|/root/bbroot-staging}}. Instead, we'll first install any missing dependencies into your helper PC's main root, and only ''then'' emerge {{Package|sys-kernel/gentoo-sources}} into the temporary working tree.
+
+{{Note|Incidentally, you ''can'' of course just work directly in your normal Gentoo root for all of this. However, many users will have an existing set of kernel sources installed, and, since we don't want to disrupt that, we elect to build our 'bootloader kernel' in {{Path|/root/bbroot-staging}} instead.}}
+
+Issue:
+
+{{RootCmd
+|emerge --onlydeps --verbose sys-kernel/gentoo-sources
+|ROOT{{=}}"/root/bbroot-staging" emerge --nodeps --oneshot --verbose sys-kernel/gentoo-sources
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+When this completes, a kernel source tree should be present in {{Path|/root/bbroot-staging/usr/src/linux}}.
+
+Our next step is to set an appropriate configuration for our new kernel. We'll need a 'sane' baseline, which, for the sake of concreteness, we'll extract here from the most recent Gentoo minimal install image's kernel (other choices are possible; however, take particular care if using the configuration captured from a kernel created by {{c|buildkernel}}, as that will have a built-in command line etc. that we don't want).
+
+So, begin by downloading a current version of the image. Issue:
+
+{{RootCmd
+|export ISOPATH{{=}}"$(grep install <(curl --silent http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-iso.txt) {{!}} cut -d' ' -f1)"
+|export ISONAME{{=}}"$(basename "${ISOPATH}")"
+|echo -e "${ISOPATH}\n${ISONAME}"
+|output=<pre>
+20180828T214505Z/install-amd64-minimal-20180828T214505Z.iso
+install-amd64-minimal-20180828T214505Z.iso
+</pre>
+}}
+Your output will of course likely different as new versions are released. Now download the image itself, and (if desired) its contents list and digitally signed digest list:
+{{RootCmd
+|mkdir -pv /root/gentoo-images && cd /root/gentoo-images
+|wget -c "http://distfiles.gentoo.org/releases/amd64/autobuilds/${ISOPATH}"
+|wget -c "http://distfiles.gentoo.org/releases/amd64/autobuilds/${ISOPATH}.CONTENTS"
+|wget -c "http://distfiles.gentoo.org/releases/amd64/autobuilds/${ISOPATH}.DIGESTS.asc"
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Once this completes, you can verify the image if you like; for instructions please see [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#download_verify_image|these notes]].
+
+Next, you can loop-map the image's partitions. In this image, there should only be two partitions; to check, issue:
+{{RootCmd
+|kpartx -l "/root/gentoo-images/${ISONAME}"
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+loop1p1 : 0 481280 /dev/loop1 0
+loop1p2 : 0 12912 /dev/loop1 160
+</pre>
+}}
+
+{{Note|With all these {{c|kpartx}} operations, you may see a warning printed (<code>Disk has a valid GPT signature but invalid PMBR</code>): this is normal with the type of hybrid structure employed in post-August 2018 Gentoo minimal install images, and may safely be ignored for our purposes.}}
+
+{{Tip|Always use fully-qualified paths with {{c|kpartx}}, to avoid confusing it.}}
+
+{{Note|Your output may differ depending on the version of your image, or if you have other loop maps present on your machine.}}
+
+In this case, we only want the first partition, so issue:
+{{RootCmd
+|LOOPNAME{{=}}"$(kpartx -l "/root/gentoo-images/${ISONAME}" {{!}} head -n 1 {{!}} cut -d ' ' -f 1)"
+|kpartx -a -v "/root/gentoo-images/${ISONAME}" && echo "Loop name is: ${LOOPNAME}"
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+add map loop1p1 (253:12): 0 481280 linear 7:1 0
+add map loop1p2 (253:13): 0 12912 linear 7:1 160
+Loop name is: loop1p1
+</pre>
+}}
+
+The <code>kpartx -a ...</code> command scans the specified image, and creates device maps corresponding to the partitions detected within it, at {{Path|/dev/mapper/loop<#>p<#>}}. The first partition (which in this case is the one we want) is at {{Path|/dev/mapper/${LOOPNAME}} (your target partition number may differ, if you have more than one partition on your target image, in which case modify these instructions accordingly). Such device-mapper entries can be treated just like regular device paths ({{Path|/dev/sda1}} etc.), so we can proceed to mount it (read-only, since we just want to extract the kernel configuration). Issue:
+{{RootCmd
+|mkdir -pv /root/mingenp1
+|mount -v -o ro /dev/mapper/${LOOPNAME} /root/mingenp1
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+mount: /dev/mapper/loop1p1 mounted on /root/mingenp1.
+</pre>
+}}
+
+<span id="min_image_contents"></span>Next, check the contents; issue:
+
+{{RootCmd
+|ls -R /root/mingenp1
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+/root/mingenp1:
+README.txt  gentoo.efimg  image.squashfs  isolinux  livecd
+
+/root/mingenp1/isolinux:
+F2.msg  F5.msg  System-gentoo.map  elilo.efi   isolinux.bin  memtest86
+F3.msg  F6.msg  boot.cat           gentoo      isolinux.cfg
+F4.msg  F7.msg  boot.msg           gentoo.igz  kernels.msg
+</pre>
+}}
+
+Again, your output may differ slightly. However, in this case, the actual 'payload' kernel is {{Path|/root/mingenp1/isolinux/gentoo}}, and its initramfs is {{Path|/root/mingenp1/isolinux/gentoo.igz}}. Command line options (for the default boot case) may be found in {{Path|/root/mingenp1/isolinux/isolinux.cfg}}.
+
+The relevant stanza in that latter file (not necessary now, where we are only really interested in the kernel config, but of relevance later on) reads:
+{{FileBox|filename=/root/mingenp1/isolinux/isolinux.cfg|title=Baseline kernel stanza from isolinux.cfg|lang=bash|1=
+label gentoo
+  kernel gentoo
+  append root=/dev/ram0 init=/linuxrc  dokeymap looptype=squashfs loop=/image.squashfs  cdroot initrd=gentoo.igz vga=791
+}}
+
+Returning to the task at hand, now we can enter the kernel source directory, and extract the config from the minimal install image kernel, using a utility script ({{Path|scripts/extract-ikconfig}}) provided with the kernel sources. Issue:
+{{RootCmd
+|cd /root/bbroot-staging/usr/src/linux
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+then:
+{{RootCmd
+|make distclean
+|scripts/extract-ikconfig /root/mingenp1/isolinux/gentoo > .config
+|make olddefconfig
+|cp .config orig_config
+|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+}}
+
+With the 'starter' kernel configuration extracted, the device mapping onto the image may safely be removed:
+{{RootCmd
+|umount -v /root/mingenp1
+|kpartx -v -d "/root/gentoo-images/${ISONAME}"
+|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+}}
+
+{{Important|Always remove loop mappings, using <code>kpartx -d</code>, when you are finished with an image file, even when, as here, you have only accessed partitions within it in read-only mode.}}
+
+Start the kernel configuration editor (we will do a manual kernel build here, to keep things simple):
+{{RootCmd
+|make menuconfig
+|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+}}
+
+<span id="set_kexec_kernel_options">and set the required options</span> as follows:
+
+{{KernelBox
+|title=Support integral initramfs, EFI stub booting, and kexec
+|<pre>
+   General setup  --->
+      [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
+      (/root/initramfs-staging)    Initramfs source file(s)
+   Processor type and features  --->
+      [*] EFI runtime service support
+      [*]   EFI stub support 
+      [*] kexec system call
+      [ ] Built-in kernel command line
+</pre>
+}}
+
+{{Note|There is no need for a built-in kernel command line; by default the kernel will mount our initramfs as the root filesystem, and attempt to start {{Path|/init}} from there.}}
+{{Tip|Here, for clarity of exposition, we ''are'' going to build the modules into the initramfs &mdash; however, if desired, you can simply ensure that all necessary features are '''built-in''' when creating the kernel. If you do this, the module tree can be omitted from the initramfs altogether, which will generally make for a somewhat smaller kernel size / faster boot (and you won't have to {{c|modprobe}} the correct modules inside your {{Path|/kexec.readme}} script either).}}
+
+Then exit the {{c|menuconfig}} tool, saving options. With that done, build the kernel modules first:
+{{RootCmd
+|nice make -j $(nproc) modules
+|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+}}
+
+Install the modules into the staging initramfs filestructure:
+
+{{RootCmd
+|nice make INSTALL_MOD_PATH{{=}}"/root/initramfs-staging" modules_install
+|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+}}
+
+The modules will now be present in {{Path|/root/initramfs-staging/lib/modules/<kernel-release-name>/...}}
+
+Next, clean up a few spurious soft links in the above directory (which will fail to resolve outside of the build environment):
+{{RootCmd
+|find /root/initramfs-staging/lib/modules/ -mindepth 2 -maxdepth 2 -type l -delete
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Now the initramfs is complete, we can <span id="build_bzimage">build the kernel itself</span>. Issue:
+{{RootCmd
+|nice make -j $(nproc) bzImage
+|cd
+|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+}}
+
+The file we need (or a link to it, anyhow) is in {{Path|/root/bbroot-staging/usr/src/linux/arch/x86_64/boot/bzImage}}.
+
+<span id="show_initramfs_tree">Next, check your staging initramfs tree is indeed complete.</span> To do so, issue:
+
+{{RootCmd
+|tree -n -L 4 /root/initramfs-staging/
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+/root/initramfs-staging/
+├── bin
+│   └── busybox
+├── boot
+├── dev
+│   ├── console
+│   ├── null
+│   ├── pts
+│   └── tty
+├── etc
+├── init
+├── lib
+│   └── modules
+│       └── 4.18.5-gentoo
+│           ├── kernel
+│           ├── modules.builtin
+│           └── modules.order
+├── mnt
+│   └── target
+├── proc
+├── root
+├── sbin
+├── sys
+└── usr
+    └── sbin
+        └── kexec
+
+17 directories, 8 files
+</pre>
+}}
+
+{{Note|Obviously, the kernel release name (in {{Path|/root/initramfs-staging/lib/modules/}} may be different to the above, depending on which version of {{Package|sys-kernel/gentoo-sources}} you used above. Also note that through the <code>-N 4</code> option, the above tree has been restricted to four levels deep &mdash; there should be a large number of kernel modules present in the {{Path|/root/initramfs-staging/lib/modules/<release-name>/kernel/}} subdirectories.}}
+
+=== <span id="create_efi_filestructure">Staging EFI Filestructure</span> ===
+
+Next we will create a (staging) copy of the required filestructure for the EFI partition, and then add the kernel we have just built into it. Issue:
+
+{{RootCmd
+|rm -rf /root/efiroot-staging 
+|mkdir -pv /root/efiroot-staging/EFI/Boot
+|cp -v --dereference /root/bbroot-staging/usr/src/linux/arch/x86_64/boot/bzImage /root/efiroot-staging/EFI/Boot/bootx64.efi
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Note that we have copied our kernel to the 'magic path' &mdash; {{Path|/EFI/Boot/bootx64.efi}} &mdash; that most (64-bit) EFI BIOSes look for during boot.
+
+=== <span id="kexec_sourceme">kexec.sourceme Script Fragment</span> ===
+
+Next, we need to put in place the {{Path|/kexec.sourceme}} fragment, which the initramfs's {{c|init}} script (created [[#create_init_script|above]]) will load.
+
+Exactly what is needed in this fragment will, of course, depend upon the target legacy image you want to boot, but, for concreteness, in this tutorial we'll put together a simple script targeting '''legacy Gentoo minimal install images''', which, accordingly, will need to:
+# mount the first partition on the EFI boot device read-only;
+# extract the desired command line from the [[#min_image_contents|isolinux config file]] therein;
+# load the (original, target) kernel, initramfs from the same location; then
+# switch to the new kernel, using <code>kexec -e</code>.
+
+{{Note|Even if this does not match your specific use-case exactly, hopefully it will provide a good basis for modification. The content of the minimal install image's first partition was reviewed [[#min_image_contents|earlier]] (yes, this ''was'' using a more modern, EFI-enabled version of the image, but the ''first'' partition's structure has not changed much over time).}}
+
+Issue:
+
+{{RootCmd
+|nano -w /root/efiroot-staging/kexec.sourceme
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Then put the following text in that file:
+
+{{FileBox|filename=/root/efiroot-staging/kexec.sourceme|title=Sample kexec bootloader script|lang=bash|1=
+# Copyright (c) 2018 sakaki <sakaki@deciban.com>
+# License: GPL 3.0+
+# NO WARRANTY
+
+# This script fragment will be sourced by the initial (boot) kernel's
+# init script; it must in turn load the final (target) kernel,
+# and initramfs, setup the kernel command line, and finally pass
+# control over to the new kernel with kexec -e.
+#
+# Remember that this script is running in a fairly minimal busybox
+# environment, and that the shell is ash, not bash.
+#
+# On entry, /boot is already mounted (read-only), and its
+# device path (e.g. "/dev/sdb2") placed in the shell variable
+# BOOT_PATH.
+
+# adjust the following to suit your system... here we are loading
+# the kernel, initramfs and command line from the TARGET_PATH,
+# which is the device path of the first partition of the boot
+# device
+TARGET_PATH="$(echo "$BOOT_PATH" {{!}} sed 's/[0-9]*$/1/')"
+INITRAMFS="/mnt/target/isolinux/gentoo.igz"
+KERNEL="/mnt/target/isolinux/gentoo"
+ISOLINUX_CONFIG="/mnt/target/isolinux/isolinux.cfg"
+
+echo "Mounting target filesystem (read only)..."
+if ! mount -o ro "${TARGET_PATH}" /mnt/target; then
+    echo "Error - failed to mount ${TARGET_PATH}!" >&2
+    error_exit
+fi
+
+echo "Loading target kernel, initramfs and command line..."
+# extract command line from minimal install image
+# adapt for your own target system
+CMDLINE="$(grep append "${ISOLINUX_CONFIG}" {{!}} head -n 1 {{!}} sed 's/append //')"
+kexec --type=bzImage \
+    --initrd="${INITRAMFS}" \
+    --append="${CMDLINE}" \
+    --load "${KERNEL}"
+umount /boot
+umount /mnt/target
+echo "Booting target kernel with kexec..."
+kexec -e
+}}
+
+Save, and exit {{c|nano}}.
+
+{{Note|As this file will be [[:Wikipedia:Source_(command)|sourced]] (and on a FAT filesystem!) we do not need to worry about making it executable.}}
+
+With the script in place, our staging EFI filestructure is complete.
+
+Check yours looks as follows:
+{{RootCmd
+|tree -n /root/efiroot-staging/
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+/root/efiroot-staging/
+├── EFI
+│   └── Boot
+│       └── bootx64.efi
+└── kexec.sourceme
+
+2 directories, 2 files
+</pre>
+}}
+
+{{Note|Remember that in the above, {{Path|/EFI/Boot/bootx64.efi}} is our [[#build_bzimage{{!}}kernel bzImage]], which in turn [[#set_kexec_kernel_options{{!}}contains]] our [[#show_initramfs_tree{{!}}initramfs filestructure]] internally.}}
+
+If all looks good, tar the tree up for future use:
+{{RootCmd
+|XZ_OPT{{=}}"-e9" tar -cJf /root/efi.tar.xz -C /root/efiroot-staging .
+}}
+
+(Don't forget the period at the end!) The resulting file is {{Path|/root/efi.tar.gz}}.
+
+=== <span id="cleanup">Cleaning Up</span> ===
+
+With all that done, the staging directories can be deleted, if you like (the following step is optional):
+
+{{RootCmd
+|rm -rf /root/{bbroot-staging,efiroot-staging,initramfs-staging}
+}}
+
+== <span id="adapting_a_target_image">Adapting a Target Legacy Image</span> ==
+
+Now that we have created a target EFI {{c|kexec}}-bootloader tarball, we can use it to 'EFI'-ify an existing legacy bootable image. To do this, we'll download the image, add a new [[:Wikipedia:EFI_system_partition|EFI system partition]]) to it, create a FAT32 filesystem thereon, and then mount it, untar the {{Path|efi.tar.xz}} file we just created there, edit the {{Path|kexec.sourceme}} file if necessary, and then {{c|sync}} and dismount. The legacy image should then be bootable for '''both''' UEFI and legacy systems, and can subsequently be tested.
+
+{{Note|As a shortcut, if you have skipped over the steps above, you can download a pre-built {{c|kexec}}-bootloader tarball if you wish, as follows:
+{{RootCmd
+|wget -c https://isshoni.org/downloads/efi.tar.xz
+}}
+}}
+
+For concreteness, I'll illustrate how to modify a September 2018 Gentoo minimal install image &mdash; you can easily adapt these instructions for a different target.
+
+{{Note|As of '''August''' 2018, Gentoo minimal install images support EFI booting ''directly'', by inclusion of the {{c|grub}} bootloader.<ref name="min_install_no_efi"/> For that reason, we'll download an older image archived just ''prior'' to that change. You can verify the Release Engineering digital signature on the supplied image prior to using it if you like, to verify it is original.}}
+{{Note|As a matter of (academic) interest, it ''is'' also possible to create an additional EFI system partition on ''post'' August 2018 Gentoo minimal install images. On some UEFI BIOSes, you can then select ''which'' system partition on the USB stick to boot from. However, not all systems support having more than one system partition per drive (and these more modern images support EFI booting anyway).}}
+
+Download the image, and, if desired, the matching contents and digitally-signed digest listing for it:
+
+{{RootCmd
+|export ISONAME{{=}}"install-amd64-minimal-20180703T214502Z.iso"
+|wget -c "https://isshoni.org/downloads/${ISONAME}"
+|wget -c "https://isshoni.org/downloads/${ISONAME}.CONTENTS"
+|wget -c "https://isshoni.org/downloads/${ISONAME}.DIGESTS.asc"
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Once this completes, you can verify the image if you like; for instructions please see [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#download_verify_image|these notes]].
+
+Next, append some extra space to the image for use as an EFI system partition. How much you need will depend upon your system, but 100MiB should suffice:
+
+{{RootCmd
+|cp -v "${ISONAME}" efi-image.iso 
+|dd if{{=}}/dev/zero bs{{=}}1M count{{=}}100 >> efi-image.iso
+}}
+
+Now add a new EFI system partition to the image using {{c|fdisk}}.
+
+If your image is [[:Wikipedia:Master_boot_record|MBR]] (which most will be, including our example in this case), then use:
+{{RootCmd
+|# sed 's:\s*#.*$::g' <<EOF {{!}} fdisk efi-image.iso
+|output=<pre>
+n     # create a new partition
+p     # which is primary
+      # use next partition number (here 2)
+      # use the default start sector
+      # and fill the remaining space (+100MiB)
+t     # change the partition type
+      # of the last-created partition
+ef    # to 'EFI system partition'
+w     # then commit changes and exit
+EOF
+</pre>
+}}
+
+Or, if your image is [[:Wikipedia:GUID_Partition_Table|GPT]] (unusual, since most of these will already be provisioned with EFI bootloaders), then use instead:
+{{RootCmd
+|# sed 's:\s*#.*$::g' <<EOF {{!}} fdisk efi-image.iso
+|output=<pre>
+n     # create a new partition
+      # use next partition number (here 2)
+      # use the default start sector
+      # and fill the remaining space (+100MiB)
+t     # change the partition type
+      # of the last-created partition
+1     # to 'EFI system partition'
+w     # then commit changes and exit
+EOF
+</pre>
+}}
+
+{{Note|The {{c|sed}} command in the above simply strips out the inline <code># comments</code> from the [[:Wikipedia:Here_document|heredoc]].}}
+
+Check the structure of the image (for our example, it should now have ''two'' partitions (we just added the second), but your target may differ), using {{c|kpartx}}; issue:
+
+{{RootCmd
+|kpartx -l /root/gentoo-images/efi-image.iso
+|output=<pre>
+loop2p1 : 0 643072 /dev/loop3 0
+loop2p2 : 0 204800 /dev/loop3 643072
+</pre>
+}}
+
+Assuming that looks good, map the partitions:
+
+{{RootCmd
+|export EFILOOPNAME{{=}}"$(kpartx -l "/root/gentoo-images/efi-image.iso" {{!}} tail -n 1 {{!}} cut -d ' ' -f 1)"
+|kpartx -a -v "/root/gentoo-images/efi-image.iso" && echo "Loop name of last partition is: ${EFILOOPNAME}"
+|output=<pre>
+add map loop1p1 (253:12): 0 643072 linear 7:1 0
+add map loop1p2 (253:13): 0 204800 linear 7:1 643072
+Loop name of last partition is: loop1p2
+</pre>
+}}
+
+Next, create a FAT32 filesystem in the newly created partition, ensuring its label is set to {{c|gen-kexec}}, as that is the name which the init script looks we [[#create_init_script|created earlier]] looks for:
+{{RootCmd
+|mkfs.vfat -F 32 -n gen-kexec /dev/mapper/${EFILOOPNAME}
+}}
+
+With that done, we can make a temporary mountpoint, and mount the newly created EFI system partition (mapped from within the image file) there:
+{{RootCmd
+|mkdir -pv /mnt/efisys
+|mount -t vfat -v /dev/mapper/${EFILOOPNAME} /mnt/efisys
+}}
+
+Unpack the EFI tarball into the root directory of the filesystem you just mounted:
+{{RootCmd
+|tar -xJf /root/efi.tar.xz -C /mnt/efisys
+}}
+
+Then, if required, you can edit the file {{Path|/mnt/efisys/kexec.sourceme}} to suit.
+
+For this particular target, however, we're already done (no editing required), so you just need to {{c|sync}}, dismount the filesystem, then unbind the device mapper from the image file. Issue:
+{{RootCmd
+|sync
+|umount -v /mnt/efisys
+|kpartx -v -d /root/gentoo-images/efi-image.iso
+}}
+
+And with that, modification of the legacy image to support EFI booting is complete!
+
+== <span id="testing">Writing and Booting the Modified Image</span> ==
+
+Now the image has been created, you can try writing it to a USB stick, and then booting a (UEFI) PC with it.
+
+To do so, insert an unused USB stick into your machine, and note its device path (you can use the {{c|lsblk}} tool, run before and after insertion, to help you; alternatively, look at <code>dmesg | tail</code>). Then, write the image:
+
+{{RootCmd
+|cat /root/gentoo-images/efi-image.iso > /dev/sdX && sync && partprobe /dev/sdX
+}}
+
+Replace {{Path|/dev/sdX}} in the above with ''actual'' path to your USB stick (e.g. {{Path|/dev/sdc}}, {{Path|/dev/sdd}} etc. Be sure to use the top-level device, and '''not''' a partition within it (so e.g., {{Path|/dev/sdc}} and not {{Path|/dev/sdc1}}; {{Path|/dev/sdd}} and not {{Path|/dev/sdd1}} etc.).
+
+{{Warning|Ensure you have the path correct, as the above command will '''wipe''' all existing contents of the target drive.}}
+
+Once this completes, remove the new USB key and place it into your target PC (which should be powered off at the time). Then, apply power to your target machine, and use the (system-specific) hotkey to enter the BIOS (or bring up the one-time boot selection). You should then (provided that you ensure secure boot is '''off''') be able to select the USB stick as an EFI boot target, save, and reboot.
+
+If all is well, the target system should then load and run the EFI-stub kernel from {{Path|/EFI/Boot/bootx64.efi}} on the USB stick. This will unpack the embedded kernel and its initramfs, and start it, which will, after initialization, run the initramfs init script. This will attempt to locate the {{c|gen-kexec}} filesystem and mount it read-only, then source the {{Path|kexec.sourceme}} script fragment from within it. This, in turn will mount (in the case of the Gentoo minimal install image) the first partition of the image read-only, load ''its'' kernel, initramfs and command line, and then pass control over to that new kernel via {{c|kexec}}. The system should then start up, just the same as if it were booted from a legacy, non-EFI BIOS.
+
+{{Note|Well, not ''quite'' the same, since the {{c|efivarfs}} filesystem will be mounted. If you are running an OpenRC system, such as the minimal install image, and wish to use a tool such as {{c|buildkernel}} which modifies variables in this pseudo-filesystem, you should, once booted, remount the {{c|efivarfs}} filesystem read-write. To do so, issue:
+{{RootCmd
+|remount -v -o remount,rw efivarfs
+}}
+For avoidance of doubt, it is safe to carry out the above step on {{c|systemd}} also (although redundant there, as it mounts {{c|efivarfs}} read-write by default).
+}}
+
+That concludes this mini-guide! To rejoin the main tutorial, please click [[../Using_Your_New_Gentoo_System#additional_mini_guides|here ({{c|systemd}})]] or [[../Using_Your_New_Gentoo_System_under_OpenRC#additional_mini_guides|here ({{c|OpenRC}})]].
+
+== <span id="notes">Notes</span> ==
+

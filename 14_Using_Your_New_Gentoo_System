@@ -610,6 +610,7 @@ Listed below is a short set of 'mini-guides', covering additional set-up topics 
 * [[../Extending_LUKS_to_Protect_an_Additional_Drive|Extending LUKS to Protect an Additional Drive]]
 * [[../Disabling_the_Intel_Management_Engine|Disabling the Intel Management Engine]]
 * [[../Sandboxing_the_Firefox_Browser_with_Firejail|Sandboxing the Firefox Browser with Firejail]]
+* [[../Booting_Legacy_Images_on_EFI_using_kexec|Booting Legacy Images on EFI using {{c|kexec}}]]
 
 == <span id="sayonara">Sayonara ^-^</span> ==
 
