@@ -88,7 +88,7 @@ Whichever workflow you use, once the menu configuration tool appears, ensure tha
 |title=Additional kernel configuration changes to support user namespaces
 |<pre>
    Device Drivers  --->
-      Multiple devices driver support (RAID and LVM)  --->
+      [*] Multiple devices driver support (RAID and LVM)  --->
           <*> Device mapper support
               <*> Multipath target
 </pre>
@@ -315,18 +315,24 @@ So, begin by downloading a current version of the image. Issue:
 |export ISOPATH{{=}}"$(grep install <(curl --silent http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-iso.txt) {{!}} cut -d' ' -f1)"
 |export ISONAME{{=}}"$(basename "${ISOPATH}")"
 |echo -e "${ISOPATH}\n${ISONAME}"
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 |output=<pre>
 20180828T214505Z/install-amd64-minimal-20180828T214505Z.iso
 install-amd64-minimal-20180828T214505Z.iso
 </pre>
 }}
-Your output will of course likely different as new versions are released. Now download the image itself, and (if desired) its contents list and digitally signed digest list:
+Your output will of course likely different as new versions are released. Now download the image itself, and (if desired) its contents list and digitally signed digest list. Issue:
 {{RootCmd
 |mkdir -pv /root/gentoo-images && cd /root/gentoo-images
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+followed by:
+{{RootCmd
 |wget -c "http://distfiles.gentoo.org/releases/amd64/autobuilds/${ISOPATH}"
 |wget -c "http://distfiles.gentoo.org/releases/amd64/autobuilds/${ISOPATH}.CONTENTS"
 |wget -c "http://distfiles.gentoo.org/releases/amd64/autobuilds/${ISOPATH}.DIGESTS.asc"
-|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|cd
+|prompt=koneko <span style{{=}}"color:royalblue;">~/gentoo-images #</span>
 }}
 
 Once this completes, you can verify the image if you like; for instructions please see [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#download_verify_image|these notes]].
@@ -378,6 +384,11 @@ mount: /dev/mapper/loop1p1 mounted on /root/mingenp1.
 /root/mingenp1:
 README.txt  gentoo.efimg  image.squashfs  isolinux  livecd
 
+/root/mingenp1/boot:
+
+/root/mingenp1/grub:
+grub.cfg
+
 /root/mingenp1/isolinux:
 F2.msg  F5.msg  System-gentoo.map  elilo.efi   isolinux.bin  memtest86
 F3.msg  F6.msg  boot.cat           gentoo      isolinux.cfg
@@ -406,14 +417,14 @@ then:
 |scripts/extract-ikconfig /root/mingenp1/isolinux/gentoo > .config
 |make olddefconfig
 |cp .config orig_config
-|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+|prompt=koneko <span style{{=}}"color:royalblue;">~/bbroot-staging/usr/src/linux #</span>
 }}
 
 With the 'starter' kernel configuration extracted, the device mapping onto the image may safely be removed:
 {{RootCmd
 |umount -v /root/mingenp1
 |kpartx -v -d "/root/gentoo-images/${ISONAME}"
-|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+|prompt=koneko <span style{{=}}"color:royalblue;">~/bbroot-staging/usr/src/linux #</span>
 }}
 
 {{Important|Always remove loop mappings, using <code>kpartx -d</code>, when you are finished with an image file, even when, as here, you have only accessed partitions within it in read-only mode.}}
@@ -421,7 +432,7 @@ With the 'starter' kernel configuration extracted, the device mapping onto the i
 Start the kernel configuration editor (we will do a manual kernel build here, to keep things simple):
 {{RootCmd
 |make menuconfig
-|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+|prompt=koneko <span style{{=}}"color:royalblue;">~/bbroot-staging/usr/src/linux #</span>
 }}
 
 <span id="set_kexec_kernel_options">and set the required options</span> as follows:
@@ -446,14 +457,14 @@ Start the kernel configuration editor (we will do a manual kernel build here, to
 Then exit the {{c|menuconfig}} tool, saving options. With that done, build the kernel modules first:
 {{RootCmd
 |nice make -j $(nproc) modules
-|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+|prompt=koneko <span style{{=}}"color:royalblue;">~/bbroot-staging/usr/src/linux #</span>
 }}
 
 Install the modules into the staging initramfs filestructure:
 
 {{RootCmd
 |nice make INSTALL_MOD_PATH{{=}}"/root/initramfs-staging" modules_install
-|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
+|prompt=koneko <span style{{=}}"color:royalblue;">~/bbroot-staging/usr/src/linux #</span>
 }}
 
 The modules will now be present in {{Path|/root/initramfs-staging/lib/modules/<kernel-release-name>/...}}
@@ -461,19 +472,10 @@ The modules will now be present in {{Path|/root/initramfs-staging/lib/modules/<k
 Next, clean up a few spurious soft links in the above directory (which will fail to resolve outside of the build environment):
 {{RootCmd
 |find /root/initramfs-staging/lib/modules/ -mindepth 2 -maxdepth 2 -type l -delete
-|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|prompt=koneko <span style{{=}}"color:royalblue;">~/bbroot-staging/usr/src/linux #</span>
 }}
 
-Now the initramfs is complete, we can <span id="build_bzimage">build the kernel itself</span>. Issue:
-{{RootCmd
-|nice make -j $(nproc) bzImage
-|cd
-|prompt=koneko <span style{{=}}"color:royalblue;">~/root/bbroot-staging/usr/src/linux #</span>
-}}
-
-The file we need (or a link to it, anyhow) is in {{Path|/root/bbroot-staging/usr/src/linux/arch/x86_64/boot/bzImage}}.
-
-<span id="show_initramfs_tree">Next, check your staging initramfs tree is indeed complete.</span> To do so, issue:
+<span id="show_initramfs_tree">Now, check your staging initramfs tree is complete (which it should be, at this point).</span> To do so, issue:
 
 {{RootCmd
 |tree -n -L 4 /root/initramfs-staging/
@@ -512,6 +514,15 @@ The file we need (or a link to it, anyhow) is in {{Path|/root/bbroot-staging/usr
 
 {{Note|Obviously, the kernel release name (in {{Path|/root/initramfs-staging/lib/modules/}} may be different to the above, depending on which version of {{Package|sys-kernel/gentoo-sources}} you used above. Also note that through the <code>-N 4</code> option, the above tree has been restricted to four levels deep &mdash; there should be a large number of kernel modules present in the {{Path|/root/initramfs-staging/lib/modules/<release-name>/kernel/}} subdirectories.}}
 
+Assuming that all looks good, you can proceed to <span id="build_bzimage">build the kernel itself</span> (which will ''encapsulate'' a copy of the above initramfs, due to the <code>CONFIG_INITRAMFS_SOURCE="/root/initramfs-staging"</code> option set [[#set_kexec_kernel_options|earlier]]). Issue:
+{{RootCmd
+|nice make -j $(nproc) bzImage
+|cd
+|prompt=koneko <span style{{=}}"color:royalblue;">~/bbroot-staging/usr/src/linux #</span>
+}}
+
+The resulting file we need (or a link to it, anyhow) is in {{Path|/root/bbroot-staging/usr/src/linux/arch/x86_64/boot/bzImage}}.
+
 === <span id="create_efi_filestructure">Staging EFI Filestructure</span> ===
 
 Next we will create a (staging) copy of the required filestructure for the EFI partition, and then add the kernel we have just built into it. Issue:
@@ -523,7 +534,7 @@ Next we will create a (staging) copy of the required filestructure for the EFI p
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
-Note that we have copied our kernel to the 'magic path' &mdash; {{Path|/EFI/Boot/bootx64.efi}} &mdash; that most (64-bit) EFI BIOSes look for during boot.
+Note that we have copied our kernel to the 'magic path' &mdash; {{Path|(/root/efiroot-staging)/EFI/Boot/bootx64.efi}} &mdash; that most (64-bit) EFI BIOSes look for during boot.
 
 === <span id="kexec_sourceme">kexec.sourceme Script Fragment</span> ===
 
@@ -617,7 +628,9 @@ Check yours looks as follows:
 
 If all looks good, tar the tree up for future use:
 {{RootCmd
+|rm -vf /root/efi.tar.xz
 |XZ_OPT{{=}}"-e9" tar -cJf /root/efi.tar.xz -C /root/efiroot-staging .
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
 (Don't forget the period at the end!) The resulting file is {{Path|/root/efi.tar.gz}}.
@@ -628,6 +641,7 @@ With all that done, the staging directories can be deleted, if you like (the fol
 
 {{RootCmd
 |rm -rf /root/{bbroot-staging,efiroot-staging,initramfs-staging}
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
 == <span id="adapting_a_target_image">Adapting a Target Legacy Image</span> ==
@@ -637,6 +651,7 @@ Now that we have created a target EFI {{c|kexec}}-bootloader tarball, we can use
 {{Note|As a shortcut, if you have skipped over the steps above, you can download a pre-built {{c|kexec}}-bootloader tarball if you wish, as follows:
 {{RootCmd
 |wget -c https://isshoni.org/downloads/efi.tar.xz
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 }}
 
@@ -657,24 +672,26 @@ Download the image, and, if desired, the matching contents and digitally-signed 
 
 Once this completes, you can verify the image if you like; for instructions please see [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#download_verify_image|these notes]].
 
-Next, append some extra space to the image for use as an EFI system partition. How much you need will depend upon your system, but 100MiB should suffice:
+Next, append some extra space to the image for use as an EFI system partition. How much you need will depend upon your system, but 100MiB should suffice (we'll actually add 101MiB, to allow some free space at the end for GPT use, should this be required). Issue:
 
 {{RootCmd
 |cp -v "${ISONAME}" efi-image.iso 
-|dd if{{=}}/dev/zero bs{{=}}1M count{{=}}100 >> efi-image.iso
+|dd if{{=}}/dev/zero bs{{=}}1M count{{=}}101 >> efi-image.iso
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
 Now add a new EFI system partition to the image using {{c|fdisk}}.
 
 If your image is [[:Wikipedia:Master_boot_record|MBR]] (which most will be, including our example in this case), then use:
 {{RootCmd
-|# sed 's:\s*#.*$::g' <<EOF {{!}} fdisk efi-image.iso
+|sed 's:\s*#.*$::g' <<EOF {{!}} fdisk efi-image.iso
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 |output=<pre>
 n     # create a new partition
 p     # which is primary
       # use next partition number (here 2)
       # use the default start sector
-      # and fill the remaining space (+100MiB)
++100M # fill the remaining space, bar 1MiB
 t     # change the partition type
       # of the last-created partition
 ef    # to 'EFI system partition'
@@ -685,12 +702,13 @@ EOF
 
 Or, if your image is [[:Wikipedia:GUID_Partition_Table|GPT]] (unusual, since most of these will already be provisioned with EFI bootloaders), then use instead:
 {{RootCmd
-|# sed 's:\s*#.*$::g' <<EOF {{!}} fdisk efi-image.iso
+|sed 's:\s*#.*$::g' <<EOF {{!}} fdisk efi-image.iso
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 |output=<pre>
 n     # create a new partition
       # use next partition number (here 2)
       # use the default start sector
-      # and fill the remaining space (+100MiB)
++100M # fill the remaining space, bar 1MiB
 t     # change the partition type
       # of the last-created partition
 1     # to 'EFI system partition'
@@ -704,7 +722,8 @@ EOF
 Check the structure of the image (for our example, it should now have ''two'' partitions (we just added the second), but your target may differ), using {{c|kpartx}}; issue:
 
 {{RootCmd
-|kpartx -l /root/gentoo-images/efi-image.iso
+|kpartx -l /root/efi-image.iso
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 |output=<pre>
 loop2p1 : 0 643072 /dev/loop3 0
 loop2p2 : 0 204800 /dev/loop3 643072
@@ -714,8 +733,9 @@ loop2p2 : 0 204800 /dev/loop3 643072
 Assuming that looks good, map the partitions:
 
 {{RootCmd
-|export EFILOOPNAME{{=}}"$(kpartx -l "/root/gentoo-images/efi-image.iso" {{!}} tail -n 1 {{!}} cut -d ' ' -f 1)"
-|kpartx -a -v "/root/gentoo-images/efi-image.iso" && echo "Loop name of last partition is: ${EFILOOPNAME}"
+|export EFILOOPNAME{{=}}"$(kpartx -l "/root/efi-image.iso" {{!}} tail -n 1 {{!}} cut -d ' ' -f 1)"
+|kpartx -a -v "/root/efi-image.iso" && echo "Loop name of last partition is: ${EFILOOPNAME}"
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 |output=<pre>
 add map loop1p1 (253:12): 0 643072 linear 7:1 0
 add map loop1p2 (253:13): 0 204800 linear 7:1 643072
@@ -726,17 +746,30 @@ Loop name of last partition is: loop1p2
 Next, create a FAT32 filesystem in the newly created partition, ensuring its label is set to {{c|gen-kexec}}, as that is the name which the init script looks we [[#create_init_script|created earlier]] looks for:
 {{RootCmd
 |mkfs.vfat -F 32 -n gen-kexec /dev/mapper/${EFILOOPNAME}
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
 With that done, we can make a temporary mountpoint, and mount the newly created EFI system partition (mapped from within the image file) there:
 {{RootCmd
 |mkdir -pv /mnt/efisys
 |mount -t vfat -v /dev/mapper/${EFILOOPNAME} /mnt/efisys
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
 Unpack the EFI tarball into the root directory of the filesystem you just mounted:
 {{RootCmd
 |tar -xJf /root/efi.tar.xz -C /mnt/efisys
+|tree /mnt/efisys
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+/mnt/efisys/
+├── EFI
+│   └── Boot
+│       └── bootx64.efi
+└── kexec.sourceme
+
+2 directories, 2 files
+</pre>
 }}
 
 Then, if required, you can edit the file {{Path|/mnt/efisys/kexec.sourceme}} to suit.
@@ -745,7 +778,8 @@ For this particular target, however, we're already done (no editing required), s
 {{RootCmd
 |sync
 |umount -v /mnt/efisys
-|kpartx -v -d /root/gentoo-images/efi-image.iso
+|kpartx -v -d /root/efi-image.iso
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
 And with that, modification of the legacy image to support EFI booting is complete!
@@ -757,12 +791,14 @@ Now the image has been created, you can try writing it to a USB stick, and then 
 To do so, insert an unused USB stick into your machine, and note its device path (you can use the {{c|lsblk}} tool, run before and after insertion, to help you; alternatively, look at <code>dmesg | tail</code>). Then, write the image:
 
 {{RootCmd
-|cat /root/gentoo-images/efi-image.iso > /dev/sdX && sync && partprobe /dev/sdX
+|cat /root/efi-image.iso > /dev/sdX && sync && partprobe /dev/sdX
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
 Replace {{Path|/dev/sdX}} in the above with ''actual'' path to your USB stick (e.g. {{Path|/dev/sdc}}, {{Path|/dev/sdd}} etc. Be sure to use the top-level device, and '''not''' a partition within it (so e.g., {{Path|/dev/sdc}} and not {{Path|/dev/sdc1}}; {{Path|/dev/sdd}} and not {{Path|/dev/sdd1}} etc.).
 
 {{Warning|Ensure you have the path correct, as the above command will '''wipe''' all existing contents of the target drive.}}
+{{Note|With some images (most often, although not always, of the [https://www.rodsbooks.com/gdisk/hybrid.html 'hybrid-MBR'] variety), you may see the error <code>Invalid partition table - recursive partition on /dev/sdX</code> printed by the {{c|partprobe}} in the above command sequence. This can generally be ignored, as the MBR created by {{c|fdisk}} is valid (and will normally be used by the BIOS in preference to any residual GPT information).}}
 
 Once this completes, remove the new USB key and place it into your target PC (which should be powered off at the time). Then, apply power to your target machine, and use the (system-specific) hotkey to enter the BIOS (or bring up the one-time boot selection). You should then (provided that you ensure secure boot is '''off''') be able to select the USB stick as an EFI boot target, save, and reboot.
 
@@ -771,6 +807,7 @@ If all is well, the target system should then load and run the EFI-stub kernel f
 {{Note|Well, not ''quite'' the same, since the {{c|efivarfs}} filesystem will be mounted. If you are running an OpenRC system, such as the minimal install image, and wish to use a tool such as {{c|buildkernel}} which modifies variables in this pseudo-filesystem, you should, once booted, remount the {{c|efivarfs}} filesystem read-write. To do so, issue:
 {{RootCmd
 |remount -v -o remount,rw efivarfs
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 For avoidance of doubt, it is safe to carry out the above step on {{c|systemd}} also (although redundant there, as it mounts {{c|efivarfs}} read-write by default).
 }}
