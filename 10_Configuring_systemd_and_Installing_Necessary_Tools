@@ -25,7 +25,7 @@ To <span id="bring_up_if">bring up your network interface</span>, issue (directl
 |ifconfig enp0s25 up
 |prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute the interface name you [[../Final_Preparations_and_Reboot_into_EFI#note_if_name|wrote down before rebooting]] for {{c|enp0s25}} in the above (this will start with {{c|wl}}, not {{c|en}}, if using WiFi for the install).}}
+{{Note|Substitute the interface name you [[../Final_Preparations_and_Reboot_into_EFI#note_if_name|wrote down before rebooting]] for <code>enp0s25</code> in the above (this will start with {{c|wl}}, not {{c|en}}, if using WiFi for the install).}}
 {{Tip|If you have forgotten to write down the name, you can see all available (wired) Ethernet adaptors using the command:
 {{RootCmd
 |ifconfig -a
@@ -70,10 +70,10 @@ enp0s25: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 </pre>
 }}
 
-Hopefully, it will have autoconfigured an interface, as above. You should of course look for the name corresponding to the interface brought up [[#bring_up_if|above]], as opposed to {{c|enp0s25}} (which is simply an example). If using WiFi for the install, the name will start with {{c|wl}}, not {{c|en}}. You are looking for the 'inet' (assuming IPv4) entry; in this case {{Highlight|192.168.1.106}} (yours will almost certainly differ). Make a note of this address, you will need it shortly.
+Hopefully, it will have autoconfigured an interface, as above. You should of course look for the name corresponding to the interface brought up [[#bring_up_if|above]], as opposed to <code>enp0s25</code> (which is simply an example). If using WiFi for the install, the name will start with {{c|wl}}, not {{c|en}}. You are looking for the 'inet' (assuming IPv4) entry; in this case {{Highlight|192.168.1.106}} (yours will almost certainly differ). Make a note of this address, you will need it shortly.
 {{Note|If <span id{{=}}"manually_start_wpa_supplicant_systemd">using WiFi for the install</span>, and you do ''not'' receive a valid IP address via the above procedure, then it is possible that {{c|dhcpcd}} has failed to invoke {{c|wpa_supplicant}} properly. In this case, you can try starting it manually on the wireless interface in question. To do so, issue:{{RootCmd
 |systemctl start wpa_supplicant@wlp2s0
-|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>}}Substitute the wireless network interface name you wrote down [[../Setting_Up_Networking_and_Connecting_via_ssh#note_wifi_if_name{{!}}previously]] for {{c|wlp2s0}} in the above command. Wait a minute or so, and then examine the output of {{c|ifconfig}} again, to see if you are now connected.
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>}}Substitute the wireless network interface name you wrote down [[../Setting_Up_Networking_and_Connecting_via_ssh#note_wifi_if_name{{!}}previously]] for <code>wlp2s0</code> in the above command. Wait a minute or so, and then examine the output of {{c|ifconfig}} again, to see if you are now connected.
 <br>If you ''do'' need to manually start {{c|wpa_supplicant}} in this manner, you'll need to remember to do so each time during the rest of the tutorial after a reboot into Linux is called for, up until [[../Setting_up_the_GNOME_3_Desktop#testing_gnome3{{!}}the point where the {{c|NetworkManager}} service is configured]]. Most systems should not experience this issue, however.}}
 {{Note|If you need to bring up a network interface with a static IP, please see the [[Handbook:AMD64/Installation/Networking#Manual_network_configuration|"Manual Network Configuration"]] section of chapter 3 of the Gentoo handbook.}}
 
@@ -101,15 +101,15 @@ Now switch back to your helper PC. Note that, if the target PC's IP address is t
 {{Cmd
 |sed -i '/^[^[:digit:]]*192.168.1.106[^[:digit:]]/d' ~/.ssh/known_hosts
 |prompt=user@pc2 $}}
-{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[#post_reboot_ip{{!}}above]] for 192.168.1.106 in the above command.}}
+{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[#post_reboot_ip{{!}}above]] for <code>192.168.1.106</code> in the above command.}}
 
 Now we can connect via {{c|ssh}}. From the helper, issue:
 {{Cmd
 |ssh root@192.168.1.106
 |prompt=user@pc2 $
 }}
-{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[#post_reboot_ip{{!}}above]] for 192.168.1.106 in the above command.}}
-{{Tip|Remember, if you have a large number of existing keys in your {{Path|~/.ssh}} directory, you may get a "{{c|Too many authentication failures}}" error when attempting to connect. In this case (which will not affect most users), simply add the {{c|-o PubkeyAuthentication{{=}}no}} option to your {{c|ssh}} command.<ref>Server Fault: [https://serverfault.com/questions/36291/how-to-recover-from-too-many-authentication-failures-for-user-root/540613#540613 "How to recover from 'Too many Authentication Failures for user root'"]</ref>}}
+{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[#post_reboot_ip{{!}}above]] for <code>192.168.1.106</code> in the above command.}}
+{{Tip|Remember, if you have a large number of existing keys in your {{Path|~/.ssh}} directory, you may get a <code>Too many authentication failures</code> error when attempting to connect. In this case (which will not affect most users), simply add the <code>-o PubkeyAuthentication{{=}}no</code> option to your {{c|ssh}} command.<ref>Server Fault: [https://serverfault.com/questions/36291/how-to-recover-from-too-many-authentication-failures-for-user-root/540613#540613 "How to recover from 'Too many Authentication Failures for user root'"]</ref>}}
 
 Check the (relevant) key fingerprint and then, if it matches, continue as below:
 {{GenericCmd|<pre>
@@ -134,7 +134,7 @@ We'll begin by <span id="set_hostname">setting our hostname</span>. Choose whate
 |hostnamectl set-hostname koneko
 |prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute your own choice of machine name for {{c|koneko}} in the above.}}
+{{Note|Substitute your own choice of machine name for <code>koneko</code> in the above.}}
 {{Note|By default, this sets all three of your static, transient and pretty hostnames. You can find out more about what this means via the [http://www.freedesktop.org/software/systemd/man/hostnamectl.html {{c|hostnamectl}} manpage].}}
 
 Check that it worked:
@@ -175,14 +175,14 @@ The current LANG target is shown with a {{c|*}}. Now choose a [[:Wikipedia:UTF-8
 |source /etc/profile
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute for the number {{c|5}} in the above, with the correct value to select your UTF-8 profile from the list provided by {{c|eselect locale list}}.}}
+{{Note|Substitute for the number <code>5</code> in the above, with the correct value to select your UTF-8 profile from the list provided by {{c|eselect locale list}}.}}
 
 Now we need to inform {{c|systemd}} of our choice. Issue:
 {{RootCmd
 |localectl set-locale LANG{{=}}"${LANG}" LC_COLLATE{{=}}"C"
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|We leave the collation order as {{c|"C"}} here, per the [[Localization/Guide#Environment_variables_for_locales{{!}}Gentoo wiki recommendation]]. If you like, you can set other specific variables here also to partially override the {{c|LANG}} variable; see the [http://www.freedesktop.org/software/systemd/man/localectl.html {{c|localectl}} manpage] for more details.}}
+{{Note|We leave the collation order as <code>"C"</code> here, per the [[Localization/Guide#Environment_variables_for_locales{{!}}Gentoo wiki recommendation]]. If you like, you can set other specific variables here also to partially override the <var>LANG</var> variable; see the [http://www.freedesktop.org/software/systemd/man/localectl.html {{c|localectl}} manpage] for more details.}}
 
 We also need to setup a {{c|systemd}} keymap, both for the virtual consoles and for use with the [[:Wikipedia:X_Window_System|X11 windowing system]] (which we haven't brought up yet, but will be using shortly).
 
@@ -193,26 +193,26 @@ We begin by displaying a list of keymaps, and filtering out those of interest. T
 |localectl list-keymaps {{!}} grep -i jp
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Replace {{c|jp}} in the above command with a string appropriate to your keyboard, such as {{c|us}}, {{c|uk}} etc.}}
-In my case, this shows one result, {{c|jp106}} (yours will obviously vary, depending on your choice of {{c|grep}} string). Now we can set the ({{c|systemd}} virtual console) keymap. Issue:
+{{Note|Replace <code>jp</code> in the above command with a string appropriate to your keyboard, such as <code>us</code>, <code>uk</code> etc.}}
+In my case, this shows one result, <code>jp106</code> (yours will obviously vary, depending on your choice of {{c|grep}} string). Now we can set the ({{c|systemd}} virtual console) keymap. Issue:
 {{RootCmd
 |localectl set-keymap jp106
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute for {{c|jp106}} in the above with a value appropriate for your own keyboard, taken from the list returned by the {{c|localectl list-keymaps}} command. For example, a standard US layout would use {{c|us}} here; a standard UK layout, {{c|uk}}.}}
+{{Note|Substitute for <code>jp106</code> in the above with a value appropriate for your own keyboard, taken from the list returned by the <code>localectl list-keymaps</code> command. For example, a standard US layout would use <code>us</code> here; a standard UK layout, <code>uk</code>.}}
 
 It's important that you double-check your layout will operate correctly, so issue:
 {{RootCmd
 |loadkeys jp106
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute the value you used in {{c|localectl set-keymap}} for {{c|jp106}} in the above.}}
-Assuming that worked ({{c|loadkeys}} did not report an error), we now need to make sure our X11 setup is also correct. Confusingly, X Windows uses a different naming system for keyboard layouts from the virtual console. {{c|localectl set-keymap}} will try to infer the correct X11 layout for you, but you should check that it hasn't chosen anything bizarre. Issue:
+{{Note|Substitute the value you used in <code>localectl set-keymap</code> for <code>jp106</code> in the above.}}
+Assuming that worked ({{c|loadkeys}} did not report an error), we now need to make sure our X11 setup is also correct. Confusingly, X Windows uses a different naming system for keyboard layouts from the virtual console. <code>localectl set-keymap</code> will try to infer the correct X11 layout for you, but you should check that it hasn't chosen anything bizarre. Issue:
 {{RootCmd
 |localectl status
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-and verify that all is well. For example, in the case above, the X11 Layout will have been guessed as {{c|jp}}, based on the {{c|jp106}} keymap passed to {{c|localectl}}. That happens to be fine, but in my case, I'd also like to add a second X11 keymap, for use with a plug-in keyboard (which happens to have a UK keymapping), so I issue:
+and verify that all is well. For example, in the case above, the X11 Layout will have been guessed as <code>jp</code>, based on the <code>jp106</code> keymap passed to {{c|localectl}}. That happens to be fine, but in my case, I'd also like to add a second X11 keymap, for use with a plug-in keyboard (which happens to have a UK keymapping), so I issue:
 {{RootCmd
 |localectl --no-convert set-x11-keymap jp,gb
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -224,7 +224,7 @@ We are nearly done - the last step is to ensure that the <span id="set_vconsole_
 
 If the text output displayed directly on your target PC already looks OK, and you can press {{Key|Backspace}} (directly at the target machine's keyboard) and delete characters successfully, then you need do nothing further here, the default settings are already appropriate for you, and you should [[#regenerate_env|click here]] to skip directly to the next step (regenerating your environment).
 
-This involves setting the {{c|FONT}} and {{c|FONT_MAP}} variables in the {{Path|/etc/vconsole.conf}} file (which is read by the {{c|systemd}} {{c|vconsole-setup}} service). See the {{c|setfont}} manpage, and the discussions "Into the Mist: How Linux Console Fonts Work" and the "UTF-8 and Unicode FAQ for Unix/Linux" for more background on this.<ref>[http://linux.die.net/man/8/setfont {{c|setfont}} manpage]</ref><ref>Linux Gazette: [http://tldp.org/LDP/LG/issue91/loozzr.html "Into the Mist: How Linux Console Fonts Work"]</ref><ref>Kuhn, Marcus. [http://www.cl.cam.ac.uk/~mgk25/unicode.html "UTF-8 and Unicode FAQ for Unix/Linux"]</ref> Issue:
+This involves setting the <var>FONT</var> and <var>FONT_MAP</var> variables in the {{Path|/etc/vconsole.conf}} file (which is read by the {{c|systemd}} {{c|vconsole-setup}} service). See the {{c|setfont}} manpage, and the discussions "Into the Mist: How Linux Console Fonts Work" and the "UTF-8 and Unicode FAQ for Unix/Linux" for more background on this.<ref>[http://linux.die.net/man/8/setfont {{c|setfont}} manpage]</ref><ref>Linux Gazette: [http://tldp.org/LDP/LG/issue91/loozzr.html "Into the Mist: How Linux Console Fonts Work"]</ref><ref>Kuhn, Marcus. [http://www.cl.cam.ac.uk/~mgk25/unicode.html "UTF-8 and Unicode FAQ for Unix/Linux"]</ref> Issue:
 {{RootCmd
 |nano -w /etc/vconsole.conf
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -234,9 +234,12 @@ And ''append'' the following lines to the file:
 FONT=lat1-16
 FONT_MAP=8859-1_to_uni
 }}
-{{Note|You should set an appropriate font and mapper for your system. You may find the information in the Gentoo wiki [[Localization/Guide{{!}}"Localization Howto"]] document useful. The above {{c|FONT}} and {{c|FONT_MAP}} settings should work for a US machine also.}}
-<span id="fix_strange_characters_on_backspace">{{Important|If, after a reboot, you find that e.g., pressing the {{Key|Backspace}} key (when typing on your target machine's keyboard directly) produces strange characters on the screen, in the first instance try commenting out the {{c|FONT}} line in {{Path|/etc/vconsole.conf}} (by placing a {{c|#}} symbol at the start), then rebooting.}}</span>
-{{Note|You can also specify {{c|FONT_UNIMAP}} in the {{Path|/etc/vconsole.conf}} file, but that's generally unnecessary, since most fonts include a Unicode mapping table anyway.}}
+
+{{Note|You should set an appropriate font and mapper for your system. You may find the information in the Gentoo wiki [[Localization/Guide{{!}}"Localization Howto"]] document useful. The above <var>FONT</var> and <var>FONT_MAP</var> settings should work for a US machine also.}}
+
+<span id="fix_strange_characters_on_backspace">{{Important|If, after a reboot, you find that e.g., pressing the {{Key|Backspace}} key (when typing on your target machine's keyboard directly) produces strange characters on the screen, in the first instance try commenting out the <var>FONT</var> line in {{Path|/etc/vconsole.conf}} (by placing a <code>#</code> symbol at the start), then rebooting.}}</span>
+
+{{Note|You can also specify <var>FONT_UNIMAP</var> in the {{Path|/etc/vconsole.conf}} file, but that's generally unnecessary, since most fonts include a Unicode mapping table anyway.}}
 Save and exit the {{c|nano}} editor.
 
 <span id="regenerate_env">Finally, whether or not you modified {{Path|/etc/vconsole.conf}} above,</span> re-generate your environment, and check all looks good with the locale settings:
@@ -326,20 +329,20 @@ If the time is not correct, issue:
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 to set it.
-{{Note|Obviously, substitute for {{c|YYYY-MM-DD hh:mm:ss}} with the actual, numerical date and time. For example, to set the date/time to 5:12pm on February 9th 2014 (''local time''), you would issue:
+{{Note|Obviously, substitute for <code>YYYY-MM-DD hh:mm:ss</code> with the actual, numerical date and time. For example, to set the date/time to 5:12pm on February 9th 2014 (''local time''), you would issue:
 {{RootCmd
 |timedatectl set-time "2014-02-09 17:12:00"
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 }}
-{{Note|To reiterate, {{c|systemd}} ''should'' have automatically picked up this setting, so most users will find they do not need to execute the above {{c|timedatectl set-time <...>}} command.}}
+{{Note|To reiterate, {{c|systemd}} ''should'' have automatically picked up this setting, so most users will find they do not need to execute the above <code>timedatectl set-time <...></code> command.}}
 
 If the timezone reported in the output of {{c|timedatectl status}} is incorrect (or shows as "{{c|n/a}}"), you can correct it now; to do so, issue:
 {{RootCmd
 |timedatectl set-timezone "Europe/London"
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute your own timezone for {{c|Europe/London}} in the above command. This should be the same value as that you chose when setting the timezone [[../Building_the_Gentoo_Base_System_Minus_Kernel#set_europe_london|earlier]]. You can see a full list of available timezones by issuing:
+{{Note|Substitute your own timezone for <code>Europe/London</code> in the above command. This should be the same value as that you chose when setting the timezone [[../Building_the_Gentoo_Base_System_Minus_Kernel#set_europe_london|earlier]]. You can see a full list of available timezones by issuing:
 {{RootCmd
 |timedatectl list-timezones
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -364,12 +367,12 @@ and check that the reported {{c|Universal time}} and {{c|RTC time}} are in close
 
 As this tutorial covers the setup of a non-server-configuration machine, most users will not need to set an explicit domain name or NIS domain (if you do, see [[Handbook:AMD64/Installation/System#Networking_information|this section]] of the Gentoo handbook). 
 
-However, their absence results in the appearance of an annoying "{{c|This is koneko.(none)}}"-style message at console login. To fix this, enter:
+However, their absence results in the appearance of an annoying <code>This is koneko.(none)</code>-style message at console login. To fix this, enter:
 {{RootCmd
 |nano -w /etc/issue
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-and remove the {{c|.\0}} string from that file, so it reads:
+and remove the <code>.\0</code> string from that file, so it reads:
 {{FileBox|filename=/etc/issue|title=Modify the string to read as follows|1=
 This is \n (\s \m \r) \t
 }}
@@ -387,7 +390,7 @@ And modify the {{c|127.0.0.1}} and {{c|::1}} lines in the 'localhost aliases' se
 ::1             koneko localhost
 }}
 Leave the rest of the file as-is. Save and exit {{c|nano}}.
-{{Note|Substitute your own choice of machine name (which you set [[#set_hostname|just recently]]) for {{c|koneko}} in the above command.}}
+{{Note|Substitute your own choice of machine name (which you set [[#set_hostname|just recently]]) for <code>koneko</code> in the above command.}}
 
 == <span id="emerge_misc_system_tools">Emerging Additional System Tools</span> ==
 
@@ -545,7 +548,7 @@ Here's what these packages provide:
 
 == <span id="ensure_system_up_to_date">Ensuring the System is Fully Up-to-Date</span> ==
 
-If you have been following these instructions, then it is very likely that you have a completely current system at this point. Nevertheless, let's make double-sure this is so. To do this, we'll make use of the {{c|genup}} utility script, from the {{c|sakaki-tools}} ebuild repository (aka 'overlay'). To install it, issue:
+As there are quite a few interlocking steps required to properly keep a Gentoo system up-to-date, I have provided a convenience script, {{c|genup}}, to do this as part of the {{c|sakaki-tools}} ebuild repository (aka 'overlay'). To install it now, issue:
 {{RootCmd
 |emerge --ask --verbose app-portage/genup
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -559,59 +562,35 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 Please note that if you do not have the {{Package|app-portage/layman}} package installed (which, if you have been following these instructions, you will not at this point), then you will see the error message when running {{c|genup}}:{{GenericCmd|/usr/bin/eix-sync: line xxx: layman: command not found<br>&nbsp;* layman -S failed}}This is to be expected and not a cause for concern.
 }}
 
-Next, {{Highlight|verify that you have {{c|auto-sync}} set to {{c|no}} for the {{c|gentoo}} repository}} (as should have been done when you edited the file {{Path|/etc/portage/repos.conf/gentoo.conf}} [[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|earlier]]); issue:
-{{RootCmd
-|cat /etc/portage/repos.conf/gentoo.conf
-|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
-|output=<pre>
-[DEFAULT]
-main-repo = gentoo
-
-[gentoo]
-location = /usr/portage
-sync-type = rsync
-auto-sync = no
-
-sync-rsync-verify-jobs = 1
-sync-rsync-verify-metamanifest = no
-sync-rsync-verify-max-age = 24
-sync-openpgp-key-path = /usr/share/openpgp-keys/gentoo-release.asc
-sync-openpgp-key-refresh-retry-count = 40
-sync-openpgp-key-refresh-retry-overall-timeout = 1200
-sync-openpgp-key-refresh-retry-delay-exp-base = 2
-sync-openpgp-key-refresh-retry-delay-max = 60
-sync-openpgp-key-refresh-retry-delay-mult = 4
-
-sync-uri = rsync://rsync.uk.gentoo.org/gentoo-portage
-</pre>
-}}
-Your {{c|sync-uri}} value may well differ from that shown above (depending on your [[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|earlier choice]] of regional mirror) but the important thing to check is the {{c|auto-sync}} value. Assuming this looks OK, execute the {{c|genup}} script to bring your system fully up to date (we'll avoid checking for kernel updates at this point). Issue:
+Assuming this looks OK, execute the {{c|genup}} script to bring your system fully up to date (we'll avoid checking for kernel updates at this point). Issue:
 {{RootCmd
 |genup --no-kernel-upgrade
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
-You can read more about {{c|genup}} via its manpage. However, in summary, when invoked in non-interactive ('batch') mode (as here), and with the {{c|--no-kernel-upgrade}} flag, it will:
-* update your Portage tree (including any active ebuild repositories, such as {{c|sakaki-tools}}) and the {{c|eix}} cache (using {{c|emaint sync --auto}} / {{c|eix-sync}});
-* remove any prior {{c|emerge}} resume history (using {{c|emaint --fix cleanresume}})
-* ensure Portage itself is up-to-date (using {{c|emerge --oneshot --update portage}});
-* emerge any packages which have been updated, or whose use flags have changed (using {{c|emerge --deep --with-bdeps{{=}}y --changed-use --update --backtrack{{=}}50 @world}});
-* rebuild any external modules if necessary (such as those for VirtualBox) (using {{c|emerge @module-rebuild}})
-* rebuild any packages depending on stale libraries (using {{c|emerge @preserved-rebuild}});
-* update old Perl modules not caught by {{c|emerge}} (using {{c|perl-cleaner}});
-* ''not'' attempt to rebuild the kernel, even if a new version of {{Package|sys-kernel/gentoo-sources}} has become available (because we specified {{c|--no-kernel-upgrade}});
-* remove any unreferenced packages (using {{c|emerge --depclean}});
-* re-emerge any packages depending on libraries removed by the previous step (using {{c|revdep-rebuild}}); 
-* rebuild any packages depending on stale libraries again (using {{c|emerge @preserved-rebuild}});
-* remove any unused source tarballs (using {{c|eclean --deep distfiles}}); and
-* update environment settings as a precautionary measure (using {{c|env-update}}); and
+You can read more about {{c|genup}} via its manpage. However, in summary, when invoked in non-interactive ('batch') mode (as here), and with the <code>--no-kernel-upgrade</code> flag, it will:
+* update your Portage tree (including any active ebuild repositories, such as {{c|sakaki-tools}}) and the {{c|eix}} cache (using <code>emaint sync --auto</code> / <code>eix-sync</code>);
+* remove any prior {{c|emerge}} resume history (using <code>emaint --fix cleanresume</code>)
+* ensure Portage itself is up-to-date (using <code>emerge --oneshot --update portage</code>);
+* ensure {{c|genup}} itself is up-to-date (using <code>emerge --oneshot --update genup</code>), restarting if not;
+* emerge any packages which have been updated, or whose use flags have changed (using <code>emerge --deep --with-bdeps=y --changed-use --update --backtrack=50 @world</code>);
+* remove any unreferenced packages (using <code>emerge --depclean</code>);
+* rebuild any external modules if necessary (such as those for VirtualBox) (using <code>emerge @module-rebuild</code>)
+* rebuild any packages depending on stale libraries (using <code>emerge @preserved-rebuild</code>);
+* update old Perl modules not caught by {{c|emerge}} (using <code>perl-cleaner</code>);
+* ''not'' attempt to rebuild the kernel, even if a new version of {{Package|sys-kernel/gentoo-sources}} has become available (because we specified <code>--no-kernel-upgrade</code>);
+* remove any unreferenced packages again (using <code>emerge --depclean</code>);
+* re-emerge any packages depending on libraries removed by the previous step (using <code>revdep-rebuild</code>); 
+* rebuild any packages depending on stale libraries again (using <code>emerge @preserved-rebuild</code>);
+* remove any unused source tarballs (using <code>eclean --deep distfiles</code>); and
+* update environment settings as a precautionary measure (using <code>env-update</code>); and
 * run any custom updaters in {{Path|/etc/genup/updaters.d}}.
 
 {{Note|If you should have any issues when running {{c|genup}}, particularly the deep {{c|emerge}} stage, then you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build|these earlier notes]]. (As of version 1.0.4, {{c|genup}} will ''automatically'' retry failed {{c|emerge}} runs with make parallelism inhibited.)}}
-{{Note|For avoidance of doubt, {{c|genup}} ''will'' update your {{c|gentoo}} repo (using {{c|emerge-webrsync}}), even though {{c|auto-sync}} was set to {{c|no}} (for {{c|rsync}}) in {{Path|/etc/portage/repos.conf/gentoo.conf}} [[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|earlier]]. Because you have the {{c|webrsync-gpg}} [[../Building_the_Gentoo_Base_System_Minus_Kernel#default_authentication|set]] in FEATURES, signature checking will be automatically performed.<br>
-Incidentally, warnings about "{{c|unsafe permissions}}" on the {{Path|/var/lib/gentoo/gkeys/keyrings/gentoo/release}} directory may safely be ignored: this contains only ''public'' keys for our application, and is only ''writeable'' by root. Similarly, and as before, warnings that the "{{c|key is not certified with a trusted signature}}" are to be expected<ref>Information Security Stack Exchange: [http://security.stackexchange.com/questions/6841/ways-to-sign-gpg-public-key-so-it-is-trusted "Ways to sign gpg public key so it is trusted?"]</ref> and do not impact the signature check validity.}}
 
-Assuming that completed successfully (you receive the message "{{c|All done - your system is now up-to-date!}}"), look at the preceding few lines of output from {{c|genup}}. If you see:
+{{Note|For avoidance of doubt, {{c|genup}} ''will'' signature-verify the Gentoo repo before using it, since we set things up that way earlier ([[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|here]] and [[../Building_the_Gentoo_Base_System_Minus_Kernel#switch_back_to_rsync|here]]). As before, warnings that the "{{c|key is not certified with a trusted signature}}" are to be expected<ref>Information Security Stack Exchange: [http://security.stackexchange.com/questions/6841/ways-to-sign-gpg-public-key-so-it-is-trusted "Ways to sign gpg public key so it is trusted?"]</ref> and do not impact the signature check validity.}}
+
+Assuming that completed successfully (you receive the message <code>All done - your system is now up-to-date!</code>), look at the preceding few lines of output from {{c|genup}}. If you see:
 {{GenericCmd|<pre>
 * There are no configuration file changes pending review.
 </pre>
@@ -630,8 +609,11 @@ then (as instructed) you need to run {{c|dispatch-conf}} (this is an inherently 
 
 and follow the prompts to accept, zap (ignore) or merge each proposed change.
 {{Note|The [[Handbook:AMD64/Portage/Tools#dispatch-conf|{{c|dispatch-conf}}]] tool is discussed in more detail in the bootstrapping section [[../Building_the_Gentoo_Base_System_Minus_Kernel#using_dispatch_conf|earlier]].}}
-{{Note|If you prefer, you can add the {{c|--ask}} flag to {{c|genup}}, in which case it ''will'' run {{c|dispatch-conf}} for you at the appropriate point in the update. Alternatively, you can also force {{c|genup}} to invoke {{c|dispatch-conf}} even in non-interactive (batch) mode, by appending the {{c|--dispatch-conf}} option.}}
+
+{{Note|If you prefer, you can add the <code>--ask</code> flag to {{c|genup}}, in which case it ''will'' run {{c|dispatch-conf}} for you at the appropriate point in the update. Alternatively, you can also force {{c|genup}} to invoke {{c|dispatch-conf}} even in non-interactive (batch) mode, by appending the <code>--dispatch-conf</code> option.}}
+
 {{Note|If you should have any issues when running {{c|genup}}, particularly the deep {{c|emerge}} stage, then you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build{{!}}these earlier notes]].}}
+
 {{Note|For avoidance of doubt, the [[World set (Portage)|@world]] set ''includes'' the [[System set (Portage)|@system]] set.}}
 
 Finally, since this is the first full package update, and it is possible that the Portage tree snapshot has not changed since you fetched it [[../Building_the_Gentoo_Base_System_Minus_Kernel#update_portage_tree|originally]], issue the following command to make completely sure the {{c|eix}} index has updated:
@@ -640,7 +622,7 @@ Finally, since this is the first full package update, and it is possible that th
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 (that's a zero).
-{{Tip|You only need to run this command at this point in the tutorial, it is ''not'' a generally required follow-on to {{c|genup}}. However, if you find at any time in the future that {{c|eix}} is giving you strange output to your package queries, or appears to be missing new versions of packages etc., you can simply run {{c|eix-sync -0}} to bring its index up-to-date (NB the repositories on your machine are ''not'' affected by running eix-sync with the {{c|-0}} option, it does not hit the network).}}
+{{Tip|You only need to run this command at this point in the tutorial, it is ''not'' a generally required follow-on to {{c|genup}}. However, if you find at any time in the future that {{c|eix}} is giving you strange output to your package queries, or appears to be missing new versions of packages etc., you can simply run <code>eix-sync -0</code> to bring its index up-to-date (NB the repositories on your machine are ''not'' affected by running eix-sync with the <code>-0</code> option, it does not hit the network).}}
 
 == <span id="reboot_sans_plymouth">Performing a Precautionary Reboot without {{c|plymouth}}</span> ==
 
@@ -664,7 +646,7 @@ to close the second one. Then exit the enclosing {{c|ssh}} session itself:
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
-Now, ensure your boot USB key is inserted, and then, ''directly'' on the target machine (i.e., at its keyboard), issue:
+Now, ensure your boot USB key is (still) inserted, and then, ''directly'' on the target machine (i.e., at its keyboard), issue:
 {{RootCmd
 |systemctl reboot
 |prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
@@ -887,7 +869,7 @@ otherwise, if you have run {{c|buildkernel}} more than once since changing the p
 }}
 }}
 
-{{Note|If you happen to have used {{c|buildkernel}}'s {{c|--snapshot-backup}} option in the past (to ensure a 'known good' kernel was preserved), you'll also see (kernel and config) files in {{Path|/mnt/tmpefi/EFI/Boot}} with prefixed timestamps. For example, if you had previously issued {{c|buildkernel --snapshot-backup}} on 4 May 2014 at 12:23:07 say, you would see the files {{c|2014-05-04-12-23-07-gentoo.efi.old}} and {{c|2014-05-04-12-23-07-config.old}} in the {{Path|/mnt/tmpefi/EFI/Boot}} directory. You can use such files instead of {{c|gentoo.efi.old}} and {{c|config.old}}, if you like.}}
+{{Note|If you happen to have used {{c|buildkernel}}'s <code>--snapshot-backup</code> option in the past (to ensure a 'known good' kernel was preserved), you'll also see (kernel and config) files in {{Path|/mnt/tmpefi/EFI/Boot}} with prefixed timestamps. For example, if you had previously issued <code>buildkernel --snapshot-backup</code> on 4 May 2014 at 12:23:07 say, you would see the files {{c|2014-05-04-12-23-07-gentoo.efi.old}} and {{c|2014-05-04-12-23-07-config.old}} in the {{Path|/mnt/tmpefi/EFI/Boot}} directory. You can use such files instead of {{c|gentoo.efi.old}} and {{c|config.old}}, if you like.}}
 
 Finally, ensure the data has been written, unmount the USB key, and remove the temporary mountpoint you created, then exit back to the normal user. Issue
 {{RootCmd

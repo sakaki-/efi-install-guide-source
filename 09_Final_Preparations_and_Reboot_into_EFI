@@ -8,7 +8,7 @@
 ## Configuring networking for use post-reboot ({{c|OpenRC}} users only)
 ## Setting up a root password for the new system; then
 # Cleanly dismounting the {{c|chroot}}, and restarting;
-# Before the OS boots, modifying the BIOS settings so that non-secure UEFI mode is used, then restarting again.
+# Logging in to your new system as the root user, directly at the target machine's keyboard.
 
 Instructions are also provided at [[#if_things_go_wrong|the end of this chapter]] to recover back to a {{c|chroot}} environment, should things not go as planned.
 
@@ -48,8 +48,8 @@ In the {{Path|/etc/fstab}} file:<ref>[http://man7.org/linux/man-pages/man5/fstab
 * The second field shows the mount point.
 * The third field shows the filesystem type. I have assumed (per the tutorial instructions) that you have used [[ext4]] for the root and home partitions; if you chose something different, make sure to reflect it here. The use of {{c|auto}} for the optional cd-rom makes the operating system guess the filesystem type, which is useful with removable media.
 * The fourth field contains the mount options; these choices here are described in more detail below.
-* The fifth field is used by the {{c|dump}} command to denote which filesystems require dumping. It's generally fine to leave this as '0' (do not dump) in all cases.
-* The sixth field is used by {{c|fsck}} to determine the order filesystems are integrity checked at boot time. A {{c|0}} indicates no check. The root filesystem should have (as here) a {{c|1}} to force it to be checked first, and then all other persistent filesystems can have {{c|2}} specified (so they are checked together, but after the root filesystem).
+* The fifth field is used by the {{c|dump}} command to denote which filesystems require dumping. It's generally fine to leave this as <code>0</code> (do not dump) in all cases.
+* The sixth field is used by {{c|fsck}} to determine the order filesystems are integrity checked at boot time. A <code>0</code> indicates no check. The root filesystem should have (as here) a <code>1</code> to force it to be checked first, and then all other persistent filesystems can have <code>2</code> specified (so they are checked together, but after the root filesystem).
 
 {{Note|We ''don't'' need to mount {{Path|/boot}} here, since this is a UEFI system and our {{Path|/boot}} is simply a regular directory, used as a marshalling ground. Nor do we specify our {{Path|/boot/efi}} mountpoint, since that will be dealt with explicitly by {{c|buildkernel}} (and the UEFI boot sequence), and we'll generally want to be able to remove the USB key once the machine has booted anyway (for security).}}
 {{Note|There is no need to place entries for {{Path|/proc}} and {{Path|/dev}} into {{Path|/etc/fstab}}; these will be mounted automatically.}}
@@ -148,12 +148,12 @@ Similarly, we need to ensure that the {{c|sshd}} setup inside the {{c|chroot}} w
 }}
 {{Note|As you may recall (from when we edited the outer host's {{Path|/etc/ssh/sshd_config}} file [[../Setting_Up_Networking_and_Connecting_via_ssh#setup_ssh_server{{!}}earlier]]), from release 7.0 of {{c|OpenSSH}}, the defaults have changed to prohibit password-based login as {{c|root}}, hence the reason for the above edit.<ref name{{=}}"openssh_7_release_notes">OpenSSH Unix Announce: [http://lists.mindrot.org/pipermail/openssh-unix-announce/2015-August/000122.html OpenSSH 7.0 released]</ref>}}
 
-We also need to make sure that the {{Package|app-editors/nano}} editor does not accidentally get removed later in the installation (as it is only 'held in place' by a virtual, {{Package|virtual/editor}}, at the moment). Issue:
+We also need to make sure that the {{Package|app-editors/nano}} editor does not accidentally get removed later in the installation (as it is only 'held in place' by a virtual &mdash; {{Package|virtual/editor}} &mdash; at the moment). Issue:
 {{RootCmd
 |emerge --noreplace app-editors/nano
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
-{{Note|The ''--noreplace'' option ensures that the package is not rebuilt if already installed. In any case, it will be added to the @world set ({{Path|/var/lib/portage/world}}).}}
+{{Note|The <code>--noreplace</code> option ensures that the package is not rebuilt if already installed. In any case, it will be added to the @world set ({{Path|/var/lib/portage/world}}). It's a useful idiom to be aware of.}}
 
 === <span id="setup_networking_openrc">Configure Networking for Post-Reboot Use (OpenRC Users Only)</span> ===
 
@@ -233,14 +233,17 @@ then:
 
 Unmount everything (and turn off swap), deactivate LVM, and close LUKS:
 {{RootCmd
+|sync
 |swapoff -v /dev/mapper/vg1-swap
 |umount -lv /mnt/gentoo/home
 |umount -lv /mnt/gentoo/dev{/shm,/pts,}
-|umount -lv /mnt/gentoo{/proc,/sys,}
+|umount -Rv /mnt/gentoo
 |vgchange --available n
 |cryptsetup luksClose gentoo
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
+
+{{Note|In the unlikely event you are unable to execute the <code>vgchange --available n</code> command, perhaps due to some components reported as being still mounted from within the LVM logical volume, simply proceed with the following {{c|reboot}} anyway. Your system should still be in a consistent state due to the {{c|sync}} command. For avoidance of doubt, this point will ''not'' affect most users, who should find their system dismounts cleanly.}}
 
 Now we're ready to restart. Ensure your boot USB key is still inserted into the target machine (as well as the minimal install USB key, at this point), and issue:
 {{RootCmd
@@ -248,51 +251,20 @@ Now we're ready to restart. Ensure your boot USB key is still inserted into the 
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
-Your {{c|ssh}} session will exit. ''Immediately'' your target machine starts to come back up again, enter the BIOS setup screen.
+Your {{c|ssh}} session will exit. If all is well, shortly after this your target machine will restart, and, because {{c|buildkernel}} [[../Configuring_and_Building_the_Kernel#add_to_boot_list|automatically placed]]
+your new, EFI-stub kernel at the top of the boot list, it should then proceed &mdash; without any further intervention required &mdash; to boot this kernel off of the boot USB key.
 
-== <span id="set_uefi_mode_in_bios">Selecting UEFI Boot Mode in the BIOS and Restarting!</span> ==
+== <span id="login_directly_to_new_system">Logging in Directly to the New System</span> ==
 
-As mentioned earlier, the exact method of entering the BIOS varies greatly from machine to machine (as does the BIOS user interface itself). On the Panasonic CF-AX3, press {{Key|F2}} during startup (you may need to press it repeatedly, and you do this directly on the target machine's keyboard).
+After some initialization, you should then be prompted for a passphrase to unlock the {{c|gpg}} keyfile for your LUKS partition (this is the passphrase you set up [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]). Type this in (directly at the target machine keyboard), and press {{Key|Enter}}.
 
-Once the BIOS setup screen comes up, '''remove the minimal install USB key''', so that only the boot USB key (the smaller capacity one) remains inserted. Then, using the same navigation techniques as [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#bios_navigation|before]], perform the following steps:
-# disable legacy / [[:Wikipedia:Unified_Extensible_Firmware_Interface#CSM_booting|CSM]] boot mode;
-# enable EFI boot mode;
-# ensure any 'fast boot' / 'ultra fast boot' options (if present) are disabled (as these may cause USB to be disabled until the operating system comes up);
-# turn off secure boot (our kernel is currently unsigned, and we have not yet updated the machine's key database in any event);
-# select the USB boot key as the highest priority UEFI boot device; and
-# restart your machine (saving changes).
-
-It's impossible to be precise about the GUI actions required to achieve the above, as they will vary from BIOS to BIOS. However, to give you some idea, here's how you go about it on the Panasonic CF-AX3 (which has an AMT BIOS).
-
-Using the arrow keys, navigate across to the 'Boot' tab. Then, navigate down to the 'UEFI Boot' item, and press {{Key|Enter}}. In the popup that appears, select 'Enabled' using the arrow keys, and press {{Key|Enter}}. This switches the system out of legacy / CSM boot and into standard UEFI mode (steps 1 and 2 in the list above):
-{|style="background:transparent; color:black" 
-|[[File:Bios_enable_uefi.jpg|thumb|none|400px|Switching Back to UEFI Boot]]
-|}
-
-{{Important|If you have a 'Fast Boot' / 'Ultra Fast Boot' option in your BIOS, it's probably best to turn it off at this point (step 3 in the list); as this ''may'' cause USB devices to be disabled at boot time. The Panasonic has the choice of 'Normal' (as here) or 'Compatible' boot modes; 'Normal' does allow boot from USB and works with the USB keys I used, but if you have problems (and the same BIOS), you could try switching this to 'Compatible' instead).}}
-
-Next (step 4), we'll <span id="turn_off_secure_boot">turn off</span> [[:Wikipedia:Unified_Extensible_Firmware_Interface#Secure_boot|secure boot]], since we haven't yet signed our kernel (or installed our own keys into the BIOS). On the CF-AX3, use the arrow keys to select the 'Security' tab, then navigate down to the 'Secure Boot' item, and select it by pressing {{Key|Enter}}. This enters a 'Security' sub-page; navigate to the 'Secure Boot control' item, and press {{Key|Enter}}. In the popup that appears, select 'Disabled' using the arrow keys, and press {{Key|Enter}}:
-{|style="background:transparent; color:black" 
-|[[File:Bios_disable_secure_boot.jpg|thumb|none|400px|(Temporarily) Disabling Secure Boot]]
-|}
-
-Next, on the CF-AX3, it is necessary to restart the machine at this point (as it will not pick up valid UEFI boot devices immediately upon switching into UEFI boot mode). Press {{Key|F10}} to restart, and confirm if prompted.
-{{Tip|Many BIOSes behave in this manner, and must be restarted when changing from CSM/legacy to UEFI boot (and ''vice versa''), before all BIOS boot options relevant to that new mode can be specified.}}
-
-When the machine restarts, hit {{Key|F2}} again, to re-enter BIOS setup. Now we can select a boot device (step 5). Using the arrow keys, navigate to the 'Boot' tab, and then down to the 'UEFI Priorities' item. Press {{Key|Enter}}, and a sub-page is displayed. Ensure the item 'UEFI Boot from USB' is enabled (if it isn't, enable it now, and then press {{Key|F10}} to restart (confirming if prompted), and come back to this point). Navigate down to 'Boot Option #1' and press {{Key|Enter}}. In the pop-up menu that appears, select your (boot) USB key, and press {{Key|Enter}} to select it:
-{|style="background:transparent; color:black" 
-|[[File:Bios_set_efi_boot_order.jpg|thumb|none|400px|Making Our Boot USB Key the First Boot Option]]
-|}
-{{Note|The item that ''you'' need to select from this menu will of course depend the make and model of your boot USB key.}}
-{{Note|With ''some'' BIOSes you will also have to specify the specific ''file'' on the chosen USB device to boot - if so, you should enter (or select) {{Path|/EFI/Boot/bootx64.efi}} (most BIOSes however will ''not'' require this, as this path is the EFI default).}}
-
-That's it! Now press {{Key|F10}} to restart (step 6), and confirm if prompted.
-
-If all that worked, your target system should restart, and boot the UEFI stub kernel off the boot USB key. After some initialization, you should be prompted for a passphrase to unlock the {{c|gpg}} keyfile for your LUKS partition (this is the passphrase you set up [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]). Type this in (directly at the target machine keyboard), and press {{Key|Enter}}. Shortly after, assuming that your passphrase is correct, you'll be presented with a login prompt. <span id="login_directly_to_new_system">Enter 'root' as the user</span> (again, directly at the keyboard, without quotes), and then type the root password you set up [[#setup_new_root_password|above]].
+Shortly after this, assuming that your passphrase is correct, you'll be presented with a login prompt. Enter 'root' as the user (again, directly at the keyboard, without quotes), press {{Key|Enter}}, and then type the root password you set up [[#setup_new_root_password|above]], and press {{Key|Enter}} again.
 
 {{Note|On certain versions of {{c|systemd}}, you may be notified that the {{c|plymouth-start.service}} unit failed during boot. As we have not yet enabled {{c|plymouth}} using {{c|buildkernel}}, this is to be expected, and the error may be ignored at this point.<br>For avoidance of doubt, this (minor) issue does not impact {{c|OpenRC}} users.}}
 
-If all goes well, you should now be logged in! If this is the case, congratulations, you have a encrypted system which boots from UEFI and uses (depending on your choice [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]]) {{c|systemd}} or {{c|OpenRC}}. You can now [[#next_steps|click here]] to complete the configuration of your init system (and other) settings.
+With luck, you should now be logged in! If this is the case, congratulations, you have a encrypted system which boots from UEFI and uses (depending on your choice [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]]) {{c|systemd}} or {{c|OpenRC}}. You should now '''remove the minimal install USB key''', so that only the boot USB key (the smaller capacity one) remains inserted, then [[#next_steps|click here]] to complete the configuration of your init system (and other) settings.
+
+{{Note|If you ''were'' able to successfully boot, then please note that the minimal install image USB key is no longer required for the remaining steps in this tutorial &mdash; as such, you may, at your option, either keep it around for 'fallback recovery' purposes (in case anything should go wrong later &mdash; the process for command-line recovery is detailed [[#if_things_go_wrong|below]]), or, reformat it for other use.}}
 
 If however, for some reason you ''weren't'' able to boot, then read on.
 
@@ -302,7 +274,7 @@ If however, for some reason you ''weren't'' able to boot, then read on.
 
 The following are short-form instructions to get you back into a {{c|chroot}} environment again, so that you can attempt to fix whatever problem prevented you from booting under UEFI. I have included backlinks throughout, so you can hop up to where these steps were first taken, and read in more detail about what is involved - the style of what follows is rather telegraphic.
 
-First, re-insert your minimal install USB key into the target machine (leaving the boot USB key inserted as well, since we'll need it to unlock the LUKS partition), and restart the system. As the machine comes up, re-enter the BIOS and re-activate legacy / [[:Wikipedia:Unified_Extensible_Firmware_Interface#CSM_booting|CSM]] booting, and set (if it is not already) the USB key to be the top boot priority device (original instructions [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#set_csm_boot|here]]). Save the BIOS settings and exit, thereby rebooting into the Gentoo minimal install system (original instructions [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#boot_beep|here]]). As before, hit {{Key|Enter}} when it beeps at you, remember to select the correct keymap etc. Then, since the boot image itself has no persistence, issue (directly on the target machine's keyboard):
+First, re-insert your minimal install USB key into the target machine (leaving the boot USB key inserted as well, since we'll need it to unlock the LUKS partition), and restart the system. As the machine comes up, re-enter the BIOS, and set (if it is not already) the (minimal install) USB key to be the top UEFI boot device (original instructions [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#set_mii_boot|here]]). Save the BIOS settings and exit, thereby rebooting into the Gentoo minimal install system (original instructions [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#boot_beep|here]]). As before, hit {{Key|Enter}} at the GRUB screen, remember to select the correct keymap etc. Then, since the boot image itself has no persistence, issue (directly on the target machine's keyboard):
 {{RootCmd
 |passwd root
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
@@ -312,7 +284,7 @@ Retype new password: <enter your (host system) root password again>
 passwd: password updated successfully
 </pre>
 }}
-Remember (original instructions [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#first_root_pw_setup|here]]), you are setting up a password for the 'outer', host system here - root's password ''inside'' the {{c|chroot}} will be retained (and different), but we haven't remounted the {{c|chroot}} yet.
+Remember (original instructions [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#first_root_pw_setup|here]]), you are setting up a password for the 'outer', host system here &mdash; root's password ''inside'' the {{c|chroot}} will be retained (and different), but we haven't remounted the {{c|chroot}} yet.
 
 Next, ensure that your networking is up. Follow the appropriate instructions below.
 
@@ -331,7 +303,7 @@ If, instead, you are installing over '''WiFi''', you need to re-create your conf
 <then type your WiFi access point passphrase (without quotes) and press Enter>
 </pre>
 }}
-{{Note|As before, substitute the correct name for {{c|"ESSID"}} in the above.}}
+{{Note|As before, substitute the correct name for <code>"ESSID"</code> in the above.}}
 Lock down the file's access permissions (to root only) and check that its contents look sane. Issue:
 {{RootCmd
 |chmod -v 600 /etc/wpa.conf
@@ -343,13 +315,13 @@ Assuming that looks OK, we can connect. Issue:
 |wpa_supplicant -Dnl80211,wext -iwlp2s0 -c/etc/wpa.conf -B
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute the wireless network interface name you wrote down [[../Setting_Up_Networking_and_Connecting_via_ssh#note_wifi_if_name{{!}}previously]] for {{c|wlp2s0}} in the above command.}}
+{{Note|Substitute the wireless network interface name you wrote down [[../Setting_Up_Networking_and_Connecting_via_ssh#note_wifi_if_name{{!}}previously]] for <code>wlp2s0</code> in the above command.}}
 Then note your IP address:
 {{RootCmd
 |ifconfig wlp2s0
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Again, substitute the wireless network interface name you wrote down [[../Setting_Up_Networking_and_Connecting_via_ssh#note_wifi_if_name{{!}}previously]] for {{c|wlp2s0}} in the above command.}}
+{{Note|Again, substitute the wireless network interface name you wrote down [[../Setting_Up_Networking_and_Connecting_via_ssh#note_wifi_if_name{{!}}previously]] for <code>wlp2s0</code> in the above command.}}
 
 {{Note|As before, if you need to use a fixed IP address, a proxy, IPv6, or an unencrypted WiFi connecction, please see [[Handbook:AMD64/Installation/Networking|Chapter 3]] of the Gentoo handbook for more details.
 }}
@@ -370,7 +342,7 @@ Now switch to your helper PC. Note that, if the target PC's IP address is the sa
 {{Cmd
 |sed -i '/^[^[:digit:]]*192.168.1.106[^[:digit:]]/d' ~/.ssh/known_hosts
 |prompt=user@pc2 $}}
-{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} for 192.168.1.106 in the above command.}}
+{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} for <code>192.168.1.106</code> in the above command.}}
 
 and issue (original instructions [[../Setting_Up_Networking_and_Connecting_via_ssh#log_in_via_helper|here]]):
 {{Cmd
@@ -385,7 +357,7 @@ Password: <enter root password you just set>
 ... additional output suppressed ...
 </pre>
 }}
-{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} for 192.168.1.106 in the above command.}}
+{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} for <code>192.168.1.106</code> in the above command.}}
 Once you are connected, we need to get {{c|screen}} running. Via the {{c|ssh}} connection on the helper PC (which is how you should enter all subsequent commands, unless otherwise specified), issue (original instructions [[../Setting_Up_Networking_and_Connecting_via_ssh#start_screen|here]]):
 {{RootCmd
 |screen
@@ -419,7 +391,7 @@ Enter passphrase
 </pre>
 }}
 {{Note|Replace {{Path|/dev/sdZn}} in the above command with the device path for the LUKS partition, e.g., {{Path|/dev/sda7}}. You can check this with {{c|lsblk}} (original instructions [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#find_luks_partition|here]]).<br>Also, you ''may'' see some errors of the form <code>device-mapper: remove ioctl on XXX failed: Device or resource busy</code>; these can generally be ignored.}}
-{{Note|You may get complaints about {{c|'no LC_CTYPE known'}} printed by {{c|pinentry}}; these can generally be ignored. See explanation in the [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#lc_ctype_problem|original text]].}}
+{{Note|You may get complaints about <code>no LC_CTYPE known</code> printed by {{c|pinentry}}; these can generally be ignored. See explanation in the [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#lc_ctype_problem|original text]].}}
 {{Tip|Remember that if {{c|gpg}} gets stuck with a bad password in its cache for some reason, you can reset it by issuing:
 {{RootCmd
 |echo RELOADAGENT {{!}} gpg-connect-agent
@@ -452,7 +424,7 @@ If necessary fix it by issuing (original instructions [[../Creating_and_Booting_
 |date MMDDhhmmYYYY
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute MMDDhhmmYYYY in the above with the correct date/time string. For example, to set the UTC date/time to 5:12pm on February 9th 2017, you would issue
+{{Note|Substitute <code>MMDDhhmmYYYY</code> in the above with the correct date/time string. For example, to set the UTC date/time to 5:12pm on February 9th 2017, you would issue
 {{RootCmd
 |date 020917122017
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
@@ -503,14 +475,14 @@ followed by
 Now hit {{Key|Ctrl}}{{Key|a}} then {{Key|p}} to get back to the original console.
 
 That's it! You can now proceed to edit your {{c|chroot}}-ed system (and hopefully, to fix it). It is impossible to be specific as to what may have caused a problem, but some likely candidates include:
-* '''Incorrect kernel configuration.''' In this case, run {{c|buildkernel --ask --verbose}}, enter the graphical kernel configuration editor when prompted, change the appropriate kernel settings, and then save and exit the editor. The build will continue with your modified configuration. (A problem of this sort is most likely to occur if you have ''already'' started to dabble with the configuration, since the standard flow in this tutorial assumes you have used the {{Path|/proc/config.gz}} config from the running minimal install system kernel - which is therefore to some extent 'known good' - as a basis).
-** In particular, if you elected to use {{c|OpenRC}} boot [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]] (and not the default {{c|systemd}}), and received an error similar to "{{c|The filesystem /dev/mapper/vg1-root <...> does not contain a valid init{{=}}<...>/systemd}}" after entering your LUKS passphrase, then you have not correctly set up the {{c|INITSYSTEM}} variable in {{Path|/etc/buildkernel.conf}}. Fix this (either by editing {{Path|/etc/buildkernel.conf}} or using {{c|buildkernel --easy-setup}} and choosing option "{{c|7) set init system}}", then run {{c|buildkernel --ask --verbose}} again.
-* '''Buggy version of {{c|buildkernel}}.''' Please note that {{c|buildkernel}} version 1.0.24 has a bug that affects booting and should not be used (earlier and later versions are not affected). Issue {{c|buildkernel --version}} to check, and if you ''do'' have the affected 1.0.24 version installed, update it (using {{c|emaint sync --repo sakaki-tools && emerge -av --update buildkernel}}), then rebuild your kernel and reboot.
+* '''Incorrect kernel configuration.''' In this case, run <code>buildkernel --ask --verbose</code>, enter the graphical kernel configuration editor when prompted, change the appropriate kernel settings, and then save and exit the editor. The build will continue with your modified configuration. (A problem of this sort is most likely to occur if you have ''already'' started to dabble with the configuration, since the standard flow in this tutorial assumes you have used the {{Path|/proc/config.gz}} config from the running minimal install system kernel - which is therefore to some extent 'known good' - as a basis).
+** In particular, if you elected to use {{c|OpenRC}} boot [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]] (and not the default {{c|systemd}}), and received an error similar to <code>The filesystem /dev/mapper/vg1-root <...> does not contain a valid init=<...>/systemd</code> after entering your LUKS passphrase, then you have not correctly set up the <var>INITSYSTEM</var> variable in {{Path|/etc/buildkernel.conf}}. Fix this (either by editing {{Path|/etc/buildkernel.conf}} or using <code>buildkernel --easy-setup</code> and choosing option "{{c|7) set init system}}", then run <code>buildkernel --ask --verbose</code> again.
+* '''Buggy version of {{c|buildkernel}}.''' Please note that {{c|buildkernel}} version 1.0.24 has a bug that affects booting and should not be used (earlier and later versions are not affected). Issue <code>buildkernel --version</code> to check, and if you ''do'' have the affected 1.0.24 version installed, update it (using <code>emaint sync --repo sakaki-tools && emerge -av --update buildkernel</code>), then rebuild your kernel and reboot.
 * '''Missing packages.''' For example, you may have forgotten to install e.g., {{Package|net-misc/dhcpcd}} prior to reboot, preventing you from accessing the network properly. If this is the case, simply {{c|emerge}} the [[#emerge_additionals|required software]] within the chroot, and then try again. There is no need to re-run {{c|buildkernel}} in this case.
-* '''Password not set for root.''' If for any reason you forgot to set a root password for the new system (as instructed [[#setup_new_root_password|above]], when you were {{c|chroot}}-ed in originally), then your attempt to log in will have been rejected. This is easily fixed by using {{c|passwd root}}.
-* '''Wrong keymapping causing mangled passwords.''' If the system would not accept your {{c|gpg}} keyfile passphrase on reboot, but you were able to successfully unlock it when re-entering the {{c|chroot}} above, or, if the system would not accept your root password after a restart, then you may have not setup the {{c|KEYMAP}} variable in {{Path|/etc/buildkernel.conf}} correctly. See [[../Configuring_and_Building_the_Kernel#important_conf_vars|this earlier discussion]] for further details. (These issues can also generally be ameliorated (for most locales) through the use of only standard English letters in your passphrases, as mentioned [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#correct_horse_battery_staple|previously]].) Review, and if necessary, change your boot-time keymap by using {{c|buildkernel --easy-setup}}, and then re-run {{c|buildkernel --ask --verbose}}.
-* '''Problems with UUIDs.''' The {{c|buildkernel}} script tries to ensure that the UUIDs you have passed it (in {{Path|/etc/genkernel.conf}} [[../Configuring_and_Building_the_Kernel#important_conf_vars|above]]) are valid, but it is still possible to make a mistake (e.g. if you have more than one LUKS partition on your system, for example). Double check these values, and, if necessary, change them (by using {{c|buildkernel --easy-setup}}) and then re-run {{c|buildkernel --ask --verbose}}.
-* '''BIOS configuration problems.''' A total failure of your new system to even try to start (or if you get Windows instead!) is likely to indicate some issue with your BIOS settings. Are you sure your USB boot key is at the top of the UEFI boot order? And that secure boot is disabled at this point? Run through the steps in the [[#set_uefi_mode_in_bios|"Selecting UEFI Boot Mode in the BIOS and Restarting!"]] section once more, then try again. (You should also double-check that the first (and only) partition on your USB boot key is marked as an EFI system partition and is formatted {{c|fat32}}; see [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#setup_system_partition|this discussion]].) A very few EFI systems also do not look for a boot executable under the standard {{Path|/EFI/Boot/bootx64.efi}} path, but instead will use {{Path|/EFI/Microsoft/Boot/bootmgfw.efi}}.<ref>Smith, Roderick W. [http://www.rodsbooks.com/refind/installing.html#naming "The rEFInd Boot Manager: Installing rEFInd: Alternative Naming Options"]</ref> If that's the case for your target machine, change the EFI boot file path using {{c|buildkernel --easy-setup}}, then re-run {{c|buildkernel --ask --verbose}}.
+* '''Password not set for root.''' If for any reason you forgot to set a root password for the new system (as instructed [[#setup_new_root_password|above]], when you were {{c|chroot}}-ed in originally), then your attempt to log in will have been rejected. This is easily fixed by using <code>passwd root</code>.
+* '''Wrong keymapping causing mangled passwords.''' If the system would not accept your {{c|gpg}} keyfile passphrase on reboot, but you were able to successfully unlock it when re-entering the {{c|chroot}} above, or, if the system would not accept your root password after a restart, then you may have not setup the <var>KEYMAP</var> variable in {{Path|/etc/buildkernel.conf}} correctly. See [[../Configuring_and_Building_the_Kernel#important_conf_vars|this earlier discussion]] for further details. (These issues can also generally be ameliorated (for most locales) through the use of only standard English letters in your passphrases, as mentioned [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#correct_horse_battery_staple|previously]].) Review, and if necessary, change your boot-time keymap by using <code>buildkernel --easy-setup</code>, and then re-run <code>buildkernel --ask --verbose</code>.
+* '''Problems with UUIDs.''' The {{c|buildkernel}} script tries to ensure that the UUIDs you have passed it (in {{Path|/etc/genkernel.conf}} [[../Configuring_and_Building_the_Kernel#important_conf_vars|above]]) are valid, but it is still possible to make a mistake (e.g. if you have more than one LUKS partition on your system, for example). Double check these values, and, if necessary, change them (by using <code>buildkernel --easy-setup</code>) and then re-run <code>buildkernel --ask --verbose</code>.
+* '''BIOS configuration problems.''' A total failure of your new system to even try to start (or if you get Windows instead!) is likely to indicate some issue with your BIOS settings. Are you sure your USB '''boot''' key is at the top of the UEFI boot order (as it should be, if {{c|buildkernel}} has [[../Configuring_and_Building_the_Kernel#add_to_boot_list|done its job]])? And that secure boot is disabled at this point, and that fast boot is off? Double check these points, then try again &mdash; for hints about entering and modifying the UEFI BIOS settings, please refer to [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#boot_minimal_install_iso|these earlier notes]]. (You should also double-check that the first (and only) partition on your USB boot key is marked as an EFI system partition and is formatted {{c|fat32}}; see [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#setup_system_partition|this discussion]].) A very few EFI systems also do not look for a boot executable under the standard {{Path|/EFI/Boot/bootx64.efi}} path, but instead will use {{Path|/EFI/Microsoft/Boot/bootmgfw.efi}}.<ref>Smith, Roderick W. [http://www.rodsbooks.com/refind/installing.html#naming "The rEFInd Boot Manager: Installing rEFInd: Alternative Naming Options"]</ref> If that's the case for your target machine, change the EFI boot file path using <code>buildkernel --easy-setup</code>, then re-run <code>buildkernel --ask --verbose</code>.
 
 {{Note|If you try to fix things that involve using the graphical kernel configuration editor, and you are connected over {{c|ssh}} from your helper machine, be aware that you may get some pretty strange characters displayed. This can happen if your helper's locale is not present on the target (in the host operating system that is, not the {{c|chroot}}, since {{c|sshd}} is running in the former context).<ref name="set_locale_failed">ServerFault Q&A Site: [http://serverfault.com/questions/304469/setting-locale-failed-force-certain-locale-when-connecting-through-ssh "Setting locale failed: force certain locale when connecting through ssh"]</ref> In this case, simply open up a chroot directly at the target's keyboard, and perform the {{c|buildkernel}} from there; i.e., directly at the machine, issue:
 {{RootCmd

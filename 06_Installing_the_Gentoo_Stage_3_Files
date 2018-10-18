@@ -17,7 +17,7 @@ Per <span id="set_date_and_time">the handbook</span>, you should stick with [[:W
 |date MMDDhhmmYYYY
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute MMDDhhmmYYYY in the above with the correct date/time string. For example, to set the UTC date/time to 5:12pm on February 9th 2017, you would issue
+{{Note|Substitute <code>MMDDhhmmYYYY</code> in the above with the correct date/time string. For example, to set the UTC date/time to 5:12pm on February 9th 2017, you would issue
 {{RootCmd
 |date 020917122017
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
@@ -45,7 +45,7 @@ Now <span id="download_stage_3">download the files</span>. As before, substitute
 |wget -c http://distfiles.gentoo.org/releases/amd64/autobuilds/YYYYMMDDThhmmssZ/stage3-amd64-YYYYMMDDThhmmssZ.tar.xz.DIGESTS.asc
 |prompt=livecd <span style{{=}}"color:royalblue;">/mnt/gentoo #</span>
 }}
-{{Note|Substitute the current release timestamp for YYYYMMDDThhmmssZ in the above commands.}}
+{{Note|Substitute the current release timestamp for <code>YYYYMMDDThhmmssZ</code> in the above commands.}}
 {{Note|The autobuilds directory also contains a set of 'nomultilib' variants; these are not recommended for general use.}}
 
 As before (when we [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#download_verify_image|downloaded the minimal install image]]), we have to go through a two-stage verification: first check the signature in the {{c|DIGESTS.asc}} file, and then check the digests in that file themselves. As this is the target machine (not the helper), we don't yet have the necessary Gentoo automated weekly release {{Highlight|public key}}, whose fingerprint may be found on the [[Project:RelEng|Gentoo release engineering]] page. So let's fetch it now. Issue:
@@ -58,7 +58,7 @@ As before (when we [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB#do
 |gpg --keyserver hkp://pool.sks-keyservers.net:80 --recv-key 2D182910
 |prompt=livecd <span style{{=}}"color:royalblue;">/mnt/gentoo #</span>}}}}
 {{Note|If the above keyserver is unavailable for some reason, you should be able to use any other one, such as {{c|pgp.mit.edu}} for example.}}
-{{Note|If the fingerprint has changed, substitute the correct value for {{c|2D182910}} in the above.}}
+{{Note|If the fingerprint has changed, substitute the correct value for <code>2D182910</code> in the above.}}
 
 You should next verify that the key's ''full'' fingerprint matches that listed on the [[Project:RelEng#Keys|Release Engineering]] page:
 {{RootCmd
@@ -70,7 +70,7 @@ pub   rsa4096 2009-08-25 [SC] [expires: 2019-08-22]
 uid           [ unknown] Gentoo Linux Release Engineering (Automated Weekly Release Key) <releng@gentoo.org>
 </pre>
 }}
-{{Note|Although correct at the time of writing, the key ID you need to enter in the above command may differ from {{c|2D182910}}, as may the fingerprint data shown. Always use the [[Project:RelEng#Keys|Release Engineering]] page data as your primary reference.}}
+{{Note|Although correct at the time of writing, the key ID you need to enter in the above command may differ from <code>2D182910</code>, as may the fingerprint data shown. Always use the [[Project:RelEng#Keys|Release Engineering]] page data as your primary reference.}}
 
 If all looks good, verify the digest file:
 {{RootCmd
@@ -103,7 +103,7 @@ The last step in this stage is to unpack the tarball. Double check you are in th
 |prompt=livecd <span style{{=}}"color:royalblue;">/mnt/gentoo #</span>
 }}
 
-As per [[Handbook:AMD64/Installation/Stage#Unpacking_the_stage_tarball{{!}}the handbook]], the options to {{c|tar}} are to e'''x'''tract, provide '''v'''erbose output, decompress with xz ('''J'''), '''p'''reserve permissions and extract from a '''f'''ile, not standard input. Further, the {{c|--xattrs-include{{=}}'*.*'}} option ensures that extended attributes stored in the tarball are also copied (from all namespaces), and the {{c|--numeric-owner}} option uses the numeric owner and group IDs from the tarball, even if they are different in the host system (they will not be here, since we are booted from an official minimal install image, but it doesn't hurt to specify this).
+As per [[Handbook:AMD64/Installation/Stage#Unpacking_the_stage_tarball{{!}}the handbook]], the options to {{c|tar}} are to e'''x'''tract, provide '''v'''erbose output, decompress with xz ('''J'''), '''p'''reserve permissions and extract from a '''f'''ile, not standard input. Further, the <code>--xattrs-include{{=}}'*.*'</code> option ensures that extended attributes stored in the tarball are also copied (from all namespaces), and the {{c|--numeric-owner}} option uses the numeric owner and group IDs from the tarball, even if they are different in the host system (they will not be here, since we are booted from an official minimal install image, but it doesn't hurt to specify this).
 
 Check that the base system has unpacked OK:
 {{RootCmd
@@ -188,17 +188,17 @@ IUSE=""
 }}
 
 Not a lot to see, is there? That's because {{c|diffstat}} uses a standard [[:Wikipedia:GNU_build_system|'Autotools']]-style build, without patches, so the default {{c|ebuild}} control flow (and invoked 'hook' functions) can do almost everything for us. Therefore, all that has to be done is:
-* to specify (via the {{c|EAPI}} variable) that the {{c|ebuild}} makes use of the most modern [http://devmanual.gentoo.org/ebuild-writing/eapi/index.html package manager functionality], including built-in default behaviours (version {{c|6}}, at the time of writing).
-* to specify a brief {{c|DESCRIPTION}}, {{c|HOMEPAGE}} (both self-explanatory) and most importantly, {{c|SRC_URI}}; this last variable tells Portage the location from whence to download the package tarball, if it cannot find it in the Portage mirrors (the {{c|${P}}} expands out to be the package name and version; a handy list of these special variables may be found [https://devmanual.gentoo.org/ebuild-writing/variables/ here]);
-* to specify the {{c|LICENSE}} (the relevant text may be found at {{Path|/usr/src/portage/licenses/${LICENSE}}});
+* to specify (via the <var>EAPI</var> variable) that the {{c|ebuild}} makes use of the most modern [http://devmanual.gentoo.org/ebuild-writing/eapi/index.html package manager functionality], including built-in default behaviours (version {{c|6}}, at the time of writing).
+* to specify a brief <var>DESCRIPTION</var>, <var>HOMEPAGE</var> (both self-explanatory) and most importantly, <var>SRC_URI</var>; this last variable tells Portage the location from whence to download the package tarball, if it cannot find it in the Portage mirrors (the <var>${P}</var> expands out to be the package name and version; a handy list of these special variables may be found [https://devmanual.gentoo.org/ebuild-writing/variables/ here]);
+* to specify the <var>LICENSE</var> (the relevant text may be found at {{Path|/usr/src/portage/licenses/${LICENSE}}});
 * to specify that SLOTTING is not used by this ebuild (this is an advanced feature; see [[#slot_intro|below]] for a brief overview); and
-* finally to list the architectures ({{c|KEYWORDS}}) for which this {{c|ebuild}} applies. Here, we can see that (at the time of writing) it is in testing (has a tilde) for all the architectures listed ({{c|alpha}}, {{c|amd64}} etc.).
+* finally to list the architectures (<var>KEYWORDS</var>) for which this {{c|ebuild}} applies. Here, we can see that (at the time of writing) it is in testing (has a tilde) for all the architectures listed ({{c|alpha}}, {{c|amd64}} etc.).
 
-{{Note|At the time of writing, {{c|diffstat}} had no USE flags, hence {{c|IUSE{{=}}""}}.}}
+{{Note|At the time of writing, {{c|diffstat}} had no <var>USE</var> flags, hence <code>IUSE{{=}}""</code>.}}
 
-That's all that is needed in this case, because the default {{c|ebuild}} functions will automatically pull down the tarball, unpack it, issue a {{c|./configure}}, issue a {{c|make}}, followed by a {{c|make install}} (to a dummy root), after which, the program file (plus manpage etc.) will be copied over ('merged') to the real filesystem (and any prior version's files safely unmerged immediately thereafter).
+That's all that is needed in this case, because the default {{c|ebuild}} functions will automatically pull down the tarball, unpack it, issue a <code>./configure</code>, issue a <code>make</code>, followed by a <code>make install</code> (to a dummy root), after which, the program file (plus manpage etc.) will be copied over ('merged') to the real filesystem (and any prior version's files safely unmerged immediately thereafter).
 
-{{Note|In fact, the default {{c|ebuild}} flow will handle not just [[:Wikipedia:GNU_build_system{{!}}'Autotools']] packages, but also any package provided with a Makefile that can accept {{c|make}} and {{c|make install}} invocations, and respects the {{c|DESTDIR}} variable. By default, the {{c|./configure}} step will be omitted if no {{c|configure}} file is found in the top-level source directory of the tarball after unpacking.}}
+{{Note|In fact, the default {{c|ebuild}} flow will handle not just [[:Wikipedia:GNU_build_system{{!}}'Autotools']] packages, but also any package provided with a Makefile that can accept {{c|make}} and {{c|make install}} invocations, and respects the <var>DESTDIR</var> variable. By default, the {{c|./configure}} step will be omitted if no {{c|configure}} file is found in the top-level source directory of the tarball after unpacking.}}
 
 There are then two main ways to invoke the {{c|diffstat}} ebuild. The <span id="use_emerge">first</span> (and more common way) is via {{c|emerge}}: typically, you would issue:
 
@@ -230,7 +230,7 @@ The {{c|diffstat}} example above is about as simple as a real-world ebuild gets!
 
 However, one common additional requirement is the need to apply [[:Wikipedia:Patch_(computing)#In_software_development|patches]]. To do this, an ebuild will typically override the default [http://devmanual.gentoo.org/ebuild-writing/functions/src_prepare/index.html {{c|src_prepare}}] ebuild 'hook' function (invoked by the standard {{c|ebuild}} flow after the source tarball has been successfully unpacked), and in the overridden version use the [http://devmanual.gentoo.org/ebuild-writing/functions/src_prepare/epatch/index.html epatch] utility function to apply patches held in the {{c|files}} directory.
 
-{{Note|However, from EAPI 6 the default {{c|src_prepare}} function is no-longer a no-op, it will automatically apply any patches listed in the {{c|PATCHES}} array variable (and call {{c|eapply_user}}, to apply user patches)<ref>Gentoo Development Guide: [http://devmanual.gentoo.org/ebuild-writing/eapi/index.html "EAPI Usage and Description"]</ref>. The ebuild we're about to look at however uses EAPI 5, so has to apply its required patches using {{c|epatch}} directly.}}
+{{Note|However, from EAPI 6 the default {{c|src_prepare}} function is no-longer a no-op, it will automatically apply any patches listed in the <var>PATCHES</var> array variable (and call {{c|eapply_user}}, to apply user patches)<ref>Gentoo Development Guide: [http://devmanual.gentoo.org/ebuild-writing/eapi/index.html "EAPI Usage and Description"]</ref>. The ebuild we're about to look at however uses EAPI 5, so has to apply its required patches using {{c|epatch}} directly.}}
 
 For example, consider the {{c|sign}} package, which provides a file signing and signature verification utility. It lives in the {{c|app-crypt}} category. Looking in its corresponding directory ({{Path|/usr/portage/app-crypt/sign}}) we notice immediately that unlike {{c|diffstat}}, there is a {{c|files}} subdirectory, containing two patches ({{c|1.0.7-as-needed.patch}} and {{c|1.0.7-openssl-0.9.8.patch}}).
 
@@ -279,14 +279,14 @@ src_install() {
 
 Most of this should be familiar enough from the {{c|diffstat}} example, but there are some new elements too. Specifically:
 * the {{c|inherit}} command is used to pull in two useful 'eclasses': [http://devmanual.gentoo.org/eclass-reference/eutils.eclass/ eutils] (which supplies the {{c|epatch}} function discussed shortly) and [https://devmanual.gentoo.org/eclass-reference/toolchain-funcs.eclass/ toolchain-funcs] (which supplies {{c|tc-getCC}}, a function to return the name of the toolchain C compiler);
-* the {{c|SRC_URI}} makes use of the {{c|${PN}}} variable, which expands out to the package name, ''without'' version (a full list of these convenience variables may be found [http://devmanual.gentoo.org/ebuild-writing/variables/index.html here]);
-* the {{c|IUSE}} definition is not blank: there is one optional USE flag here, {{c|libressl}} (which switches to that SSL library, as we shall discuss next; see [[#use_flags|below]] for a brief introduction to USE flags);
-* the {{c|RDEPEND}} variable specifies a set of runtime dependencies, and the {{c|DEPEND}} a set of build/install time dependencies, for the package. This is used by Portage to ensure that all prerequisites are also installed, when you ask to {{c|emerge app-crypt/sign}}. Notice that this build pulls in {{Package|dev-libs/openssl}} by default, unless the {{c|libressl}} USE flag is specified, in which case {{Package|dev-libs/libressl}} is pulled in instead;
+* the <var>SRC_URI</var> makes use of the <var>${PN}</var> variable, which expands out to the package name, ''without'' version (a full list of these convenience variables may be found [http://devmanual.gentoo.org/ebuild-writing/variables/index.html here]);
+* the <var>IUSE</var> definition is not blank: there is one optional USE flag here, {{c|libressl}} (which switches to that SSL library, as we shall discuss next; see [[#use_flags|below]] for a brief introduction to USE flags);
+* the <var>RDEPEND</var> variable specifies a set of runtime dependencies, and the <var>DEPEND</var> a set of build/install time dependencies, for the package. This is used by Portage to ensure that all prerequisites are also installed, when you ask to {{c|emerge app-crypt/sign}}. Notice that this build pulls in {{Package|dev-libs/openssl}} by default, unless the {{c|libressl}} <var>USE</var> flag is specified, in which case {{Package|dev-libs/libressl}} is pulled in instead;
 * the [https://devmanual.gentoo.org/ebuild-writing/functions/src_prepare/index.html {{c|src_prepare}}] 'hook' function (which by default is a no-op at EAPI 5) is overridden to perform two custom tasks:
-** to patch the source using the {{c|epatch}} utility, using patch files {{Path|/usr/portage/app-crypt/sign/files/1.0.7-openssl-0.9.8.patch}} and {{Path|/usr/portage/app-crypt/sign/files/1.0.7-as-needed.patch}} ({{c|${PV}}} expands to the package version, without name or revision tags). As described [http://devmanual.gentoo.org/ebuild-writing/functions/src_prepare/epatch/index.html here], {{c|epatch}} intelligently attempts to apply patches using different {{c|-p}} levels etc.
+** to patch the source using the {{c|epatch}} utility, using patch files {{Path|/usr/portage/app-crypt/sign/files/1.0.7-openssl-0.9.8.patch}} and {{Path|/usr/portage/app-crypt/sign/files/1.0.7-as-needed.patch}} (<var>${PV}</var> expands to the package version, without name or revision tags). As described [http://devmanual.gentoo.org/ebuild-writing/functions/src_prepare/epatch/index.html here], {{c|epatch}} intelligently attempts to apply patches using different {{c|-p}} levels etc.
 ** to invoke a small {{c|sed}} script to modify the Makefile slightly.
-* the [https://devmanual.gentoo.org/ebuild-writing/functions/src_compile/index.html {{c|src_compile}}] 'hook' function (which by default will simply invoke {{c|emake}} after some pre-preprocessing) is overridden to ensure that the C compiler is set correctly (the upstream Makefile not supporting environment-set {{c|CC}} values in this case);
-* the [https://devmanual.gentoo.org/ebuild-writing/functions/src_install/index.html {{c|src_install}}] 'hook' function (which by default will invoke {{c|emake DESTDIR{{=}}"${D}" install}} and then further install any documentation specified via the {{c|DOCS}} array variable) is overridden to perform a manual install using some helper [https://devmanual.gentoo.org/function-reference/install-functions/index.html install functions]; this is sometimes necessary if the upstream Makefile does not support the use of {{c|DESTDIR}}, or does not support the {{c|install}} target.
+* the [https://devmanual.gentoo.org/ebuild-writing/functions/src_compile/index.html {{c|src_compile}}] 'hook' function (which by default will simply invoke {{c|emake}} after some pre-preprocessing) is overridden to ensure that the C compiler is set correctly (the upstream Makefile not supporting environment-set <code>CC</code> values in this case);
+* the [https://devmanual.gentoo.org/ebuild-writing/functions/src_install/index.html {{c|src_install}}] 'hook' function (which by default will invoke <var>emake DESTDIR{{=}}"${D}" install</var> and then further install any documentation specified via the <var>DOCS</var> array variable) is overridden to perform a manual install using some helper [https://devmanual.gentoo.org/function-reference/install-functions/index.html install functions]; this is sometimes necessary if the upstream Makefile does not support the use of <var>DESTDIR</var>, or does not support the {{c|install}} target.
 
 {{Note|Of course, ebuilds can be much more complex than either of the above two examples, but they should give you a basic idea of how the system works. For more details, I'd refer you to the Gentoo Development Guide [http://devmanual.gentoo.org/ebuild-writing/index.html "Ebuild Writing"] section.}}
 
@@ -382,7 +382,7 @@ There are two main dimensions to this - the maximum number of concurrent Portage
 
 As has been recommended, we'll set our number of concurrent jobs and parallel make threads to attempt, to be equal to the number of CPUs on the system, plus one.<ref>Preney, Paul. [http://www.preney.ca/paul/archives/341 "Parallel Builds with Gentoo's Emerge"]</ref> We'll also prevent new jobs or compilations starting when the system load average hits or exceeds the number of CPUs.
 
-The two variables we'll need to set here are EMERGE_DEFAULT_OPTS (for Portage job control) and [[MAKEOPTS]] (to pass options on to {{c|make}}). These are often defined in the {{Path|make.conf}} file, but we want to allow the values to be set programmatically. Since Portage doesn't support fancy [[:Wikipedia:Bash_(Unix_shell)|bash]] features like command substitution,<ref>[http://dev.gentoo.org/~zmedico/portage/doc/man/make.conf.5.html make.conf manpage]</ref> we'll set and export these variables in root's {{Path|.bashrc}} instead (these will then override any conflicting values in the {{Path|make.conf}} or profile, as explained [[#variable_check_order|earlier]]).
+The two variables we'll need to set here are <var>EMERGE_DEFAULT_OPTS</var> (for Portage job control) and <var>[[MAKEOPTS]]</var> (to pass options on to {{c|make}}). These are often defined in the {{Path|make.conf}} file, but we want to allow the values to be set programmatically. Since Portage doesn't support fancy [[:Wikipedia:Bash_(Unix_shell)|bash]] features like command substitution,<ref>[http://dev.gentoo.org/~zmedico/portage/doc/man/make.conf.5.html make.conf manpage]</ref> we'll set and export these variables in root's {{Path|.bashrc}} instead (these will then override any conflicting values in the {{Path|make.conf}} or profile, as explained [[#variable_check_order|earlier]]).
 {{Note|Generally speaking, {{c|emerge}} is launched as the root user (superuser) in Gentoo. {{c|emerge}} usually drops its privilege level to run as the "portage" user when compiling.}} 
 
 Start up your favourite editor: in this tutorial we'll be assuming {{c|nano}}:
@@ -405,7 +405,7 @@ export EMERGE_DEFAULT_OPTS="--jobs=${NUMCPUSPLUSONE} --load-average=${NUMCPUS}"
 
 Save and exit the {{c|nano}} editor.
 
-{{Note|Should you experience problems with parallel {{c|make}}, and wish to fall back to a more conservative setting, you can do so globally by setting {{c|MAKEOPTS{{=}}"-j1"}} in the above.}}
+{{Note|Should you experience problems with parallel {{c|make}}, and wish to fall back to a more conservative setting, you can do so globally by setting <code>MAKEOPTS{{=}}"-j1"</code> in the above.}}
 
 Next, we need to make sure that the {{Path|.bashrc}} file is picked up by root's login shell, so copy across the default {{Path|.bash_profile}}:
 {{RootCmd
@@ -467,8 +467,8 @@ VIDEO_CARDS="intel i965"
 INPUT_DEVICES="libinput"
 }}
 
-{{Note|Set {{c|VIDEO_CARDS}} and {{c|INPUT_DEVICES}} to appropriate values for your particular system in {{Path|/etc/portage/make.conf}}. See table [[#video_cards_variable{{!}}below]] for discussion.}}
-{{Important|As [[#set_cpu_flags_x86{{!}}discussed below]], ensure that you only specify {{c|CPU_FLAGS_X86}} flags that your CPU supports, otherwise compiled software may crash.}}
+{{Note|Set <var>VIDEO_CARDS</var> and <var>INPUT_DEVICES</var> to appropriate values for your particular system in {{Path|/etc/portage/make.conf}}. See table [[#video_cards_variable{{!}}below]] for discussion.}}
+{{Important|As [[#set_cpu_flags_x86{{!}}discussed below]], ensure that you only specify <var>CPU_FLAGS_X86</var> flags that your CPU supports, otherwise compiled software may crash.}}
 
 Save the file and exit {{c|nano}}.
 
@@ -513,6 +513,8 @@ Here is a <span id="make_conf_summary">brief summary</span> of the shipped ('sta
 |-
 | <span style="color:royalblue"><span id="input_devices_variable">{{c|INPUT_DEVICES}}</span></span> || USE_EXPAND || <span style="color:purple">''various input devices set by profile''<span> || <span style="color:royalblue">{{c|libinput}}</span> || This variable instructs the X Window server (which we will be installing shortly) which input devices to support. It is also a {{c|USE_EXPAND}} variable.<br>Note that whereas older systems might have typically specified "[[Evdev|{{c|evdev}}]] [[Synaptics|{{c|synaptics}}]]" here, these are now replaced for most purposes simply by [[Libinput|{{c|libinput}}]], as above (see also [[Xorg/Guide#make.conf|these comments]] on the Gentoo wiki; {{c|libinput}} is also the default input driver for {{c|wayland}} compositors).
 |}
+
+{{Note|When using [[../Installing_the_Gentoo_Stage_3_Files#variable_check_order|incremental]] variables such as <var>FEATURES</var>, note that the above-mentioned 'auto-cascading' only works ''between'' (executed) configuration files, not ''within'' them. As such, if you wanted to e.g. add a second <var>FEATURES</var> line to {{Path|/etc/portage/make.conf}}, you should use the <code>FEATURES{{=}}"${FEATURES} <newfeature>"</code> rubric, to avoid discarding the first line's settings. Incidentally, it's ''always'' safe to use the above rubric, even the first time you set an incremental variable in a configuration file. Furthermore, it note that it ''is'' safe to have multiple flags added line-by-line in ''non-executed'' configuration files, such as those in {{Path|/etc/portage/package.use/<...>}}, since these are externally parsed.}}
 
 == <span id="next_steps">Next Steps</span> ==
 

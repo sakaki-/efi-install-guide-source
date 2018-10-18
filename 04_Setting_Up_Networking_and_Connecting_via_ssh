@@ -70,7 +70,7 @@ Next, we'll need to <span id="create_wpa_config">create a configuration file</sp
 <then type your WiFi access point passphrase (without quotes) and press Enter>
 </pre>
 }}
-{{Note|Substitute the correct name for {{c|"ESSID"}} in the above ({{c|"MyWiFi"}}, or whatever it happens to be in your case).}}
+{{Note|Substitute the correct name for <code>"ESSID"</code> in the above (<code>"MyWiFi"</code>, or whatever it happens to be in your case).}}
 
 Lock down the file's access permissions (to root only) and check that its contents look sane. Issue:
 {{RootCmd
@@ -88,7 +88,7 @@ Assuming that looks OK, we can connect. Issue:
 Successfully initialized wpa_supplicant
 </pre>
 }}
-{{Note|Substitute the wireless network interface name you wrote down [[#note_wifi_if_name{{!}}a minute ago]] for {{c|wlp2s0}} in the above command.}}
+{{Note|Substitute the wireless network interface name you wrote down [[#note_wifi_if_name{{!}}a minute ago]] for <code>wlp2s0</code> in the above command.}}
 In this command:
 {| class="wikitable"
 |-
@@ -115,7 +115,7 @@ wlp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         ... etc ...
 </pre>
 }}
-{{Note|Substitute the wireless network interface name you wrote down [[#note_wifi_if_name{{!}}a minute ago]] for {{c|wlp2s0}} in the above command.}}
+{{Note|Substitute the wireless network interface name you wrote down [[#note_wifi_if_name{{!}}a minute ago]] for <code>wlp2s0</code> in the above command.}}
 
 Hopefully, it will have connected successfully. You are looking for the 'inet' (assuming IPv4) entry; in this case {{Highlight|192.168.1.106}} (yours will almost certainly differ).
 
@@ -158,8 +158,8 @@ Next, <span id="log_in_via_helper">move back onto the second</span>, helper PC (
 |ssh root@192.168.1.106
 |prompt=user@pc2 $}}
 (The {{c|sed}} command simply removes any record of fingerprints for previous connections to other {{c|sshd}} servers at that IP address, since {{c|ssh}} will refuse to connect if it finds a conflicting one.)
-{{Note|Of course, substitute whatever IP address you got back from {{c|ifconfig}} for 192.168.1.106 in the above commands.}}
-{{Tip|If you have a large number of existing keys in your {{Path|~/.ssh}} directory, you may get a "{{c|Too many authentication failures}}" error when attempting to connect. In this case (which will not affect most users), simply add the {{c|-o PubkeyAuthentication{{=}}no}} option to your {{c|ssh}} command.<ref>Server Fault: [https://serverfault.com/questions/36291/how-to-recover-from-too-many-authentication-failures-for-user-root/540613#540613 "How to recover from 'Too many Authentication Failures for user root'"]</ref>}}
+{{Note|Of course, substitute whatever IP address you got back from {{c|ifconfig}} for <code>192.168.1.106</code> in the above commands.}}
+{{Tip|If you have a large number of existing keys in your {{Path|~/.ssh}} directory, you may get a <code>Too many authentication failures</code> error when attempting to connect. In this case (which will not affect most users), simply add the <code>-o PubkeyAuthentication{{=}}no</code> option to your {{c|ssh}} command.<ref>Server Fault: [https://serverfault.com/questions/36291/how-to-recover-from-too-many-authentication-failures-for-user-root/540613#540613 "How to recover from 'Too many Authentication Failures for user root'"]</ref>}}
 Check the reported key fingerprint and then, if it matches one you noted earlier, continue as below:
 {{GenericCmd|<pre>
 ... additional output suppressed ...
@@ -183,7 +183,7 @@ Now, still via this remote login {{c|ssh}} connection (i.e., at the helper PC's 
 }}
 to start a new [[:Wikipedia:GNU_Screen|screen]] session - this is useful as it allows you to multiplex several virtual consoles, disconnect while lengthy compiles are running and then reconnect later, and so on.
 
-{{Note|With some (helper-PC-side) terminals, you may get an error issued when trying to run {{c|screen}}, of the form <code>Cannot find terminfo entry for 'xxx'</code>.<ref>Stack Overflow: [http://stackoverflow.com/questions/10823994/unix-screen-utility-error-cannot-find-termcap-entry-for-xterm-256color "Unix screen utility error: Cannot find termcap entry for 'xterm-256color'"]</ref> If this happens, simply try again with:{{RootCmd|TERM{{=}}xterm-color screen|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>}}}}
+{{Note|With some (helper-PC-side) terminals, you may get an error issued when trying to run {{c|screen}}, of the form <code>Cannot find terminfo entry for 'xxx'</code>.<ref>Stack Overflow: [http://stackoverflow.com/questions/10823994/unix-screen-utility-error-cannot-find-termcap-entry-for-xterm-256color "Unix screen utility error: Cannot find termcap entry for 'xterm-256color'"]</ref><br>If this happens, simply try again with:{{RootCmd|TERM{{=}}xterm-color screen|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>}}}}
 {{Note|See [https://library.linode.com/linux-tools/utilities/screen this brief discussion] of how to use screen. And here is an even briefer overview of some commands you may find useful to get you started: {{Key|Ctrl}}{{Key|a}} is the ''escape character'' for screen, which you type and then follow up with the rest of the command if necessary; so for example {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|?}} to get help, {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|d}} to detach the current session (disconnect from it from your ssh console, leaving any active commands to run in the background), {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|c}} to create a new 'window', {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|"}} (that's a double quote) to list the current windows, {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|n}} to go to the next window and {{Key|Ctrl}}{{Key|a}} ''then'' {{Key|p}} to go to the previous window. If you disconnect, you can reconnect to your session from a console (either when logged in via {{c|ssh}}, or directly on the machine's console itself) using {{RootCmd|screen -D -R}}You can also use this command to reconnect to a {{c|screen}} session if e.g. your {{c|ssh}} connection gets dropped for some reason.}}
 
 == <span id="next_steps">Next Steps</span> ==
