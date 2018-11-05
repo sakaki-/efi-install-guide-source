@@ -2,14 +2,14 @@
 
 <span id="final_config_steps">Currently</span>, your target system is using a kernel configuration largely based on that shipped with the Gentoo minimal installation image (with some [[../Configuring_and_Building_the_Kernel#buildkernel_config_changes|necessary changes imposed by {{c|buildkernel}}]]). Since this configuration is (by design!) lightweight, it leaves many options disabled (including many device drivers). As a result, at this point in the installation a number of features that may be present on your machine (such as Bluetooth, WiFi, touchscreen etc.) may not yet be usable.
 
-In this (penultimate) chapter, we'll address that, by enabling the relevant configuration options and recompiling the kernel (using the {{c|buildkernel}} tool's {{c|--menuconfig}} option).
+In this (penultimate) chapter, we'll address that, by enabling the relevant configuration options and recompiling the kernel (using the {{c|buildkernel}} tool's <code>--menuconfig</code> option).
 
 Unfortunately, it's impossible to be precise about the exact options you'll need to enable, as these vary from machine to machine. Nevertheless, we'll cover a number of the most commonly encountered requirements (and by way of example, provide explicit instructions for WiFi, Bluetooth, touchscreen, audio, and integrated card reader on the CF-AX3).
 
 This section of the tutorial has no precise analogue in the Gentoo manual, although elements of it are reflected in [[Handbook:AMD64/Installation/Kernel|Chapter 7]]. You may also find it useful to refer to the [[Kernel/Gentoo_Kernel_Configuration_Guide|"Gentoo Kernel Configuration Guide"]] on the wiki.
 
 We will also address some additional miscellaneous issues at the end of this chapter, namely:
-* pruning your kernel configuration (to remove unused items and make the kernel image smaller); 
+* pruning your kernel image (by removing unused modules and firmware files);
 * getting suspend and hibernate working properly;
 * setting the system default {{c|python}} interpreter; and
 * disabling {{c|sshd}} (as we no longer need it).
@@ -20,18 +20,20 @@ Let's get started!
 
 == <span id="general_approach">General Approach</span> ==
 
-{{Important|In what follows, I am assuming that you know how to use the {{c|make menuconfig}} kernel configuration tool (which {{c|buildkernel}} invokes). You can find a short overview of {{c|make menuconfig}} in an [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro{{!}}earlier section]] of this tutorial; if you skipped over it before, you may wish to [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro{{!}}review it now]] (or at least, read the sub-section regarding [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#kernel_config_shorthand_note{{!}}"implementing a shorthand configuration fragment in {{c|make menuconfig}}"]]), before proceeding. Greg Kroah-Hartman's ''Linux Kernel in a Nutshell'' is also highly recommended.<ref name{{=}}"kernel_in_nutshell">Kroah-Hartman, Greg. [http://www.kroah.com/lkn/ ''Linux Kernel in a Nutshell'' (ebook)]. O'Reilly, 2006</ref>}}
+{{Important|In what follows, I am assuming that you know how to use the <code>make menuconfig</code> kernel configuration tool (which {{c|buildkernel}} invokes). You can find a short overview of <code>make menuconfig</code> in an [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro{{!}}earlier section]] of this tutorial; if you skipped over it before, you may wish to [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro{{!}}review it now]] (or at least, read the sub-section regarding [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#kernel_config_shorthand_note{{!}}"implementing a shorthand configuration fragment in <code>make menuconfig</code>"]]), before proceeding. Greg Kroah-Hartman's ''Linux Kernel in a Nutshell'' is also highly recommended.<ref name{{=}}"kernel_in_nutshell">Kroah-Hartman, Greg. [http://www.kroah.com/lkn/ ''Linux Kernel in a Nutshell'' (ebook)]. O'Reilly, 2006</ref>}}
 
 <span id="resume_after_menuconfig_tutorial">The</span> general approach when looking to enable a feature which is physically supported on your machine (for example, Bluetooth), is as follows:
 * Obviously, check whether the feature already works (it's always possible that your current kernel already has the necessary options enabled or modularized). If it does, great, you're done!
-* Otherwise, ensure your boot USB key is inserted, then invoke (as {{c|root}}) {{c|buildkernel --menuconfig}} in a terminal (which will run the {{c|make menuconfig}} tool).
+* Otherwise, ensure your boot USB key is inserted, then invoke (as {{c|root}}) <code>buildkernel --menuconfig</code> in a terminal (which will run the <code>make menuconfig</code> tool).
 * Collect as much information as possible about the physical device (vendor name, model name etc.), using tools such as {{c|hwinfo}}, {{c|lspci}} and {{c|lsusb}} (in a separate terminal window).
-* If the device description should match one given in the specific CF-AX3 instructions below, implement the given kernel configuration shorthand fragment (using the {{c|buildkernel --menuconfig}} interface).
+* If the device description should match one given in the specific CF-AX3 instructions below, implement the given kernel configuration shorthand fragment (using the <code>buildkernel --menuconfig</code> interface).
 * Otherwise, search (still via the {{c|menuconfig}} interface; see the [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro|tutorial earlier]]) for a suitable option, and then enable (or modularize) it (and any dependencies). If you can't find anything suitable this way, do a web search based on the information collected. (Unfortunately, there is no automated tool to do this for you).
-* Once you have made all desired changes, exit and save {{c|make menuconfig}}, thereby allowing {{c|buildkernel}} to continue and create a new kernel; and then reboot. With luck, your desired feature should now be operational.
-* If all else fails, invoke {{c|buildkernel --menuconfig}} again, try modularizing ''all'' options under the appropriate sub-menu in the {{c|make menuconfig}} interface, then save and exit, to create a new kernel as before. If, after a reboot, the desired feature is operational, you should then be able to locate its driver using {{c|hwinfo --pci --usb}} (after which you can rerun {{c|buildkernel --menuconfig}} if you like, to turn off all other unneeded items and recompile). This approach (i.e., turn on pretty much everything so that something will work ^-^) is actually the one taken by many Linux distributions (such as Ubuntu) for their 'generic' kernels, so don't feel shy to try it if need be.
+* Once you have made all desired changes, exit and save <code>make menuconfig</code>, thereby allowing {{c|buildkernel}} to continue and create a new kernel; and then reboot. With luck, your desired feature should now be operational.
+* If all else fails, invoke <code>buildkernel --menuconfig</code> again, try modularizing ''all'' options under the appropriate sub-menu in the <code>make menuconfig</code> interface, then save and exit, to create a new kernel as before. If, after a reboot, the desired feature is operational, you should then be able to locate its driver using <code>hwinfo --pci --usb</code> (after which you can rerun <code>buildkernel --menuconfig</code> if you like, to turn off all other unneeded items and recompile). This approach (i.e., turn on pretty much everything so that ''something'' will work ^-^) is actually the one taken by many Linux distributions (such as Ubuntu) for their 'generic' kernels, so don't feel shy to try it if need be.
 
 Tweaking your kernel configuration to enable machine features is one of the more frustrating tasks you have to do when bringing up a system under Linux. In this tutorial, I've deliberately postponed it till near the end - when you already have all the other elements of a functioning system in place.
+
+{{Tip|Depending on the popularity of your target machine with other Linux users, you may also be able to find useful kernel &mdash; and other &mdash; configuration information by searching online.}}
 
 To make the process concrete, I'll now lay out the changes necessary to enable the main features of the Panasonic CF-AX3 laptop. You will obviously need to adapt what follows depending on your particular target machine.
 
@@ -57,16 +59,16 @@ Ensure your boot USB key is inserted in the target machine, and then (at the ter
 |buildkernel --snapshot-backup
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-to create a 'last known good' backup of the current kernel (and configuration) on the boot USB key. Although {{c|buildkernel}} does create a backup of the previous version when it is run, that backup is not persistent, and will be overwritten the ''next'' time buildkernel is executed. Keeping a (timestamped) backup via {{c|--snapshot-backup}} ensures that there's no risk we run {{c|buildkernel}} twice between reboots, thereby losing our reference point.
+to create a 'last known good' backup of the current kernel (and configuration) on the boot USB key. Although {{c|buildkernel}} does create a backup of the previous version when it is run, that backup is not persistent, and will be overwritten the ''next'' time buildkernel is executed. Keeping a (timestamped) backup via <code>--snapshot-backup</code> ensures that there's no risk we run {{c|buildkernel}} twice between reboots, thereby losing our reference point.
 
 Next, issue:
 {{RootCmd
 |buildkernel --menuconfig
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-Because you have not specified {{c|--ask}} here, but you ''have'' specified {{c|--menuconfig}}, the process will run through by itself (assuming no errors) to the point where you can modify the kernel configuration using the standard {{c|curses}}-based {{c|make menuconfig}} editor GUI. You can now use that interface to enable specific features as specified in the kernel configuration shorthand 'recipes' given below.
+Because you have not specified <code>--ask</code> here, but you ''have'' specified <code>--menuconfig</code>, the process will run through by itself (assuming no errors) to the point where you can modify the kernel configuration using the standard {{c|curses}}-based <code>make menuconfig</code> editor GUI. You can now use that interface to enable specific features as specified in the kernel configuration shorthand 'recipes' given below.
 
-Now, because it will be useful to have a second terminal available (for {{c|emerge}} work etc.), open one now within GNOME. Click in the current terminal window (the one showing the {{c|make menuconfig}} interface, then press {{Key|Ctrl}}{{Key|Shift}}{{Key|n}} to spawn a new one. In this fresh window, log in as root:
+Now, because it will be useful to have a second terminal available (for {{c|emerge}} work etc.), open one now within GNOME. Click in the current terminal window (the one showing the <code>make menuconfig</code> interface, then press {{Key|Ctrl}}{{Key|Shift}}{{Key|n}} to spawn a new one. In this fresh window, log in as root:
 
 {{Cmd
 |su --login root
@@ -241,17 +243,17 @@ There are a couple of other devices on the CF-AX3 which I have not dealt with he
 
 Of course, as mentioned earlier, your particular target platform will have its own set of devices that may well not have been mentioned here (for example, MemoryStick readers, digital TV receivers etc.), and you should obviously adapt your kernel configuration accordingly.
 
-Lastly, if you find that your early boot splash is being interrupted with the error message "{{c|kvm: already loaded the other module}}", then you should ensure that ''only'' the KVM option (Intel or AMD) appropriate to your processor is set in the configuration. The relevant options are {{c|CONFIG_KVM_INTEL}} and {{c|CONFIG_KVM_AMD}}.
+Lastly, if you find that your early boot splash is being interrupted with the error message <code>kvm: already loaded the other module</code>, then you should ensure that ''only'' the KVM option (Intel or AMD) appropriate to your processor is set in the configuration. The relevant options are {{c|CONFIG_KVM_INTEL}} and {{c|CONFIG_KVM_AMD}}.
 
 === <span id="finishing_up_config">Finishing Up</span> ===
 
-When satisfied with your configuration, exit {{c|menuconfig}}, saving changes. Once you have done so, {{c|buildkernel}} will automatically create a new kernel with the newly created configuration, sign it, and copy it over to the boot USB key. Wait for the process to complete (you get the message "{{c|All done!}}"). Then (leaving the boot USB key inserted) restart your target machine (you can do this from within GNOME, by clicking on the 'power' icon (in the top right of the screen), clicking on the 'power' button in the dropdown menu that then appears, and then clicking on the 'Restart' button in the dialog).
+When satisfied with your configuration, exit {{c|menuconfig}}, saving changes. Once you have done so, {{c|buildkernel}} will automatically create a new kernel with the newly created configuration, sign it, and copy it over to the boot USB key. Wait for the process to complete (you get the message <code>All done!</code>). Then (leaving the boot USB key inserted) restart your target machine (you can do this from within GNOME, by clicking on the 'power' icon (in the top right of the screen), clicking on the 'power' button in the dropdown menu that then appears, and then clicking on the 'Restart' button in the dialog).
 
 The machine should then power cycle (you will be cleanly logged out of GNOME first). When it restarts, as before, you will need to enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]), directly at the target machine keyboard to unlock the LUKS partition. You should then be presented with a GNOME login page (as [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#login_to_gnome|previously]]). Directly at the target machine, click on your (regular) user name then, when prompted, type in the (regular user) password you set up [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#setup_regular_user|earlier]] (ensure you have the correct keyboard settings, if relevant, as discussed [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#input_source_menu|above]]).
 
 You should now be able to use all the features of your machine that you just enabled (such as WiFi etc.).
 
-{{Note|Of course, it's entirely fine to repeat this {{c|"buildkernel --menuconfig"}} process a few times, so if there are other features you need to enable, feel free to do so now. If your machine fails to boot with a given configuration, see these [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}earlier instructions]] for how to fall back to the prior kernel on the boot USB key ({{c|buildkernel}} makes a backup of the previous kernel each time it is run).}}
+{{Note|Of course, it's entirely fine to repeat this <code>buildkernel --menuconfig</code> process a few times, so if there are other features you need to enable, feel free to do so now. If your machine fails to boot with a given configuration, see these [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}earlier instructions]] for how to fall back to the prior kernel on the boot USB key ({{c|buildkernel}} makes a backup of the previous kernel each time it is run).}}
 
 === <span id="config_lcd_backlight">LCD Screen Backlight (Addressing the i915 Regression)</span> ===
 
@@ -260,12 +262,12 @@ One final note. Like most laptops, the CF-AX3 has a dimmable backlight on its LC
 |nano -w /etc/buildkernel.conf
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-Locate the line specifying {{c|ADDITIONALKERNELCMDS}}. If it is currently commented out (the line starts with a {{c|#}} character), then uncomment and edit that line so it reads:
+Locate the line specifying <var>ADDITIONALKERNELCMDS</var>. If it is currently commented out (the line starts with a {{c|#}} character), then uncomment and edit that line so it reads:
 {{FileBox|filename=/etc/buildkernel.conf|title=Specifying additional kernel command line options|lang=bash|1=
 ADDITIONALKERNELCMDS="acpi_backlight=video"
 }}
 Save and exit the {{c|nano}} editor.
-{{Note|If you already have some additional kernel command line options specified using the {{c|ADDITIONALKERNELCMDS}} variable, then simply add the {{c|acpi_backlight{{=}}video}} text to the end of the string (in {{Path|/etc/buildkernel.conf}}), separating it from the existing text with a space.}}
+{{Note|If you already have some additional kernel command line options specified using the <var>ADDITIONALKERNELCMDS</var> variable, then simply add the <code>acpi_backlight{{=}}video</code> text to the end of the string (in {{Path|/etc/buildkernel.conf}}), separating it from the existing text with a space.}}
 Now, ensure that you have the boot USB key inserted, and issue:
 {{RootCmd
 |buildkernel
@@ -275,20 +277,39 @@ to rebuild the kernel. Wait for the process to finish (you receive the message "
 
 When you log in again to GNOME, you should find that the screen brightness controls now operate correctly.
 
-== <span id="cleaning_kernel_config">Cleaning Up the Kernel Configuration (Optional Step)</span> ==
+== <span id="cleaning_kernel_config">Reducing the Kernel Image Size (Optional Step)</span> ==
 
 {{Note|This is an entirely ''optional'' step - if you'd like to skip it, simply [[#suspend_hibernate{{!}}continue to the next section]] now.}}
 
-As your current Linux kernel is largely derived from the minimal-install image configuration, it contains a lot of modularized and enabled features that are irrelevant to your machine (for example, all the specific x86 platform support drivers for vendors other than yours). While this bloat is mostly harmless, there are a few negative side effects of having features you don't need, for example:
-* the kernel image is larger (which makes boot time slightly longer); even even where most features are modularized, since all modules [[../Configuring_and_Building_the_Kernel#copy_static_gpg|are copied]] into the initramfs, which is then [[../Configuring_and_Building_the_Kernel#initramfs_into_kernel|integrated into the kernel itself]]. This can be an important consideration if you choose to migrate your kernel into the (often cramped) Windows EFI system partition (instructions for which are [[../Using_Your_New_Gentoo_System_under_OpenRC#migrating_off_usb_key|provided later]]);
+As your current Linux kernel is largely derived from the minimal-install image configuration, it contains a lot of modularized and enabled features that are ''irrelevant'' to your machine (for example, all the specific x86 platform support drivers for vendors other than yours). While this bloat is mostly harmless, there are a few negative side effects of having features you don't need, for example:
+* the kernel image is larger (which makes boot time slightly longer) &mdash; even even where most features are modularized &mdash; since all modules [[../Configuring_and_Building_the_Kernel#copy_static_gpg|are copied]] into the initramfs, which is then [[../Configuring_and_Building_the_Kernel#initramfs_into_kernel|integrated into the kernel itself]]. This can be an important consideration if you choose to migrate your kernel into the (somewhat cramped) Windows EFI system partition (instructions for which are [[../Using_Your_New_Gentoo_System_under_OpenRC#migrating_off_usb_key|provided later]]);
 * more code must be (uselessly) compiled each time you upgrade your kernel, which costs time; and
 * more features = a larger attack surface exposed to malware.
 
-Accordingly, you may wish to perform another {{c|buildkernel --menuconfig}} run, disabling features that do not apply to you. If so, proceed carefully: deselect some features, complete the build, and reboot; then repeat. This always allows you to fall back to the previous version kernel if something goes wrong, and you find you have chopped out something vital by mistake.
+Furthermore, to ensure that all necessary devices can be properly initialized during early boot, by default a complete copy of {{Path|/lib/firmware}} is included within the initramfs too (as was discussed [[../Configuring_and_Building_the_Kernel#include_firmware_in_initramfs|earlier]]). This directory is ~300MiB uncompressed at the time of writing, and while the vast majority of its contents will have no relevance to your target machine's hardware, they certainly ''will'' swell the resulting kernel image significantly &mdash; so much so, in fact, that it becomes impossible to fit it inside a typical existing Windows EFI system partition (100MB).
 
-<span id="using_localmodconfig">Several commentators</span> have suggested using {{c|make localmodconfig}} to automate this task,<ref>Debian User Forums: [http://forums.debian.net/viewtopic.php?f=5&t=52025 "Is there an automatic .config generator for kernel 2.6.33.4?"]</ref><ref>Unix & Linux Stack Exchange Forum: [http://unix.stackexchange.com/questions/119876/how-to-build-a-custom-kernel-with-localmodconfig-that-support-hardware-of-multip "How to build a custom kernel with localmodconfig that support hardware of multiple machines"]</ref><ref>Leemhuis, Thorsten [http://www.h-online.com/open/features/Good-and-quick-kernel-configuration-creation-1403046.html "Good and quick kernel configuration creation"]</ref><ref>Reddit: [http://www.reddit.com/r/kernel/comments/1p6bw3/kernel_compiling_tip_use_localmodconfig_to_only/ "Kernel compiling tip: Use localmodconfig to only enable and compile the modules currently in use"]</ref> but that can be dangerous (as any modules not ''currently'' loaded by the kernel will be purged from the configuration, which can result in filesystem drivers, crypto modules, codepages etc. being dropped). Furthermore, there are lots of 'false positive' loaded modules retained as well (e.g. ATA drivers) when you use this method. The best approach remains to work through manually, and do things methodically; nevertheless if you do wish to try out {{c|localmodconfig}} for yourself, proceed as follows:
+Accordingly, you may wish to take steps to pare down the number of [[#pare_down_modules|unnecessary modules]] and/or [[#pare_down_firmware|unnecessary firmware files]] contained within the bootable kernel image created by {{c|buildkernel}}. If so, instructions for these (optional) steps are provided in the subsections immediately following.
 
-First, if you don't have a root terminal open already in GNOME, do so now: press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
+{{Note|Other than a slight impact on load time, the final size of the kernel image is ''not'' particularly relevant if you intend &mdash; as many users of this guide will &mdash; to ''continue'' to boot from USB stick (and so ''not'' migrate the kernel onto a pre-existing existing EFI system partition, as described [[../Using_Your_New_Gentoo_System_under_OpenRC#migrating_off_usb_key{{!}}later]]). A big initramfs does ''not'' mean that the kernel of the ''booted'' system will consume a large amount of system memory, for example (since the initramfs is discarded by the initial startup script, shortly after the main root filesystem is brought live).<br>For that reason, the instructions in this section are optional: if you wish, simply [[#suspend_hibernate{{!}}click here]] to skip them.}}
+
+{{Important|Always proceed cautiously, when removing firmware &mdash; or disabling kernel configuration items &mdash; that do not ''appear'' to be relevant to you, and ensure (as detailed [[#make_snapshot_backup|below]]) that you have a 'known good' backup kernel to fall back to in case of problems.}}
+
+{{Important|Remember that if you change any important hardware components on your PC (switching the graphics card, for example), you should revisit this section, to ensure that the modules and boot-time firmware are appropriately tailored to your new reality.}}
+
+=== <span id="pare_down_modules">Removing Unnecessary Kernel Modules from the initramfs</span> ===
+
+The ''safest'' way to remove unneeded modules from your kernel configuration is as follows:
+# as root, run <code>buildkernel --menuconfig</code> (ensuring your boot usb key is inserted first); then
+# ''manually'' deselect those features which appear to have no local relevance (working on a small section at a time for manageability);
+# reboot (once the new kernel has been built); then
+# test for regression (reverting or rebuilding the kernel if necessary); and
+# repeat steps 1 through 4, until an acceptably small configuration is obtained.
+
+Unfortunately, such a process can easily take a day (or more) to complete fully.
+
+<span id="using_localmodconfig">Fortunately, however, there is a quicker, ''automatic'' method to remove</span> unnecessary modules: namely, the <code>make localmodconfig</code> tool, which is standard utility shipped with the kernel source code.<ref>Debian User Forums: [http://forums.debian.net/viewtopic.php?f=5&t=52025 "Is there an automatic .config generator for kernel 2.6.33.4?"]</ref><ref>Unix & Linux Stack Exchange Forum: [http://unix.stackexchange.com/questions/119876/how-to-build-a-custom-kernel-with-localmodconfig-that-support-hardware-of-multip "How to build a custom kernel with localmodconfig that support hardware of multiple machines"]</ref><ref>Leemhuis, Thorsten [http://www.h-online.com/open/features/Good-and-quick-kernel-configuration-creation-1403046.html "Good and quick kernel configuration creation"]</ref><ref>Reddit: [http://www.reddit.com/r/kernel/comments/1p6bw3/kernel_compiling_tip_use_localmodconfig_to_only/ "Kernel compiling tip: Use localmodconfig to only enable and compile the modules currently in use"]</ref> To be fair, this ''is'' a little riskier than doing things by hand (since the utility causes any modules not ''currently'' loaded by the kernel to be purged from the configuration, which can in turn cause some (wanted) filesystem drivers, crypto modules, codepages etc. to be dropped. Moreover, it tends to retain rather a lot of 'false positive' modules as well (e.g. ATA drivers), so it certainly isn't perfect. Nevertheless, it ''is'' convenient and 'one-shot' in nature, so, if you do wish to try out {{c|localmodconfig}} for yourself, proceed as follows.
+
+<span id="open_root_gnome_term">First, if you don't have a root terminal</span> open already in GNOME, do so now: press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
 {{Cmd
 |su --login root
 |prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
@@ -298,35 +319,395 @@ Password: <enter root password>
 }}
 The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
 
-Then in this terminal, issue:
+<span id="make_snapshot_backup">Then in this terminal</span>, issue:
 {{RootCmd
 |buildkernel --snapshot-backup
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-to create a 'last known good' backup of the current kernel (and configuration) on the USB boot key (this ensures that there's no risk we lose our 'safe' version, which might otherwise happen were we to run {{c|buildkernel}} twice in a row between test reboots).
+to create a 'last known good' timestamped backup of the current kernel (and configuration) on the USB boot key (this ensures that there's no risk we lose our 'safe' version, which might otherwise happen were we to run {{c|buildkernel}} twice in a row between test reboots).
 
-Now switch to the kernel directory, ask {{c|localmodconfig}} to do its magic, then return:
+Ensure you plug in any important devices at this point, so their driver modules will be loaded (incidentally, it's generally fine to ''unplug'' them again almost immediately, as any relevant modules will generally ''remain'' loaded in such an event). Then, when ready, switch to the kernel directory, and ask {{c|localmodconfig}} to do its magic then return:
 {{RootCmd
 |pushd /usr/src/linux && make localmodconfig && popd
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
-Finally, ensure you have the boot USB key inserted, and create a new kernel based on the stripped-down configuration:
+Once this has completed, ensure you have the boot USB key inserted, and create a new kernel based on the stripped-down configuration:
 {{RootCmd
 |buildkernel --menuconfig
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
-This will allow you to review the proposed configuration for sanity in the {{c|make menuconfig}} tool, and make any necessary changes.
-{{Note|You can find a short overview of {{c|make menuconfig}} in an [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro{{!}}earlier troubleshooting section]] of this tutorial.}}
+This will allow you to review the proposed configuration for sanity in the <code>make menuconfig</code> tool, and make any necessary changes.
+{{Note|You can find a short overview of <code>make menuconfig</code> in an [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#make_menuconfig_intro{{!}}earlier troubleshooting section]] of this tutorial.}}
 
-When satisfied with your configuration, exit {{c|menuconfig}}, saving any changes. Once you have done so, {{c|buildkernel}} will automatically create a new kernel with the newly created configuration, sign it, and copy it over to the boot USB key, as before. Once the process completes (you get the message "{{c|All done!}}"), leave the USB key inserted and reboot in the normal manner. 
+<span id="check_size_of_mod_slimmed_kernel">When satisfied with your</span> final configuration, exit {{c|menuconfig}}, saving any changes. Once you have done so, {{c|buildkernel}} will automatically create a new kernel with the newly created configuration, sign it, and copy it over to the boot USB key, as before. Once the process completes (you get the message <code>All done!</code>), you can check the new size of your kernel image, by issuing:
+{{RootCmd
+|ls -lht /boot/vmlinuz*-gentoo {{!}} head -n 1
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+-rw-r--r-- 1 root root 130M Oct 26 12:18 /boot/vmlinuz-4.14.65-gentoo
+</pre>
+}}
+Obviously, your output will differ, depending upon your kernel version, the number of modules removed etc.
 
-{{Note|If your machine fails to boot with a given configuration, see these [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}earlier instructions]] for how to fall back to the prior kernel on the boot USB key.}}
+{{Note|Yes, the size ''is'' still large, and that's due to the included firmware files, an issue we will address [[#remove_unnecessary_firmware{{!}}shortly]].}}
 
-This is very much an optional task, so feel free to postpone it for a rainy day (or forever if you like ^-^ !).
+{{Note|If you chose [[../Configuring_and_Building_the_Kernel/#deblob_or_not{{!}}earlier]] to ''deblob'' your kernel, use <code>/boot/vmlinuz*-ck</code> in place of <code>/boot/vmlinuz*-gentoo</code> in the above. For avoidance of doubt, this will ''not'' apply to most users.}}
 
-{{Note|However, if you would like to migrate your kernel to the Windows EFI partition on the hard drive (instructions for which are provided [[../Using_Your_New_Gentoo_System_under_OpenRC#migrating_off_usb_key{{!}}later]]), then it may be worth slimming down your configuration somewhat: standard Windows installations (like the CF-AX3) have a 100MB EFI system partition, of which about 20% is used for Windows files: as such, an 'unslimmed' kernel ''will'' fit, but there'll be no room for backups etc.}}
+Then &mdash; leaving the USB key inserted &mdash; reboot, and login again, in the normal manner. 
+
+If you find, when rebooted, that some previously working facilities of your target machine have regressed, simply run (as root) <code>buildkernel --menuconfig</code> again, restore any necessary features, and reboot once {{c|buildkernel}} has completed building the new kernel, repeating as necessary until your system is fully functional once more. 
+
+{{Note|If your machine ''fails'' to boot with your new configuration, see these [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}earlier instructions]] for how to fall back to the prior (or [[#make_snapshot_backup{{!}}snapshotted]] last-known-good) kernel on the boot USB key, so you can get back in to fix things up.}}
+
+=== <span id="pare_down_firmware">Removing Unnecessary Firmware from the initramfs</span> ===
+
+<span id="remove_unnecessary_firmware">With the module set reduced</span>, we can now turn our attention to the ''major'' driver of kernel image size &mdash; the default inclusion of a complete copy of {{Path|/lib/firmware/<...>}} in its integral initramfs.
+
+{{Note|Obviously, this subsection does ''not'' apply to those who chose [[../Configuring_and_Building_the_Kernel/#deblob_or_not{{!}}earlier]] to ''deblob'' their kernel, and such users should [[#suspend_hibernate{{!}}click here]] to skip to the next section now (for avoidance of doubt though, most users of this guide will ''not'' be deblobbing, and so should continue reading ^-^).}}
+
+Fortunately, we can easily pare down what is included here, through use of the <code>user_modify_initramfs()</code> function in {{Path|/etc/buildkernel.conf}}. Recall that when {{c|buildkernel}} runs, it creates an [[../Configuring_and_Building_the_Kernel#initramfs_copy_location|uncompressed staging copy]] of the initramfs filestructure at {{Path|/boot/initramfs}}, then calls <code>user_modify_initramfs()</code> (if defined), then repacks the (possibly modified) initramfs filestructure again for inclusion into the final kernel image.
+
+As such, there are two basic approaches we can take using this function:
+# remove ''everything'' from the initramfs' {{Path|/lib/firmware}} directory, reboot, and then retain ''only'' those firmware files which the kernel complained about being unable to find; or
+# start with a ''full'' set of firmware, then cautiously remove some (hopefully!) irrelevant content from the initramfs' filestructure, reboot to test, and repeat as necessary.
+
+The first approach is preferred, since it will result in the smallest possible initramfs, and requires generally just one or two reboot iterations to converge on the final result. As such, in what follows we'll try that avenue of attack initially, falling back to option 2 ''only'' in case your target system won't boot at ''all'' without initramfs firmware, even to a command line interface &mdash; a rare situation for most PCs.
+
+==== <span id="remove_all_fw_then_add_back">Option 1: Retaining only what is Required</span> ====
+
+<span id="remove_all_fw_via_umi">To begin</span>, open ([[#open_root_gnome_term|as before]]) a root terminal, and issue:
+{{RootCmd
+|nano -w /etc/buildkernel.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and then ''uncomment'' the lines specifying <code>user_modify_initramfs()</code>, and modify the function body, so it now reads:
+
+{{FileBox|filename=/etc/buildkernel.conf|title=Example of purging all firmware from initramfs via hook function|lang=bash|1=
+user_modify_initramfs() {
+    show "Removing all firmware from initramfs..."
+    local FD="${INITRAMFSDIR}/lib/firmware"
+    # remove all firmware files (and symbolic links) that we
+    # don't explicitly retain
+    find "${FD}" \
+        \( -type f -o -type l \) -exec rm -f {} +
+    # remove all empty directory trees
+    find "${FD}" -type d -empty -delete
+}
+}}
+
+Leave the rest of the file as-is. Save, and exit {{c|nano}}.
+
+{{Note|The first {{c|find}} command in the above searches for all '''f'''iles or symbolic '''l'''inks recursively within the <var>${FD}</var> (i.e., {{Path|/boot/initramfs/lib/firmware}}) directory. It builds up a list of all such paths (the <code>{} +</code>), and then '''exec'''utes a '''f'''orced {{c|rm}} (delete) on the resulting set. Once this has been done, the second {{c|find}} command then locates any empty '''d'''irectories within <var>${FD}</var>, and deletes those too (for clarity when reviewing the initramfs image &mdash; they don't take up much space).<br>Yes, this ''is'' a rather complex way to (sort-of!) write <code>rm -rf "${FD}"/*</code>, but it will make more sense shortly, when we start [[#keep_some_ipaths{{!}}''excluding'' paths we want to keep]].}}
+
+{{Tip|We use the case-insensitive <code>-ipath</code> here, since vendors sometimes change the capitalization of provided firmware files.}}
+
+{{Note|Upon entry to the <code>user_modify_initramfs()</code> hook function, the <var>INITRAMFSDIR</var> variable is set to {{Path|/boot/initramfs}}: as in the above, it should be used in preference to hard-coding (in case this path changes in a later release of {{c|buildkernel}}).<br>Incidentally, <code>show</code> is an function used like {{c|echo}} within {{c|buildkernel}}; its use here is, obviously, optional.}}
+
+{{Note|If you have ''already'' uncommented the <code>user_modify_initramfs()</code> function (which, for avoidance of doubt, most users will ''not'' by this stage in the tutorial), then simply add the new lines to the end of the existing body, before the trailing <code>}</code>.}}
+
+Now, ensure the boot usb key is inserted, and rebuild the kernel. Issue:
+
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+... additional output suppressed ...
+ <span style{{=}}"color:green;">*</span> Copying static gpg program into initramfs...
+ <span style{{=}}"color:green;">*</span> Copying contents of /etc/modprobe.d directory into initramfs...
+ <span style{{=}}"color:green;">*</span> Calling user_modify_initramfs function...
+ <span style{{=}}"color:green;">*</span> Removing all firmware from initramfs...
+ <span style{{=}}"color:green;">*</span> Deleting old initramfs cpio archive, and repacking...
+... additional output suppressed ...
+ <span style{{=}}"color:green;">*</span> All done!
+}}
+
+{{Tip|The {{Path|/boot/initramfs}} directory is left around (for convenience) when {{c|buildkernel}} exits, so you can easily check to see that your <code>user_modify_initramfs()</code> function had the desired effect.}}
+
+Assuming this completed successfully (you get the output <code>All done!</code>), then leave the boot USB key inserted, and reboot the system, entering your {{c|gpg}} passphrase in the normal manner.
+
+Now, if (and ''only'' if) your machine ''fails'' to come back up correctly (an unlikely eventuality for most PCs, but possible), see these [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}earlier instructions]] for how to fall back to the prior (or [[#make_snapshot_backup{{!}}snapshotted]] last-known-good) kernel on the boot USB key. Once you have done this and restarted under the old kernel, [[#pare_back_from_full_fw|click here]] to jump to option 2 instead &mdash; unfortunately, the 'option 1' approach will not work for your system.
+
+Assuming, however, that your machine ''did'' start up fine (the more common case), then login as your regular user, in the normal manner.
+
+{{Note|You may well find you have lost WiFi functionality etc. in the absence of boot-time firmware. That is quite usual, and will be rectified by the steps which follow.}}
+
+<span id="check_dmesg_fw_fails">Next, open a terminal</span>, become root, and check ''which'' firmware files the kernel complained about being unable to find. Issue:
+
+{{RootCmd
+|dmesg {{!}} grep --ignore-case 'firmware' {{!}} grep --ignore-case --extended-regexp 'err{{!}}fail'
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+[    4.394776] platform regulatory.0: Direct firmware load for regulatory.db failed with error -2
+[    4.400051] iwlwifi <addr>: Direct firmware load for iwlwifi-7260-17.ucode failed with error -2
+[    5.695475] brcmfmac <addr>: Direct firmware load for brcm/brcmfmac4356-sdio.bin failed with error -2
+</pre>
+}}
+
+This will display any firmware load errors reported in the kernel's [[:Wikipedia:Dmesg|message buffer]]. Obviously, what you see will depend upon your particular system: the above is output obtained by following this route on a CF-AX3 (with an additional Broadcom 4356 WiFi adaptor on the PCI bus), and so you must adapt what follows accordingly.
+
+{{Note|If ''nothing'' is printed out, and further testing shows your system is running normally, congratulations &mdash; it appears your system (unusually) can run ''without'' any uploaded boot-time firmware at all (or, on subsequent iterations of this process, with just the firmware you have elected to retain in the initramfs). In such a case, [[#suspend_hibernate{{!}}click here]] to jump forward to the next section now (leaving {{Path|/etc/buildkernel.conf}} as-is).}}
+
+Proceeding with the CF-AX3 example, we can see that two (top-level) firmware files, {{Path|regulatory.db}} and {{Path|iwlwifi-7260-17.ucode}} failed to load, and one firmware file in the {{Path|brcm/}} (Broadcom) subdirectory also failed to load ({{Path|brcm/brcmfmac4356-sdio.bin}}).
+
+Rather than just exclude these ''particular'' files from deletion though, we need to take a look at the context first, since there may be other, related files present, or the file in question may be versioned (and so may have a different name in a future release of {{Package|sys-kernel/linux-firmware}}), etc.
+
+Issue (again, remember we are just working through the output on a CF-AX3 for concreteness here; adapt for your own system {{c|dmesg}} results):
+
+{{RootCmd
+|ls /lib/firmware/regulatory*
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+/lib/firmware/regulatory.db  /lib/firmware/regulatory.db.p7s
+</pre>
+}}
+
+{{RootCmd
+|ls /lib/firmware/iwlwifi-7260-*
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+/lib/firmware/iwlwifi-7260-10.ucode  /lib/firmware/iwlwifi-7260-17.ucode
+/lib/firmware/iwlwifi-7260-12.ucode  /lib/firmware/iwlwifi-7260-7.ucode
+/lib/firmware/iwlwifi-7260-13.ucode  /lib/firmware/iwlwifi-7260-8.ucode
+/lib/firmware/iwlwifi-7260-16.ucode  /lib/firmware/iwlwifi-7260-9.ucode
+</pre>
+}}
+
+{{RootCmd
+|ls /lib/firmware/brcm/brcmfmac4356-*
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+/lib/firmware/brcm/brcmfmac4356-pcie.bin
+/lib/firmware/brcm/brcmfmac4356-pcie.txt
+/lib/firmware/brcm/brcmfmac4356-sdio.bin
+</pre>
+}}
+
+Your queries and results will most likely differ from those shown.
+
+{{Note|We're searching in the 'real' {{Path|/lib/firmware}} directory here, as it hasn't been emptied (unlike the current {{Path|/boot/initramfs/lib/firmware}} variant).}}
+
+From the above output, we can see that:
+* the {{Path|regulatory.db}} firmware (database) has a partner file, {{Path|regulatory.db.p7s}}, that may also be relevant;
+* the {{Path|iwlwifi-7260-17.ucode}} firmware has companion versions (and so may itself be superseded, in time); and
+* the {{Path|bcrm/brcmfmac4356-sdio.bin}} firmware has companion files that look relevant.
+
+With that information in hand, we can modify the first {{c|find}} command in <code>user_modify_initramfs()</code> accordingly, adding (on a wildcard basis) appropriate paths to be ''excluded'' from deletion.
+
+{{Note|The worst that can happen with wildcards used in this manner is that you end up retaining slightly more than you need &mdash; for example, earlier firmware versions &mdash; but on the other hand, it ''is'' an easy approach to grasp, and relatively robust. While more sophisticated techniques are possible, wildcards strike a good cost-benefit balance.}}
+
+Issue:
+
+{{RootCmd
+|nano -w /etc/buildkernel.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+<span id="keep_some_ipaths">and then ''modify'' the body</span> of the <code>user_modify_initramfs()</code> function, so it reads (note the modified <code>show</code> and added <code>-ipath <...></code> lines):
+
+{{FileBox|filename=/etc/buildkernel.conf|title=Example of purging unneeded firmware from initramfs via hook function|lang=bash|1=
+user_modify_initramfs() {
+    show "Removing unnecessary firmware from initramfs..."
+    local FD="${INITRAMFSDIR}/lib/firmware"
+    # remove all firmware files (and symbolic links) that we
+    # don't explicitly retain
+    find "${FD}" \
+        -ipath "${FD}/brcm/brcmfmac4356-*" -prune -o \
+        -ipath "${FD}/iwlwifi-7260-*" -prune -o \
+        -ipath "${FD}/regulatory.*" -prune -o \
+        \( -type f -o -type l \) -exec rm -f {} +
+    # remove all empty directory trees
+    find "${FD}" -type d -empty -delete
+}
+}}
+
+As before, modify these to suit your own target system's requirements. Leave the rest of the file as-is. Save, and exit {{c|nano}}.
+
+{{Note|The <code>-ipath</code> test checks, in a case-insensitive manner, each path that {{c|find}} locates against the pattern following it &mdash; which in the above includes wildcards &mdash; for a match. Note that the paths need to be fully qualified (hence the use of the <var>${FD}</var> prefix). Matches are then subjected to the given action, which in this case is <code>-prune</code>: this ''drops'' the path (and any subpaths, if a directory) from subsequent consideration. Paths that ''don't'' match are passed on to the next clause via <code>-o</code> (short-circuit OR).<br>This idiom allows us to retain key files, with the remainder eventually falling through to the trailing test (which then deletes any of them that are files or symbolic links, just as before).}}
+
+Now we have our exclusions in place, the second {{c|find}} command makes more sense &mdash; any subdirectory that (transitively) contains leaf files (such as {{Path|bcrm/}} here) will be preserved (as not <code>-empty</code>), which is what we want.
+
+With <code>user_modify_initramfs()</code> thus modified, run {{c|buildkernel}} again to take up the changes. Ensure the boot usb key is still inserted, then issue:
+
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+... additional output suppressed ...
+ <span style{{=}}"color:green;">*</span> Copying static gpg program into initramfs...
+ <span style{{=}}"color:green;">*</span> Copying contents of /etc/modprobe.d directory into initramfs...
+ <span style{{=}}"color:green;">*</span> Calling user_modify_initramfs function...
+ <span style{{=}}"color:green;">*</span> Removing unnecessary firmware from initramfs...
+ <span style{{=}}"color:green;">*</span> Deleting old initramfs cpio archive, and repacking...
+... additional output suppressed ...
+ <span style{{=}}"color:green;">*</span> All done!
+}}
+
+Once the process completes (you get the message <code>All done!</code>), you can check the new size of your kernel image, by issuing:
+{{RootCmd
+|ls -lht /boot/vmlinuz*-gentoo {{!}} head -n 1
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+-rw-r--r-- 1 root root  23M Oct 28 14:32 /boot/vmlinuz-4.14.65-gentoo
+</pre>
+}}
+Obviously, your output will differ, depending upon your kernel version, the amount of firmware retained etc. However, you should see a ''significant'' reduction in size compared with the [[#check_size_of_mod_slimmed_kernel|prior version]] (in the case of this example, 130MiB has been reduced to 23MiB &mdash; comfortably small enough to fit within the Windows system partition should we wish to do that (as described [[../Using_Your_New_Gentoo_System_under_OpenRC#migrating_off_usb_key{{!}}later]])).
+
+Next, leaving the boot USB key inserted, reboot your system again, enter your {{c|gpg}} passphrase in the normal manner, and log back in as the regular user.
+
+Then, repeat the process from the [[#check_dmesg_fw_fails|{{c|dmesg}} check above]], iterating until '''no''' missing firmware files are reported (note that it isn't unusual to see ''different'' firmware files being complained about in {{c|dmesg}} at this point, since the underlying drivers will presumably have been able to proceed further through their bring-up than last time). Once none are, congratulations: you have successfully slimmed down your kernel image, in a manner that should continue to apply even in the face of future upgrades, so [[#suspend_hibernate|click here]] to jump down to the next section now.
+
+{{Note|If however, after several iterations of the process,  there remain some stubborn firmware load errors you ''can't'' seem to clear, remember that not all hardware is supported by the files in {{Path|/lib/firmware}} provided by {{Package|sys-kernel/linux-firmware}}, and that even such hardware that ''is'' supported may require additional files to function correctly. A good sanity check is to look at the {{c|dmesg}} output of an ''unslimmed'' kernel &mdash; if the error shows up ''there'' as well, you'll need to do an internet search for further information.}}
+
+==== <span id="pare_back_from_full_fw">Option 2: Incrementally Paring Back</span> ====
+
+{{Note|The following option 2 approach should ''only'' be attempted if option 1, above, didn't work for your target PC. So, if option 1 ''did'' work, [[#suspend_hibernate|click here]] to jump to the next section now.}}
+
+The alternative (slower, option 2) way to reduce the firmware included in your kernel's integral initramfs, is to start from a '''full''' copy of {{Path|/lib/firmware}}, and then use the <code>user_modify_initramfs()</code> function to delete ''only'' those files and directories therein that you believe to be irrelevant to your target PC, reboot to check you didn't break anything, and then iterate until a sufficiently small kernel image is obtained.
+
+<span id="begin_firmware_slimdown">To begin</span>, open ([[#open_root_gnome_term|as before]]) a root terminal, and then issue:
+
+{{RootCmd
+|nano -w /etc/buildkernel.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+<span id="keep_some_ipaths">''Modify'' the body</span> of the <code>user_modify_initramfs()</code> function you set up [[#remove_all_fw_via_umi|previously]], so it now reads:
+
+{{FileBox|filename=/etc/buildkernel.conf|title=A null hook function, to keep all firmware in initramfs|lang=bash|1=
+user_modify_initramfs() {
+    show "Retaining all firmware in initramfs..."
+    local FD="${INITRAMFSDIR}/lib/firmware"
+}
+}}
+
+Leave the rest of the file as-is. Save, and exit {{c|nano}}. Now rebuild the kernel, to return temporarily to the "full-fat" initramfs firmware payload. Ensure the boot usb key is inserted, and issue:
+
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+... additional output suppressed ...
+ <span style{{=}}"color:green;">*</span> Copying static gpg program into initramfs...
+ <span style{{=}}"color:green;">*</span> Copying contents of /etc/modprobe.d directory into initramfs...
+ <span style{{=}}"color:green;">*</span> Calling user_modify_initramfs function...
+ <span style{{=}}"color:green;">*</span> Retaining all firmware in initramfs...
+ <span style{{=}}"color:green;">*</span> Deleting old initramfs cpio archive, and repacking...
+... additional output suppressed ...
+ <span style{{=}}"color:green;">*</span> All done!
+}}
+
+Once the process completes (you get the message <code>All done!</code>), reboot, enter your {{c|gpg}} passphrase, and log in as the regular user again.
+
+<span id="find_firmware_size_hogs">Next, open a terminal</span>, become root, and then list the largest 10 files or directories in {{Path|/boot/initramfs/lib/firmware}}. Issue:
+{{RootCmd
+|du -hsx /boot/initramfs/lib/firmware/* {{!}} sort -rh {{!}} head -n 10
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+29M	/boot/initramfs/lib/firmware/netronome
+25M	/boot/initramfs/lib/firmware/liquidio
+19M	/boot/initramfs/lib/firmware/amdgpu
+16M	/boot/initramfs/lib/firmware/qed
+16M	/boot/initramfs/lib/firmware/intel
+16M	/boot/initramfs/lib/firmware/brcm
+8.7M	/boot/initramfs/lib/firmware/ti-connectivity
+8.6M	/boot/initramfs/lib/firmware/bnx2x
+8.4M	/boot/initramfs/lib/firmware/mrvl
+7.6M	/boot/initramfs/lib/firmware/ath10k
+</pre>
+}}
+
+Your results will most likely differ, depending on the version of {{Package|sys-kernel/linux-firmware}} installed on your target system.
+
+{{Note|This determines the '''s'''um size (using {{c|du}}) of the top-level files and subdirectories within {{Path|/boot/initramfs/lib/firmware/}}, in '''h'''uman-readable form (staying on a single filesystem, the <code>-x</code>), then '''r'''everse {{c|sort}}s these, taking into account their '''h'''uman-readable units, and finally prints out only the top 10 e'''n'''tries (using {{c|head}}).}}
+
+Have a look through the output list, and make a note of any that are '''irrelevant''' to your system. For example, a little checking with {{c|hwinfo}} (and <code>dmesg | grep --ignore-case <name></code>), shows that the CF-AX3 has no peripherals from netronome, liquidio, AMD or qed (''inter alia''), so we obviously don't need any of those vendors' firmware to be able to boot (remember, ''all'' firmware will still be present on your root directory, under {{Path|/lib/firmware}}, ''once'' the boot has completed &mdash; we are only working on the initramfs here).
+
+So, let's modify <code>user_modify_initramfs()</code> to purge these top-level directories from the initramfs. Issue:
+
+{{RootCmd
+|nano -w /etc/buildkernel.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and then modify the function body of <code>user_modify_initramfs()</code>, so it now reads:
+
+{{FileBox|filename=/etc/buildkernel.conf|title=Example of purging unneeded firmware from initramfs via hook function|lang=bash|1=
+user_modify_initramfs() {
+    show "Removing unnecessary firmware from initramfs..."
+    local FD="${INITRAMFSDIR}/lib/firmware"
+    rm -rf "${FD}"/{netronome,liquidio,amdgpu,qed}
+}
+}}
+
+Leave the rest of the file as-is. Save, and exit {{c|nano}}.
+
+{{Important|Obviously, do '''not''' simply copy the above <code>rm -rf <...></code> line verbatim &mdash; only delete those firmware files or directories which are irrelevant on ''your'' target machine.}}
+
+{{Note|The {{c|rm}} utility deletes files and/or directories &mdash; in the above we ask it to delete '''r'''ecursively, and the <code>-f</code> option makes it work silently, and not complain if a specified entity is absent (this makes it more robust against possible reorganization of {{Path|/lib/firmware}}, if say one of the cited top-level directories were to be dropped, or renamed).}}
+
+Now, leaving the boot usb key inserted, build the kernel, and reboot to test it. Issue:
+
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+... additional output suppressed ...
+ <span style{{=}}"color:green;">*</span> Copying static gpg program into initramfs...
+ <span style{{=}}"color:green;">*</span> Copying contents of /etc/modprobe.d directory into initramfs...
+ <span style{{=}}"color:green;">*</span> Calling user_modify_initramfs function...
+ <span style{{=}}"color:green;">*</span> Removing unnecessary firmware from initramfs...
+ <span style{{=}}"color:green;">*</span> Deleting old initramfs cpio archive, and repacking...
+... additional output suppressed ...
+ <span style{{=}}"color:green;">*</span> All done!
+}}
+
+Assuming this completed successfully (you get the output <code>All done!</code>), then leave the boot USB key inserted, and reboot the system.
+
+When it restarts, enter the {{c|gpg}} passphrase and then log in (as the regular user) in the usual manner. Open a terminal, become root, and issue:
+
+{{RootCmd
+|dmesg {{!}} grep --ignore-case 'firmware' {{!}} grep --ignore-case --extended-regexp 'err{{!}}fail'
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+to check that there are no firmware load errors reported in the kernel's [[:Wikipedia:Dmesg|message buffer]] (if there are, you have probably been a bit over-aggressive with the firmware you have removed (but clearly not so aggressive that it prevented you from booting): in such a case, you can simply tweak your <code>user_modify_initramfs()</code> and try again).
+
+{{Note|If your machine ''fails'' to boot with your new configuration, see these [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}earlier instructions]] for how to fall back to the prior (or [[#make_snapshot_backup{{!}}snapshotted]] last-known-good) kernel on the boot USB key, so you can get back in to fix things up.}}
+
+Assuming everything still appears to be functioning OK (and the {{c|dmesg}} test you just ran returned no output), you can then, as before, check the new size of your kernel image, by using:
+{{RootCmd
+|ls -lht /boot/vmlinuz*-gentoo {{!}} head -n 1
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+-rw-r--r-- 1 root root  94M Oct 26 17:55 /boot/vmlinuz-4.14.65-gentoo
+</pre>
+}}
+
+Obviously, your output will differ, depending upon your kernel version, the amount of pruning you have done etc. In the above example, you can see that a reasonable start has been made, with the kernel size having fallen from its [[#check_size_of_mod_slimmed_kernel|original]] 130MiB to 94MiB.
+
+Now, repeat the process (starting again from [[#find_firmware_size_hogs|here]]), continuing to remove files or directories deemed unnecessary for booting from the initramfs, until an acceptable final kernel size has been reached (with only a little effort, it should be possible to get down to around 30-40MiB using this approach &mdash; as with many things, a [[:Wikipedia:80_20_rule|Pareto principle]] applies ^-^).
+
+Once you ''have'' obtained a sufficiently small kernel image, congratulations: you can now [[#suspend_hibernate|click here]] to jump down and continue reading the next section of this guide.
+
+{{Tip|If you need only a ''particular'' driver from a given vendor's  subdirectory, you can use {{c|find}} within the <code>user_modify_initramfs()</code> function to selectively remove the other contents.<br>For example, suppose your system had a Broadcom/Cypress 4356 WiFi adaptor, as shown by e.g. <code>hwinfo --wlan</code>. You obviously shouldn't then delete the whole {{Path|${INITRAMFSDIR}/lib/firmware/brcm}} subdirectory &mdash; but you don't have to keep its contents wholesale either. Instead, you can modify {{Path|/etc/buildkernel.conf}} to selectively purge the subdirectory, as follows (remember to leave the rest of the file as-is):
+{{FileBox|filename=/etc/buildkernel.conf|title=Example of retaining only specific firmware for a vendor|lang=bash|1=
+user_modify_initramfs() {
+    show "Removing unnecessary firmware from initramfs..."
+    local FD="${INITRAMFSDIR}/lib/firmware"
+    rm -rf "${FD}"/{netronome,liquidio,amdgpu,qed}
+    ... etc ...
+    find "${FD}/brcm" -type f -not -name "brcmfmac4356-*" -delete
+}
+}}
+This will keep any file (or files) in the {{Path|/boot/initramfs/lib/firmware/brcm}} subdirectory whose [[:Wikipedia:Basename|base]]) filename starts with <code>brcmfmac4356-</code> deleting all other files (in the that subdirectory, recursively). It's a useful idiom to be aware of.<br>
+Remember &mdash; this is ''only'' an example &mdash; you need to check what is installed on your own target system, and adapt these instructions accordingly.}}
+
+Remember, slimming your kernel image is very much an optional task, so feel free to postpone it for a rainy day (or forever if you like ^-^ !).
+
+{{Note|However, to reiterate, if you would like to migrate your kernel to the Windows EFI partition on the hard drive (instructions for which are provided [[../Using_Your_New_Gentoo_System_under_OpenRC#migrating_off_usb_key{{!}}later]]), then you ''will'' have to slim it down somewhat to fit: standard Windows installations (like the CF-AX3) have a 100MB EFI system partition, of which about 20% is used for Windows files: as such, an 'unslimmed' kernel will (emphatically) ''not'' fit.}}
 
 == <span id="suspend_hibernate">Suspend and Hibernate</span> ==
 
@@ -336,7 +717,7 @@ The default {{Package|sys-power/pm-utils}} power management works well for many 
 
 {{Note|Your machine may use different buttons for suspend and resume. If it does not have any, unfortunately at the present time you cannot also add suspend and resume actions to the power menu in GNOME via the [https://extensions.gnome.org/extension/755/hibernate-status-button/ "Hibernate Status Button"] shell extension, as this requires {{c|systemd}} to operate. However, you ''can'' use the "Power" control panel in GNOME to make your PC's main power button trigger hibernation if you like (the default binding is "Suspend").}}
 
-For the CF-AX3, the 'stock' configuration works perfectly for suspend (simply press {{Key|Fn}}{{Key|F7}} and the machine will enter sleep state, with its power button light flashing slowly; slide the power button, and it will resume). However, hibernate requires a little further tweaking (it does work, but the system doesn't fully shutdown after the memory image is written to disk). To get around this, we need to request that {{c|pm-utils}} writes the string "{{c|shutdown}}" into {{Path|/sys/power/disk}}, rather than "{{c|platform}}" (this may be the case on your system too, but try to see if it works without making any changes first).<ref>kernel.org; Wysocki, Rafael [https://www.kernel.org/doc/Documentation/power/basic-pm-debugging.txt "Debugging hibernation and suspend"]</ref><ref>ArchLinux Wiki: [https://wiki.archlinux.org/index.php/Pm-utils "pm-utils"]</ref>
+For the CF-AX3, the 'stock' configuration works perfectly for suspend (simply press {{Key|Fn}}{{Key|F7}} and the machine will enter sleep state, with its power button light flashing slowly; slide the power button, and it will resume). However, hibernate requires a little further tweaking (it does work, but the system doesn't fully shutdown after the memory image is written to disk). To get around this, we need to request that {{c|pm-utils}} writes the string <code>shutdown</code> into {{Path|/sys/power/disk}}, rather than <code>platform</code> (this may be the case on your system too, but try to see if it works without making any changes first).<ref>kernel.org; Wysocki, Rafael [https://www.kernel.org/doc/Documentation/power/basic-pm-debugging.txt "Debugging hibernation and suspend"]</ref><ref>ArchLinux Wiki: [https://wiki.archlinux.org/index.php/Pm-utils "pm-utils"]</ref>
 
 To achieve this, we need to add the file {{Path|/etc/pm/config.d/00-use-shutdown-on-suspend}} (which does not exist by default).<ref>Ask Ubuntu: [http://askubuntu.com/questions/145443/how-do-i-use-pm-suspend-hybrid-by-default-instead-of-pm-suspend "How do I use pm-suspend-hybrid by default instead of pm-suspend?"]</ref> If you don't have a root terminal open already in GNOME, do so now: press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
 {{Cmd
@@ -364,7 +745,7 @@ After this, hibernate should work properly (on the CF-AX3). Press {{Key|Fn}}{{Ke
 
 == <span id="set_default_python">Setting the System Default {{c|python}} Interpreter</span> ==
 
-This is a bit of an odd one, but it does seem to catch people out. [[:Wikipedia:Python_(programming_language)|Python]] is a widely used dynamic language. There are two major versions (2.0 and 3.0),<ref>python.org wiki: [https://wiki.python.org/moin/Python2orPython3 "Should I use Python 2 or Python 3 for my development activity?"]</ref> and a ''lot'' of python scripts that you find on the web use the older version. The problem is that these scripts also often start with a ''versionless'' [[:Wikipedia:Shebang_(Unix){{!}}shebang]] like:
+This is a bit of an odd one, but it does seem to catch people out. [[:Wikipedia:Python_(programming_language)|Python]] is a widely used dynamic language. There are two major versions (2.x and 3.x),<ref>python.org wiki: [https://wiki.python.org/moin/Python2orPython3 "Should I use Python 2 or Python 3 for my development activity?"]</ref> and a ''lot'' of python scripts that you find on the web use the older version. The problem is that these scripts also often start with a ''versionless'' [[:Wikipedia:Shebang_(Unix){{!}}shebang]] like:
 {{GenericCmd|<pre>
 #!/usr/bin/env python
 </pre>
@@ -389,7 +770,7 @@ Then in this terminal, issue:
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 |output=<pre>
 Available Python interpreters, in order of preference:
-  [1]   python3.4
+  [1]   python3.6
   [2]   python2.7 (fallback)
 </pre>
 }}

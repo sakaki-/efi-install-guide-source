@@ -15,7 +15,7 @@ and uses accelerated, modern-looking graphics:
 
 For more information about GNOME, see its [https://www.gnome.org official site] and [[:Wikipedia:GNOME|Wikipedia page]]. A list of GNOME releases may be found [[:Wikipedia:GNOME#Releases|here]].
 
-GNOME requires a graphical support 'platform' on which to run, and in previous versions of this guide, the [[:Wikipedia:X_Window_System|X Window System ("X11")]] fulfilled this role. Now, however, as the more modern, lightweight and secure [[:Wikipedia:Wayland_(display_server_protocol)|Wayland]] protocol has reached sufficient maturity for everyday use, we'll be leveraging that instead (with GNOME providing its own [[:Wikipedia:Compositing_window_manager|compositing window manager]], [[:Wikipedia:Mutter_(software)|{{c|mutter}}]]). As Kristian Høgsberg (one of the Wayland founders) writes in the project's FAQ:<ref name="wayland_faq">Høgsberg, K. [https://wayland.freedesktop.org/faq.html "Wayland FAQ"]</ref>
+GNOME requires graphical support scaffolding on which to run, and in previous versions of this guide, the [[:Wikipedia:X_Window_System|X Window System ("X11")]] fulfilled this role. Now, however, as the more modern, lightweight and secure [[:Wikipedia:Wayland_(display_server_protocol)|Wayland]] protocol has reached sufficient maturity for everyday use, we'll be leveraging that instead (with GNOME providing its own [[:Wikipedia:Compositing_window_manager|compositing window manager]], [[:Wikipedia:Mutter_(software)|{{c|mutter}}]]). As Kristian Høgsberg (one of the Wayland founders) writes in the project's FAQ:<ref name="wayland_faq">Høgsberg, K. [https://wayland.freedesktop.org/faq.html "Wayland FAQ"]</ref>
 
 :: [[:Wikipedia:Wayland_(display_server_protocol)#Differences_between_Wayland_and_X|What’s different now]] is that a lot of infrastructure has moved from the [[:Wikipedia:Display_server|X server]] into the kernel (memory management, command scheduling, [[:Wikipedia:Mode-setting|mode setting]]) or libraries ([[:Wikipedia:Cairo_(graphics)|cairo]], pixman, [[:Wikipedia:Freetype|freetype]], [[:Wikipedia:Fontconfig|fontconfig]], [[:Wikipedia:Pango|pango]], etc.), and there is very little left that has to happen in a central server process. ... [An X server has] a tremendous amount of functionality that you must support to claim to speak the X protocol, yet nobody will ever use this. ... With Wayland we can move the X server and all its legacy technology to an optional code path.
 
@@ -61,7 +61,7 @@ Retype new password: <enter your new password again>
 passwd: password updated successfully
 </pre>
 }}
-{{Note|Obviously, substitute your real name (for {{c|"sakaki"}}) and desired username (for {{c|sakaki}})  in the above commands. You can also define multiple users at this point if you like.}}
+{{Note|Obviously, substitute your real name (for <code>"sakaki"</code>) and desired username (for <code>sakaki</code>)  in the above commands. You can also define multiple users at this point if you like.}}
 {{Important|Be sure to write this password down somewhere safe! You will require it to log in later.}}
 {{Note|Feel free to add or remove groups as required in the {{c|useradd}} command - the above set is a reasonable starting point for a 'power user' under {{c|systemd}} in Gentoo. See the description below for further information.}}
 
@@ -93,12 +93,12 @@ The meaning of those {{c|useradd}} options is as follows:
 |-
 | {{c|--comment}} || {{c|-c}} || A short description of the login; most commonly the user's full name (such as "John Doe").
 |}
-{{Note|With the move to {{c|systemd}}, many of the old hardware-access groups (such as {{c|disk}}, {{c|network}}, {{c|audio}}, {{c|lp}} etc.) are no longer necessary, and may even cause problems if you add yourself to them. Other 'traditional' groups such as {{c|adm}} have no effect on modern systems.<ref>ArchLinux Wiki: [https://wiki.archlinux.org/index.php/Sysvinit#Supplementary_information "Migration to systemd: Supplementary Information"]</ref>}}
+{{Note|With the move to {{c|systemd}}, many of the old hardware-access groups (such as {{c|disk}}, {{c|network}}, {{c|audio}} etc.) are no longer necessary, and may even cause problems if you add yourself to them. Other 'traditional' groups such as {{c|adm}} have no effect on modern systems.<ref>ArchLinux Wiki: [https://wiki.archlinux.org/index.php/users_and_groups#Pre-systemd_groups "Users and groups: Group list: Pre-systemd groups"]</ref>}}
 {{Note|There are a number of other software groups that you may wish to add your user(s) to over time, as and when you emerge the specific packages. For example, if you use [[VirtualBox{{!}}VirtualBox]], you'd need to add your user to the {{c|vboxusers}} group; if running this install as a VirtualBox ''guest'', you'd need to add your user to the {{c|vboxguest}} group. [https://wiki.archlinux.org/index.php/users_and_groups#Software_groups This wiki entry] has a useful list of this type of group (and instructions for how to add and remove users from a group).}}
 
 == <span id="enabling_wayland">Enabling Wayland</span> ==
 
-Next, we'll activate the {{c|wayland}} USE flag globally on your system (we'll rebuild any existing installed packages affected by this change in the subsequent section). Issue:
+Next, we'll activate the {{c|wayland}} <var>USE</var> flag globally on your system (we'll rebuild any existing installed packages affected by this change in the subsequent section). Issue:
 
 {{RootCmd
 |nano -w /etc/portage/make.conf
@@ -122,14 +122,11 @@ Next, we'll install an X11<ref name="x11_guide">Wikibooks: [https://en.wikibooks
 * apps not yet ported to use {{c|wayland}} will be hosted in a shared, rootless X11 server (the so-called '[[:Wikipedia:http://en.wikipedia.org/wiki/Wayland_(display_server_protocol)#Compatibility_with_X{{!}}XWayland]]' approach), and;
 * we also want to allow the use of 'old-school' X11-based GNOME sessions as a fallback.}}
 
-We need to set two additional USE flags for {{Package|media-libs/mesa}} (an OpenGL-like library which X pulls in as a dependency), and while we're at it, set a few others that we'll need shortly for GNOME, so issue:
+We need to set two additional <var>USE</var> flags for {{Package|media-libs/mesa}} (an OpenGL-like library which X pulls in as a dependency), and while we're at it, set a few others that we'll need shortly for GNOME, so issue:
 
 {{RootCmd
 |echo -e "# required by standard X-server installation\nmedia-libs/mesa xa" >> /etc/portage/package.use/mesa
-|echo -e "# required by GNOME\nmedia-libs/mesa gles2" >> /etc/portage/package.use/mesa
-|echo -e "# required by GNOME\nmedia-libs/cogl gles2" >> /etc/portage/package.use/cogl
 |echo -e "# required by GNOME\nmedia-libs/libsdl2 gles" >> /etc/portage/package.use/libsdl2
-|echo -e "# required by GNOME\nmedia-libs/clutter egl" >> /etc/portage/package.use/clutter
 |echo -e "# required by GNOME\nmedia-libs/gegl jpeg2k raw" >> /etc/portage/package.use/gegl
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
@@ -138,7 +135,7 @@ Followed by:
 |echo -e "# required by GNOME\nnet-fs/samba client" >> /etc/portage/package.use/samba
 |echo -e "# required by GNOME\nsys-libs/tevent python" >> /etc/portage/package.use/tevent
 |echo -e "# required by GNOME\nsys-libs/tdb python" >> /etc/portage/package.use/tdb
-|echo -e "# required by GNOME\nmedia-plugins/grilo-plugins upnp-av youtube" >> /etc/portage/package.use/grilo-plugins
+|echo -e "# required by GNOME\nmedia-plugins/grilo-plugins upnp-av" >> /etc/portage/package.use/grilo-plugins
 |echo -e "# required by GNOME 3.16+\n>{{=}}gnome-base/gnome-control-center-3.16 networkmanager" >> /etc/portage/package.use/gnome-control-center
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
@@ -150,15 +147,9 @@ Here's what those flags do:
 |-
 ! Package !! Use flag !! Description
 |-
-| rowspan=2|{{Package|media-libs/mesa}} || {{c|xa}} || This enables the XA (X Acceleration) API for [[:Wikipedia:Gallium3D{{!}}Gallium3D]] (a device driver framework for 3D graphics chipsets) (you may also find this [http://www.linuxfromscratch.org/blfs/view/svn/x/mesa.html ''Linux from Scratch'' page] useful).
+| {{Package|media-libs/mesa}} || {{c|xa}} || This enables the XA (X Acceleration) API for [[:Wikipedia:Gallium3D{{!}}Gallium3D]] (a device driver framework for 3D graphics chipsets) (you may also find this [http://www.linuxfromscratch.org/blfs/view/svn/x/mesa.html ''Linux from Scratch'' page] useful).
 |-
-| {{c|gles2}} || This enables [[:Wikipedia:OpenGL_ES|OpenGL for Embedded Systems]] (version 2) support.
-|-
-| {{Package|media-libs/cogl}} || {{c|gles2}} || Ditto.
-|-
-| {{Package|media-libs/libsdl2}} || {{c|gles}} || Ditto (but unversioned; required by {{c|wayland}}).
-|-
-| {{Package|media-libs/clutter}} || {{c|egl}} || Enables the [[:Wikipedia:EGL_(API){{!}}EGL]] backend (required by {{c|wayland}}).
+| {{Package|media-libs/libsdl2}} || {{c|gles}} || This enables [[:Wikipedia:OpenGL_ES|OpenGL for Embedded Systems support]] (required by {{c|wayland}}).
 |-
 | rowspan=2|{{Package|media-libs/gegl}} || {{c|jpeg2k}} || Enables support for [[:Wikipedia:JPEG_2000|JPEG 2000]] wavelet-based image compression.
 |-
@@ -170,9 +161,7 @@ Here's what those flags do:
 |-
 | {{Package|sys-libs/tdb}} || {{c|python}} || Ditto.
 |-
-| rowspan=2|{{Package|media-plugins/grilo-plugins}} || {{c|upnp-av}} || Enables [[:Wikipedia:Universal_Plug_and_Play|UPnP]] audio/video streaming support.
-|-
-| {{c|youtube}} || Enables support for [[:Wikipedia:YouTube|YouTube]] content discovery.
+| {{Package|media-plugins/grilo-plugins}} || {{c|upnp-av}} || Enables [[:Wikipedia:Universal_Plug_and_Play|UPnP]] audio/video streaming support.
 |-
 | {{Package|gnome-base/gnome-control-center}} || {{c|networkmanager}} || Enables support for [[NetworkManager]].
 |}
@@ -206,7 +195,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 
 Wait for the update to complete, before continuing. It should not take too long on a modern machine (as we do not have many GUI-specific libraries or apps installed, yet). A few additional {{c|wayland}}-specific libraries will also be pulled in.
 
-Now, since you have already set up the necessary [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable|{{c|VIDEO_CARDS}}]] and [[../Installing_the_Gentoo_Stage_3_Files#input_devices_variable|{{c|INPUT_DEVICES}}]] variables in {{Path|/etc/portage/make.conf}} [[../Installing_the_Gentoo_Stage_3_Files#setup_make_conf|earlier]], we can now proceed to install the X-server itself. Issue:
+Now, since you have already set up the necessary [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable|<var>VIDEO_CARDS</var>]] and [[../Installing_the_Gentoo_Stage_3_Files#input_devices_variable|<var>INPUT_DEVICES</var>]] variables in {{Path|/etc/portage/make.conf}} [[../Installing_the_Gentoo_Stage_3_Files#setup_make_conf|earlier]], we can now proceed to install the X-server itself. Issue:
 {{RootCmd
 |emerge --ask --verbose --oneshot x11-base/xorg-server
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -216,7 +205,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 ... additional output suppressed ...
 </pre>
 }}
-and the X11 server will be downloaded, compiled and installed. Note that we use {{c|--oneshot}} here to avoid adding it to your [[World set (Portage){{!}}@world]] set (this is slightly cleaner, as it will become a dependency of GNOME, once it is installed later).
+and the X11 server will be downloaded, compiled and installed. Note that we use <code>--oneshot</code> here to avoid adding it to your [[World set (Portage){{!}}@world]] set (this is slightly cleaner, as it will become a dependency of GNOME, once it is installed later).
 
 {{Tip|<span id{{=}}"virtualbox_hints">If you are installing onto a [[VirtualBox]] client</span> (and this '''won't''' apply to most readers, who will instead be installing onto a 'real' target PC), please note the following:
 * You cannot simply set <code>VIDEO_CARDS{{=}}"vesa"</code> when using VirtualBox with EFI emulation turned on.<ref>Red Hat Bugzilla: [https://bugzilla.redhat.com/show_bug.cgi?id{{=}}742695 "EFI install in VirtualBox results in text install "]</ref> You need to use <code>VIDEO_CARDS{{=}}"virtualbox"</code> instead.
@@ -259,8 +248,8 @@ Next, since {{c|wayland}} requires you to have an appropriate [[:Wikipedia:Direc
 {{Note|Your presently running kernel, the configuration of which was [[../Configuring_and_Building_the_Kernel#kernel_opts_set_by_buildkernel{{!}}based]] upon the Gentoo minimal install image's, does not currently have ''any'' DRM components enabled. We'll fix that problem in this section also.}}
 
 Two commonly used [[:Wikipedia:Direct_Rendering_Manager|DRM]]/[[:Wikipedia:Direct_Rendering_Infrastructure|DRI]] [[:Wikipedia:Direct_Rendering_Manager#Kernel_Mode_Setting|KMS]] drivers are:
-* the {{c|DRM_I915}} driver; this is needed for the integrated [[:Wikipedia:Intel_HD_and_Iris_Graphics|"HD Graphics"]] on many [[:Wikipedia:Ultrabook|Ultrabooks]] (such as the Panasonic CF-AX3); you'll need to activate it if you have an "{{c|intel}}", "{{c|intel i915}}" or "{{c|intel i965}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] setting in {{Path|/etc/portage/make.conf}};
-*the {{c|DRM_NOUVEAU}} driver; this is an open-source driver that [[:Wikipedia:Nouveau_(software)|supports]] many nVidia graphics cards (which are popular on desktop machines); you'll need to activate it if you have a "{{c|nouveau}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] setting in {{Path|/etc/portage/make.conf}}.
+* the {{c|DRM_I915}} driver; this is needed for the integrated [[:Wikipedia:Intel_HD_and_Iris_Graphics|"HD Graphics"]] on many [[:Wikipedia:Ultrabook|Ultrabooks]] (such as the Panasonic CF-AX3); you'll need to activate it if you have an "{{c|intel}}", "{{c|intel i915}}" or "{{c|intel i965}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] setting in {{Path|/etc/portage/make.conf}};
+*the {{c|DRM_NOUVEAU}} driver; this is an open-source driver that [[:Wikipedia:Nouveau_(software)|supports]] many nVidia graphics cards (which are popular on desktop machines); you'll need to activate it if you have a "{{c|nouveau}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] setting in {{Path|/etc/portage/make.conf}}.
 
 (There are others too, of course, these are simply the most frequently encountered.)
 
@@ -281,7 +270,7 @@ provides useful information. Unfortunately, as of the time of writing, there is 
 |buildkernel --menuconfig
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-Because you have not specified {{c|--ask}} here, but you ''have'' specified {{c|--menuconfig}}, the process will run through by itself (assuming no errors) to the point where you can modify the kernel configuration using the standard {{c|curses}}-based editor GUI.
+Because you have not specified <code>--ask</code> here, but you ''have'' specified <code>--menuconfig</code>, the process will run through by itself (assuming no errors) to the point where you can modify the kernel configuration using the standard {{c|curses}}-based editor GUI.
 
 The configuration changes you need to make will vary depending on the driver(s) you need to enable. The following is a step-by-step guide for modern laptops (and other PCs) with Intel integrated HD graphics (following [[Intel|this wiki page]]). If you require a different driver, modify these instructions accordingly.
 
@@ -330,7 +319,7 @@ OK, so let's work through the {{c|DRM_I915}} case as a concrete example. From th
 
 Now we know there are no further unsatisfied dependencies for {{c|DRM_I915}}, we can activate {{c|DRM}}, and then {{c|DRM_I915}} itself.
 
-{{Tip|There's a handy shortcut you can often use when searching in {{c|menuconfig}}: if the result you are interested in has a parenthesised number shown by it near the left margin, such as (1), (2) etc., then you can simply press the corresponding number key ({{Key|1}}, {{Key|2}}, etc.) to jump ''directly'' to the item in question. Then, once you're done editing it, pressing {{Key|Esc}} then {{Key|Esc}} will bring you back to the search results again. In the below text, we're going to do things the longhand way, for clarity, but using the number-key shortcuts is usually a better way to go, once you are familiar with the {{c|make menuconfig}} flow.}}
+{{Tip|There's a handy shortcut you can often use when searching in {{c|menuconfig}}: if the result you are interested in has a parenthesised number shown by it near the left margin, such as (1), (2) etc., then you can simply press the corresponding number key ({{Key|1}}, {{Key|2}}, etc.) to jump ''directly'' to the item in question. Then, once you're done editing it, pressing {{Key|Esc}} then {{Key|Esc}} will bring you back to the search results again. In the below text, we're going to do things the longhand way, for clarity, but using the number-key shortcuts is usually a better way to go, once you are familiar with the <code>make menuconfig</code> flow.}}
 
 {{Important|Remember, to use {{c|wayland}}, you '''must''' ensure that {{c|DRM}} is enabled!}}
 
@@ -357,9 +346,9 @@ Now, move to the "{{c|Direct Rendering Manager (XFree86 4.1.0 and higher DRI sup
 
 {{Note|We're taking the approach of selecting required components directly (requesting they be built into the kernel itself), rather than modularizing them, but this is generally not mandatory. {{c|buildkernel}} copies all modules into the initramfs, so whether or not to modularize is ultimately up to you - it will have no effect on your ability to boot (certainly for elements like this that were disabled in the minimal install configuration to begin with).}}
 
-{{Tip|Further to the above, for certain video cards which require a runtime firmware upload (such as more modern [[AMDGPU|AMD/ATI Radeon]] units using the "{{c|amdgpu radeonsi}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] flags), it is actually ''preferable'' to specify the necessary kernel drivers as ''modules'' (rather than building them in). This avoids having to [[AMDGPU#Incorporating_firmware|explicitly compile firmware into the kernel]] ({{c|buildkernel}} copies all modules and firmware into the initramfs anyway, so this is safe to do).}}
+{{Tip|Further to the above, for certain video cards which require a runtime firmware upload (such as more modern [[AMDGPU|AMD/ATI Radeon]] units using the "{{c|amdgpu radeonsi}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] flags), it is actually ''preferable'' to specify the necessary kernel drivers as ''modules'' (rather than building them in). This avoids having to [[AMDGPU#Incorporating_firmware|explicitly compile firmware into the kernel]] ({{c|buildkernel}} copies all modules and firmware into the initramfs anyway, so this is safe to do).}}
 
-{{Tip|If you have a Intel-CPU-based laptop that is badged as having a Radeon GPU (as does, for example, the Dell Inspiron 5567 15), you may find you need to proceed ''as if'' you had a system with standard integrated [[:Wikipedia:Intel_HD_and_Iris_Graphics|"Intel HD Graphics"]]; i.e., specifying "{{c|intel i965}}" for [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] in {{Path|/etc/portage/make.conf}} (then [[#update_vc_rebuild_world|rebuilding]] {{c|@world}} if necessary), turning on {{c|CONFIG_DRM_I915}} in your kernel etc.}}
+{{Tip|If you have a Intel-CPU-based laptop that is badged as having a Radeon GPU (as does, for example, the Dell Inspiron 5567 15), you may find you need to proceed ''as if'' you had a system with standard integrated [[:Wikipedia:Intel_HD_and_Iris_Graphics|"Intel HD Graphics"]]; i.e., specifying "{{c|intel i965}}" for [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] in {{Path|/etc/portage/make.conf}} (then [[#update_vc_rebuild_world|rebuilding]] {{c|@world}} if necessary), turning on {{c|CONFIG_DRM_I915}} in your kernel etc.}}
 
 So, now that we have set {{c|DRM}}, we can proceed to enable {{c|DRM_I915}} itself. Navigate down the {{c|Graphics support}} menu, through the new items that appeared when you selected {{c|DRM}}, until you reach the {{c|Intel 8xx/9xx/G3x/G4x/HD Graphics}} item (if you think this feels rather like a 70's era [[:Wikipedia:Adventure_game#Gathering_and_using_items|adventure game]], you're not alone!):
 
@@ -422,7 +411,7 @@ Remember also that symbols do get dropped from (and obviously, added to) the ker
 
 There's some further information about the kernel configuration shorthand notation on the [[Kernel/Gentoo_Kernel_Configuration_Guide#Kernel_configuration_shorthand_notation{{!}}Gentoo wiki]].
 
-In the later part of this tutorial, I will assume that you are able to translate these 'shorthand' kernel configuration recipes, using {{c|buildkernel --menuconfig}}, without spelling out the process step-by-step. If in doubt, please re-read this section. (And if you are reading this now because you were jumped back to this section from a later chapter, you can [[../Final_Configuration_Steps#resume_after_menuconfig_tutorial{{!}}click here]] to return - otherwise, just continue reading!)
+In the later part of this tutorial, I will assume that you are able to translate these 'shorthand' kernel configuration recipes, using <code>buildkernel --menuconfig</code>, without spelling out the process step-by-step. If in doubt, please re-read this section. (And if you are reading this now because you were jumped back to this section from a later chapter, you can [[../Final_Configuration_Steps#resume_after_menuconfig_tutorial{{!}}click here]] to return - otherwise, just continue reading!)
 }}
 
 When the machine restarts, as before, you will need to enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]), directly at the target machine keyboard.
@@ -436,11 +425,11 @@ Once this has been completed successfully, and the target machine is restarted, 
 Password: <enter root password>
 ... additional output suppressed ...
 </pre>}}
-{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[../Configuring_systemd_and_Installing_Necessary_Tools#post_reboot_ip{{!}}earlier]] for 192.168.1.106 in the above command. It is possible (although unlikely, with modern DHCP) that the target's IP address will have changed during the reboot. If so, log in directly at the target machine's keyboard, use {{c|ifconfig}} to find out the new address, then issue the above {{c|ssh}} command citing that address. As before, in such a case you may need to clean out any previous record of {{c|ssh}} connections to (other machines at) that new address (since the fingerprints will not match), using:
+{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[../Configuring_systemd_and_Installing_Necessary_Tools#post_reboot_ip{{!}}earlier]] for <code>192.168.1.106</code> in the above command. It is possible (although unlikely, with modern DHCP) that the target's IP address will have changed during the reboot. If so, log in directly at the target machine's keyboard, use {{c|ifconfig}} to find out the new address, then issue the above {{c|ssh}} command citing that address. As before, in such a case you may need to clean out any previous record of {{c|ssh}} connections to (other machines at) that new address (since the fingerprints will not match), using:
 {{Cmd
 |sed -i '/^[^[:digit:]]*192.168.1.106[^[:digit:]]/d' ~/.ssh/known_hosts
 |prompt=user@pc2 $}}
-obviously substituting the new address for {{c|192.168.1.106}} in the above. Then, be sure to check the fingerprint when prompted (by the subsequent {{c|ssh}} command), against those you noted down [[../Configuring_systemd_and_Installing_Necessary_Tools#note_new_fingerprints{{!}}earlier]].
+obviously substituting the new address for <code>192.168.1.106</code> in the above. Then, be sure to check the fingerprint when prompted (by the subsequent {{c|ssh}} command), against those you noted down [[../Configuring_systemd_and_Installing_Necessary_Tools#note_new_fingerprints{{!}}earlier]].
 }}
 {{Note|If installing over WiFi, and you had to manually restart {{c|wpa_supplicant}} in the [[../Configuring_systemd_and_Installing_Necessary_Tools#manually_start_wpa_supplicant_systemd{{!}}previous two chapters]], then you'll need to do so again here (directly at the target machine's keyboard) before you'll be able to {{c|ssh}} in.}}
 
@@ -470,7 +459,7 @@ Driver: "i915"
 }}
 The output ''you'' get will obviously depend upon your graphics card, for example, it might be <code>Driver: nouveau</code> instead, if you have an nVidia card.
 
-{{Note|Remember, too, that this is the ''kernel'' driver name: it is not necessarily the same as the value(s) you need to set in the [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] variable via {{Path|/etc/portage/make.conf}} (which in turn controls e.g., some of the USE flags on {{Package|media-libs/mesa}}, thereby configuring its ''userland'' driver set).<br>For example, with a modern HD-graphics based PC, you'd probably have {{c|CONFIG_DRM_I915}} set in the kernel (as per our worked example), <code>hwinfo --gfxcard</code> would report {{c|i915}} as the active driver, yet you would have {{c|VIDEO_CARDS{{=}}"intel i965"}} set in {{Path|/etc/portage/make.conf}} (building {{c|mesa}} with the {{c|video_cards_intel}} and {{c|video_cards_i965}} USE flags thereby).}}
+{{Note|Remember, too, that this is the ''kernel'' driver name: it is not necessarily the same as the value(s) you need to set in the [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] variable via {{Path|/etc/portage/make.conf}} (which in turn controls e.g., some of the USE flags on {{Package|media-libs/mesa}}, thereby configuring its ''userland'' driver set).<br>For example, with a modern HD-graphics based PC, you'd probably have {{c|CONFIG_DRM_I915}} set in the kernel (as per our worked example), <code>hwinfo --gfxcard</code> would report <code>i915</code> as the active driver, yet you would have <code>VIDEO_CARDS{{=}}"intel i965"</code> set in {{Path|/etc/portage/make.conf}} (building {{c|mesa}} with the <code>video_cards_intel</code> and <code>video_cards_i965</code> <var>USE</var> flags thereby).}}
 
 Next, search for messages from the DRM subsystem citing this driver name, in the kernel ring buffer. Issue:
 
@@ -486,7 +475,7 @@ Next, search for messages from the DRM subsystem citing this driver name, in the
 Again, the output you see will differ, but the important thing to verify is that that your DRM driver has been {{Highlight|initialized}}.
 {{Note|If you have multiple graphics cards in your PC, and you want to use all of them under {{c|wayland}}, make sure a DRM driver has been successfully initialized for each one.}}
 
-If, you see ''no'' matching {{c|[drm]}} message output from the {{c|grep}} (or if the earlier <code>hwinfo --gfxcard</code> produced an error), then you have ''not'' installed the correct driver. In this case, you need to go back to the [[#install_drm_driver|start of the previous section]] now, and try again.
+If, you see ''no'' matching <code>[drm]</code> message output from the {{c|grep}} (or if the earlier <code>hwinfo --gfxcard</code> produced an error), then you have ''not'' installed the correct driver. In this case, you need to go back to the [[#install_drm_driver|start of the previous section]] now, and try again.
 
 However, assuming it ''did'' work (the more usual case), as a final sanity-check, list the activated {{c|DRM_}} components present in the configuration of your running kernel. Issue:
 
@@ -525,7 +514,7 @@ Before we can try out X11, we need to instruct it which window manager to use, a
 }}
 {{Note|Substitute the user name of the regular user you created in the [[#add_regular_user{{!}}earlier step]] for {{c|sakaki}} in the above command.}}
 
-{{Note|The {{c|su}} command, when invoked with {{c|--login}} (as here) provides a console environment similar to that which the specified user would have if s/he had logged in directly. When issued by the superuser ({{c|root}}), as here, no password is required.}}
+{{Note|The {{c|su}} command, when invoked with <code>--login</code> (as here) provides a console environment similar to that which the specified user would have if s/he had logged in directly. When issued by the superuser ({{c|root}}), as here, no password is required.}}
 
 <span id="setup_xinitrc">Next, edit the {{c|.xinitrc}} file</span> in the regular user's home directory. Issue:
 {{Cmd
@@ -535,7 +524,6 @@ Before we can try out X11, we need to instruct it which window manager to use, a
 {{Note|Obviously, the name that you see in the prompt will reflect that of the regular user you added (and which you just {{c|su}}-d to).}}
 Put the following text in the {{c|.xinitrc}} (replacing the current contents, if any):
 {{FileBox|filename=~/.xinitrc|title=A basic setup to start TWM and some simple applications|lang=bash|1=
-#!/bin/sh
 twm &
 xsetroot -solid CornflowerBlue &
 xclock -geometry 100x100-1+1 &
@@ -555,7 +543,7 @@ The above shell script simply instructs X to:
 
 <span id="first_try_startx">Now we are finally ready to try out X11!</span>
 
-{{Note|<span id{{=}}"update_vc_rebuild_world">Remember,</span> if you decided to ''change'' your [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] setting (''wrt'' that which you originally entered when [[../Installing_the_Gentoo_Stage_3_Files#setup_make_conf|setting up]] {{Path|/etc/portage/make.conf}}), then you will need to issue:
+{{Note|<span id{{=}}"update_vc_rebuild_world">Remember,</span> if you decided to ''change'' your [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] setting (''wrt'' that which you originally entered when [[../Installing_the_Gentoo_Stage_3_Files#setup_make_conf|setting up]] {{Path|/etc/portage/make.conf}}), then you will need to issue:
 {{RootCmd
 |emerge --verbose --deep --with-bdeps{{=}}y --changed-use --update @world
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -574,9 +562,19 @@ If all goes well, the screen of your target PC should now be displaying somethin
 [[File:Twm_screen.png|thumb|none|400px|Simple X11/TWM Desktop and Applications]]
 (The actual layout will depend upon the geometry of your display.)
 
+{{Tip|<span id{{=}}"xrandr_fix">If your screen appears ''rotated''</span> (perhaps because you are using a monitor in portrait, rather than landscape, orientation), then you can fix this using the {{c|xrandr}} utility. Although this is not critical to install at this stage &mdash; since we'll be replacing X with GNOME over Wayland shortly &mdash; you can do so if you wish. To do do, issue (as root):{{RootCmd
+|emerge --verbose x11-apps/xrandr
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}Once this has been installed, you can then add add the following line to your {{Path|.xinitrc}}, after the <code>start twm&</code> line:
+{{FileBox|filename=~/.xinitrc|title=Example monitor rotation fix (add after twm &) |lang=bash|1=
+#!/bin/sh
+xrandr --rotate right
+}}Leave the rest of the file as-is, and try <code>startx</code> again (other rotations are available besides <code>right</code>, please see the {{c|xrandr}} manpage).<br>For avoidance of doubt, most users will ''not'' be affected by this issue, and can safely ignore the contents of this tip.
+}}
+
 If you get an error instead, remember that {{Highlight|the most likely problem preventing X11 from starting up, is a missing kernel graphics driver}}. As such, simply go back to the previous [[#install_drm_driver|section]], and add the appropriate (DRM) driver now &mdash; it may be that you simply chose the wrong one the first time around. For avoidance of doubt, there's no harm (other than the impact on kernel size!) in enabling more than one such DRM driver, if you're not exactly sure which is correct.
 
-{{Note|<span id{{=}}"update_vc_rebuild_world_2">Remember,</span> if you add or change kernel DRM drivers, you'll also need to modify (or simply augment) your [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] variable to match (in {{Path|/etc/portage/make.conf}}). Once done, you will then need to issue:
+{{Note|<span id{{=}}"update_vc_rebuild_world_2">Remember,</span> if you add or change kernel DRM drivers, you'll also need to modify (or simply augment) your [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] variable to match (in {{Path|/etc/portage/make.conf}}). Once done, you will then need to issue:
 {{RootCmd
 |emerge --verbose --deep --with-bdeps{{=}}y --changed-use --update @world
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -584,9 +582,9 @@ If you get an error instead, remember that {{Highlight|the most likely problem p
 so that affected packages (such as e.g., {{Package|media-libs/mesa}}) are rebuilt to reflect this change, before trying to {{c|startx}} again. 
 }}
 
-{{Tip|This ''won't'' be necessary for most users but, if after having run through the [[#install_drm_driver{{!}}kernel configuration]]/rebuild/reboot and [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] settings loop a few times, you ''still'' can't get X11 to start up, have a look at the Gentoo wiki page on [[Xorg/Guide{{!}}X11 configuration]], which contains some useful pointers. You may also find the content of the {{Path|/var/log/Xorg.0.log}} log file helpful, when trying to determine in more detail what went wrong. ''Double check'' that you haven't introduced any obvious syntax errors in [[#setup_xinitrc{{!}}your {{Path|~/.xinitrc}} file]] as well.<br>To reiterate however: with a modern X setup, problems are almost always as a result of missing [[#install_drm_driver|kernel graphics drivers]] (or possibly incorrect [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] or [[../Installing_the_Gentoo_Stage_3_Files#input_devices_variable{{!}}{{c|INPUT_DEVICES}}]] variables in {{Path|/etc/portage/make.conf}}), rather than an erroneous X configuration per se.}}
+{{Tip|This ''won't'' be necessary for most users but, if after having run through the [[#install_drm_driver{{!}}kernel configuration]]/rebuild/reboot and [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] settings loop a few times, you ''still'' can't get X11 to start up, have a look at the Gentoo wiki page on [[Xorg/Guide{{!}}X11 configuration]], which contains some useful pointers. You may also find the content of the {{Path|/var/log/Xorg.0.log}} log file helpful, when trying to determine in more detail what went wrong. ''Double check'' that you haven't introduced any obvious syntax errors in [[#setup_xinitrc{{!}}your {{Path|~/.xinitrc}} file]] as well.<br>To reiterate however: with a modern X setup, problems are almost always as a result of missing [[#install_drm_driver|kernel graphics drivers]] (or possibly incorrect [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] or [[../Installing_the_Gentoo_Stage_3_Files#input_devices_variable{{!}}<var>INPUT_DEVICES</var>]] variables in {{Path|/etc/portage/make.conf}}), rather than an erroneous X configuration per se.}}
 
-Assuming you ''can'' see the simple desktop displayed, next check that you can move the cursor around (using the target machine's mouse or touchpad), and try typing some simple commands (e.g. "{{c|ls /bin}}") into any of the three terminal windows. When done, move your cursor into the longest (leftmost) terminal, so that it receives the focus (its cursor will switch to a filled rectangle), and type (directly at the target machine's keyboard):
+Assuming you ''can'' see the simple desktop displayed, next check that you can move the cursor around (using the target machine's mouse or touchpad), and try typing some simple commands (e.g. "<code>ls /bin</code>") into any of the three terminal windows. When done, move your cursor into the longest (leftmost) terminal, so that it receives the focus (its cursor will switch to a filled rectangle), and type (directly at the target machine's keyboard):
 {{Cmd
 |exit
 |prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
@@ -618,7 +616,7 @@ Would you like to unmerge these packages? [Yes/No] <press y, then press Enter>
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
-{{Note|Using the {{c|--depclean}} option to {{c|emerge}} in this way is a common idiom to safely uninstall packages in Gentoo. If any of the specified [[../Installing_the_Gentoo_Stage_3_Files#atoms_etc{{!}}atoms]] happens to be a dependency of another (uncited) installed package (even transitively), it will not be removed.}}
+{{Note|Using the <code>--depclean</code> option to {{c|emerge}} in this way is a common idiom to safely uninstall packages in Gentoo. If any of the specified [[../Installing_the_Gentoo_Stage_3_Files#atoms_etc{{!}}atoms]] happens to be a dependency of another (uncited) installed package (even transitively), it will not be removed.}}
 
 Next, decide whether you wish to disable GNOME's "[[:Wikipedia:Tracker_(search_software)|{{c|tracker}}]]" file and search indexing framework (it is enabled in GNOME by default). Two reasons you may wish to do so are:
 # it runs content-based indexing on your filesystem, which can create high CPU loading for densely-populated media;<ref name="tracker_cpu">Yao, M. [https://www.soimort.org/notes/171103/ "Go Away, {{c|tracker-store}}"]</ref><ref name="disable_tracker_how">Fedora Project Forum: [https://ask.fedoraproject.org/en/question/9822/how-do-i-disable-tracker-in-gnome/ "How Do I Disable Tracker in GNOME?"]</ref> and
@@ -674,7 +672,7 @@ As [[../Building_the_Gentoo_Base_System_Minus_Kernel#use_showem{{!}}before]], yo
 You can now switch back and forward between the two windows as you like (using {{Key|Ctrl}}{{Key|a}} then {{Key|n}} to cycle forwards, and {{Key|Ctrl}}{{Key|a}} then {{Key|p}} to cycle backwards - identical in function here where we only have two windows active), which should give you a good overview of the emerge process as it progresses. You can exit the {{c|showem}} program at any time by issuing {{Key|Ctrl}}{{Key|c}}.
 }}
 
-The {{c|emerge}} will take quite some time to complete! Note that the {{c|--keep-going}} option instructs {{c|emerge}} to build as much as possible, even if some errors are encountered. This is a useful approach in general with large builds (it can be omitted during the subsequent 'clean up' {{c|emerge}} runs, should any be necessary, as we shall see).
+The {{c|emerge}} will take quite some time to complete! Note that the <code>--keep-going</code> option instructs {{c|emerge}} to build as much as possible, even if some errors are encountered. This is a useful approach in general with large builds (it can be omitted during the subsequent 'clean up' {{c|emerge}} runs, should any be necessary, as we shall see).
 
 If the above {{c|emerge}} concluded with the output <code>GNOME emerged OK</code> then congratulations, you have successfully installed GNOME, and should now [[#gnome_built_ok|click here]] to skip to the next step.
 
@@ -778,7 +776,11 @@ And hopefully you should be greeted with a (rather startlingly empty!) GNOME 3 d
 
 {{Note|The precise layout etc. that you see may of course differ, due to version changes in GNOME. Also, you may experience some issues the first time you try running GNOME in this manner (strange display glitches etc.); if so, simply try quitting (by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal) and then running {{c|startx}} again.}}
 
-You can try playing around with it briefly if you like (some simple instructions may be found [https://wiki.gnome.org/Projects/GnomeShell/CheatSheet here] - or just get started by moving your mouse pointer up to the top left corner of the screen (and optionally, clicking on 'Activities'), or by pressing {{Key|Windows Key}}), using the target machine keyboard and mouse / touchpad directly. Note, however, that this isn't a properly logged-in instance, so certain of the standard features will not function as you expect. You should be able to start a terminal etc. however. When you're done, kill the test instance, by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal (the one where you just issued {{c|startx}}).
+You can try playing around with it briefly if you like (some simple instructions may be found [https://wiki.gnome.org/Projects/GnomeShell/CheatSheet here] - or just get started by moving your mouse pointer up to the top left corner of the screen (and optionally, clicking on 'Activities'), or by pressing {{Key|Windows Key}}), using the target machine keyboard and mouse / touchpad directly. Note, however, that this isn't a properly logged-in instance, so certain of the standard features will not function as you expect. You should be able to start a terminal etc. however.
+
+{{Tip|<span id{{=}}"set_gnome_display">If your screen appears</span> ''rotated'' when logged in under GNOME under {{c|wayland}}, you don't use {{c|xrandr}} to fix it (as described [[#xrandr_fix|earlier]]), instead press the {{Key|Windows Key}}, then type <code>displays</code> and press {{Key|Enter}}. You should then be able to choose an orientation for your primary display.}}
+
+When you're done, kill the test instance, by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal (the one where you just issued {{c|startx}}).
 
 == <span id="testing_gnome3">Testing GNOME 3 on Wayland (and Refining Settings)</span> ==
 
@@ -826,6 +828,8 @@ Assuming that worked, <span id="login_to_gnome">you should now</span> be able to
 {{Note|You may need to press {{Key|Enter}} once or twice (directly on the target machine's keyboard) to see the login prompt, if the screen has blanked.}}
 {{Note|If you are installing via WiFi, you will temporarily lose connectivity (to {{c|ssh}} etc.) when bringing up {{c|NetworkManager}} in this manner, since it doesn't yet know your network settings. However, once {{c|NetworkManager}} is configured (as described [[#gnome_network_settings{{!}}next]]), you should be able to re-establish the {{c|ssh}} connection.}}
 
+{{Tip|If you modified your display settings when logged into GNOME [[#set_gnome_display|earlier]], for example to rotate the display orientation, then you can force these settings to be used by {{c|gdm}} also. To do so, simply copy the file {{Path|/home/<username>/.config/monitors.xml}} into the directory {{Path|/var/lib/gdm/.config/}}, and restart {{c|gdm}} (obviously, substitute <code><username></code> for your regular user here &mdash; it would be <code>sakaki</code> for our example system).<br>For avoidance of doubt, most users will ''not'' need to resort to this, as their {{c|gdm}} setup will be correct 'out of the box'.}}
+
 Next, directly at the target machine, click on the (regular) user name tile, then click on the 'cogwheel' icon, and select {{Key|GNOME on Wayland}} from the drop-down menu, as shown:
 [[File:Gnome_login_wayland.jpg|thumb|none|400px|Using a Wayland Session with GNOME]]
 
@@ -851,9 +855,9 @@ Assuming you see {{c|wayland}}, as above, all is well. Close out the terminal wi
 
 However, if instead you saw {{c|x11}} returned, you have been launched into a legacy X11 GNOME session, ''not'' {{c|wayland}}. Given that [[#additional_wayland_qualification|you have an appropriate DRM kernel driver installed]], this indicates an error with your system's userland configuration.
 
-{{Note|The following points should ''only'' be attempted if you could ''not'' start a {{c|wayland}}-based GNOME session (as confirmed by the {{c|XDG_SESSION_TYPE}} variable having the value {{c|x11}}, when [[#verify_xdg_session_type{{!}}tested]]).<br>To repeat: if you did manage to get GNOME on {{c|wayland}} running successfully, [[#gnome_wayland_running_ok{{!}}click here]] instead, to proceed with the next step in the install.}}
+{{Note|The following points should ''only'' be attempted if you could ''not'' start a {{c|wayland}}-based GNOME session (as confirmed by the <var>XDG_SESSION_TYPE</var> variable having the value {{c|x11}}, when [[#verify_xdg_session_type{{!}}tested]]).<br>To repeat: if you did manage to get GNOME on {{c|wayland}} running successfully, [[#gnome_wayland_running_ok{{!}}click here]] instead, to proceed with the next step in the install.}}
 
-First, check that you have set the correct [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] entry to match your kernel driver (this is important, because it e.g., sets up the driver-specific USE flags for the userspace {{Package|media-libs/mesa}} library). Modify this variable (in {{Path|/etc/portage/make.conf}}) if necessary, then (if you needed to make changes), issue (via your {{c|ssh}}/{{c|screen}} connection): {{RootCmd
+First, check that you have set the correct [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] entry to match your kernel driver (this is important, because it e.g., sets up the driver-specific <var>USE</var> flags for the userspace {{Package|media-libs/mesa}} library). Modify this variable (in {{Path|/etc/portage/make.conf}}) if necessary, then (if you needed to make changes), issue (via your {{c|ssh}}/{{c|screen}} connection): {{RootCmd
 |emerge --verbose --deep --with-bdeps{{=}}y --changed-use --update @world
 |systemctl restart gdm
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>

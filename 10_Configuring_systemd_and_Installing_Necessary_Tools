@@ -848,7 +848,11 @@ Enter the {{c|root}} password (for the helper PC, that is), and then as {{c|root
 |prompt=root@pc2 #}}
 {{Note|Replace {{Path|/dev/sdU1}} in the above with the appropriate device path for the USB key's first partition on your helper PC, such as {{Path|/dev/sdc1}}, {{Path|/dev/sdd1}} etc. You can find the path using the {{c|lsblk}} command.}}
 
-Next, delete the old (failed) kernel and config (the one that tries to use {{c|plymouth}} during {{c|init}}) and replace it with the previous version. If you have only run {{c|buildkernel}} ''once'' since [[#change_bootfile_path|changing the path of the bootfile]] (from {{Path|/EFI/Boot/bootx64.efi}} to {{Path|/EFI/Boot/gentoo.efi}}) in the last step, then issue:
+Next, delete the old (failed) kernel and config (the one that tries to use {{c|plymouth}} during {{c|init}}) and replace it with the previous version.
+
+{{Tip|Since all the essential commands below are simply file delete and copy operations over a {{c|FAT32}} filesystem on a USB key, you can even carry them out on a Windows box (via the GUI or CLI), in a pinch. This is useful to bear in mind for later reference, should you be trying to fall back to a previous kernel at a point when you ''don't'' have a Linux helper PC immediately available.}}
+
+If you have only run {{c|buildkernel}} ''once'' since [[#change_bootfile_path|changing the path of the bootfile]] (from {{Path|/EFI/Boot/bootx64.efi}} to {{Path|/EFI/Boot/gentoo.efi}}) in the last step, then issue:
 {{RootCmd
 |rm -v /mnt/tmpefi/EFI/Boot/gentoo.efi /mnt/tmpefi/EFI/Boot/config
 |cp -v /mnt/tmpefi/EFI/Boot/bootx64.efi /mnt/tmpefi/EFI/Boot/gentoo.efi

@@ -516,7 +516,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 
 === <span id="install_firejail">Installing Firejail and Required Utilities</span> ===
 
-Next, we can install the {{c|firejail}} program itself (together with a few other utility packages required for the setup described in this tutorial). However, before doing so, we need to alter its default USE flags, to enable inclusion of the code for X11 isolation.
+Next, we can install the {{c|firejail}} program itself (together with a few other utility packages required for the setup described in this tutorial). However, before doing so, we need to alter its default USE flags, to enable inclusion of the code for X11 isolation and [[:Wikipedia:Setuid|{{c|setuid}}]] operation for regular users.
 
 To do so, still working as root, issue:
 
@@ -528,8 +528,8 @@ To do so, still working as root, issue:
 and ''append'' to that file:
 
 {{FileBox|filename=/etc/portage/package.use/firejail|title=Append following text to enable X11 isolation in Firejail|lang=bash|1=
-# enable X11 isolation
-sys-apps/firejail x11
+# enable X11 isolation and suid operation for regular users
+sys-apps/firejail x11 suid
 # requirements of firejail
 x11-wm/xpra server
 }}
