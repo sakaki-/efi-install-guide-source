@@ -370,7 +370,7 @@ If you find, when rebooted, that some previously working facilities of your targ
 Fortunately, we can easily pare down what is included here, through use of the <code>user_modify_initramfs()</code> function in {{Path|/etc/buildkernel.conf}}. Recall that when {{c|buildkernel}} runs, it creates an [[../Configuring_and_Building_the_Kernel#initramfs_copy_location|uncompressed staging copy]] of the initramfs filestructure at {{Path|/boot/initramfs}}, then calls <code>user_modify_initramfs()</code> (if defined), then repacks the (possibly modified) initramfs filestructure again for inclusion into the final kernel image.
 
 As such, there are two basic approaches we can take using this function:
-# remove ''everything'' from the initramfs' {{Path|/lib/firmware}} directory, reboot, and then retain ''only'' those firmware files which the kernel complained about being unable to find; or
+# remove ''everything'' from the initramfs' {{Path|/lib/firmware}} directory, reboot, and then retain ''only'' those firmware files which the kernel complains about being unable to find; or
 # start with a ''full'' set of firmware, then cautiously remove some (hopefully!) irrelevant content from the initramfs' filestructure, reboot to test, and repeat as necessary.
 
 The first approach is preferred, since it will result in the smallest possible initramfs, and requires generally just one or two reboot iterations to converge on the final result. As such, in what follows we'll try that avenue of attack initially, falling back to option 2 ''only'' in case your target system won't boot at ''all'' without initramfs firmware, even to a command line interface &mdash; a rare situation for most PCs.
