@@ -145,7 +145,7 @@ As you can appreciate from the above, running X11 represents quite a significant
 
 === <span id="sandboxing_with_firejail">Sandboxing with Firejail: A Brief, High-Level Tour</span> ===
 
-As we are going to be using {{Package|sys-apps/firejail}} to sandbox the {{c|firefox}} web browser on your machine, in this section, we'll briefly discuss the isolation technologies it offers<ref name="firejail_manpage">[https://firejail.wordpress.com/features-3/man-firejail/ {{c|firejail}} manpage]</ref> (actual installation and usage instructions will be given thereafter; [[#prerequisites{{!}}click here]] if you with to jump directly to that section).
+As we are going to be using {{Package|sys-apps/firejail}} to sandbox the {{c|firefox}} web browser on your machine, in this section, we'll briefly discuss the isolation technologies it offers<ref name="firejail_manpage">[https://firejail.wordpress.com/features-3/man-firejail/ {{c|firejail}} manpage]</ref> (actual installation and usage instructions will be given thereafter; [[#prerequisites{{!}}click here]] if you wish to jump directly to that section).
 
 <span id="about_firejail_profiles">In its simplest form</span>, you can sandbox an application simply by prefixing its command line with <code>firejail</code> (run as your regular user; the {{c|firejail}} program itself is [[:Wikipedia:setuid|SUID]]). So, for example, <code>firejail gedit ~/test.txt</code> would run the {{c|gedit}} text editor on the file {{Path|~/test.txt}}, inside a sandbox. As discussed below, there are various protection mechanisms {{c|firejail}} can employ, and these are automatically specified on a per-application basis through the use of a ''profile'' configuration file.<ref name="firejail-profile_manpage">[https://firejail.wordpress.com/features-3/man-firejail-profile/ {{c|firejail-profile}} manpage]</ref> When a program {{c|<appname>}} is launched under {{c|firejail}}, it will automatically try to load the matching security profile {{Path|/etc/firejail/<appname>.profile}} (for our example, this would be {{Path|/etc/firejail/gedit.profile}}). If no such file exists, the (fairly restrictive) {{Path|/etc/firejail/default.profile}} is used instead (unless the sandbox has been started by the root user, in which case {{Path|/etc/firejail/server.profile}} is used).
 
@@ -1304,7 +1304,7 @@ Next, we'll create a supplementary ('{{c|.local}}') security configuration profi
 
 {{Note|Modifications in a {{c|.local}} profile will apply to ''all'' {{c|firejail}} users on the local machine.}}
 
-{{Tip|<span id{{=}}"user_specific_profile">If you want to make</span> ''user-specific'' changes to the profile, create a (regular-user-owned) file named {{Path|~/.config/firejail/firefox.config}} as follows:{{FileBox|filename=~/.config/firejail/firefox.config|title=Adding user-specific configuration options to the firefox profile|lang=ini|1=
+{{Tip|<span id{{=}}"user_specific_profile">If you want to make</span> ''user-specific'' changes to the profile, create a (regular-user-owned) file named {{Path|~/.config/firejail/firefox.profile}} as follows:{{FileBox|filename=~/.config/firejail/firefox.profile|title=Adding user-specific configuration options to the firefox profile|lang=ini|1=
 # Add your user-specific modifications here, e.g.
 whitelist ~/user_specific_file_or_dir
 
