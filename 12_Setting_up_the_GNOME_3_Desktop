@@ -384,7 +384,8 @@ to close the second one. Then, ensure the boot USB key is still inserted in the 
 }}
 {{Note|If you have problems rebooting with this new kernel, you can follow the instructions [[../Configuring_systemd_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}given earlier]] to revert back to the backup (previous) version on the boot USB key - which won't have your configuration changes - and try again.}}
 {{Note|<span id{{=}}"kernel_config_shorthand_note">It's useful to</span> relate the process just described to the 'kernel configuration shorthand' you will often see on the Gentoo wiki, and many other places on the web. For example, looking at the [[Intel{{!}}"intel"]] page on the wiki, we read that you need to enable the following kernel options:
-{{KernelBox|title=linux-4.4|<pre>
+
+{{KernelBox|title=linux-4.4|1=
         Device Drivers  --->
             Graphics support  --->
                 <*> /dev/agpgart (AGP Support)  --->
@@ -402,7 +403,8 @@ to close the second one. Then, ensure the boot USB key is still inserted in the 
                 ...
                 -*- Backlight & LCD device support  --->
                 ...
-</pre>}}
+}}
+
 This is really just informing you of the menu locations (and prompts) of the options you need to choose, and how to set them (here, all have asterisks, so implying you should ideally select, rather than modularize). All of the above should be familiar from the process just described, those that we didn't cover are either selected by default on the current Gentoo minimal install kernel configuration, or are automatically selected by {{c|DRM_I915}}.
 
 Generally speaking, when presented with a configuration list like this, you can just work through the menus in the order provided and enable the items - the author will have done the 'depth first' dependency pass for you. However, this isn't foolproof, so if an item referred to in such a list appears missing, simply search for it, and check that its dependencies are set, as we have done above.

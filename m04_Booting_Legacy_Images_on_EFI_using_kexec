@@ -86,12 +86,11 @@ Whichever workflow you use, once the menu configuration tool appears, ensure tha
 
 {{KernelBox
 |title=Additional kernel configuration changes to support user namespaces
-|<pre>
+|1=
    Device Drivers  --->
       [*] Multiple devices driver support (RAID and LVM)  --->
           <*> Device mapper support
               <*> Multipath target
-</pre>
 }}
 
 {{Important|Some of the options in the above list may not be immediately visible to you, if they have dependencies (also from the list) that are not initially satisfied. Accordingly, if you can't find a particular option in the location specified, try in the first instance setting all the other options that ''are'' visible to you, then come back to look for it again. Repeat this process as necessary, until all the required options have been set.}}
@@ -439,7 +438,7 @@ Start the kernel configuration editor (we will do a manual kernel build here, to
 
 {{KernelBox
 |title=Support integral initramfs, EFI stub booting, and kexec
-|<pre>
+|1=
    General setup  --->
       [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
       (/root/initramfs-staging)    Initramfs source file(s)
@@ -448,7 +447,6 @@ Start the kernel configuration editor (we will do a manual kernel build here, to
       [*]   EFI stub support 
       [*] kexec system call
       [ ] Built-in kernel command line
-</pre>
 }}
 
 {{Note|There is no need for a built-in kernel command line; by default the kernel will mount our initramfs as the root filesystem, and attempt to start {{Path|/init}} from there.}}

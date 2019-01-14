@@ -102,17 +102,16 @@ On the CF-AX3, the built-in Ethernet adaptor is (obviously!) already working und
 Now, while the firmware for this 7260 ''is'' already included in {{Package|sys-kernel/linux-firmware}} (which we installed [[../Configuring_and_Building_the_Kernel#install_firmware|earlier]]), using it requires MVM firmware support (which, at the time of writing, the minimal-install kernel configuration has disabled).
 
 Set the following options (within {{c|buildkernel}}) to rectify this, and thereby activate [[:Wikipedia:Wi-Fi|WiFi]]:
-{{KernelBox
-|title=Configuration options for 7260 wireless card (WiFi) on the CF-AX3
-|<pre>
+
+{{KernelBox|title=Configuration options for 7260 wireless card (WiFi) on the CF-AX3|1=
 Device Drivers  --->
  -*- Network device support  --->
   [*]   Wireless LAN  --->
    <M>   Intel Wireless WiFi Next Gen AGN - Wireless-N/Advanced-N/Ultimate-N (iwlwifi)
    <M>	  Intel Wireless WiFi DVM Firmware support
    <M>    Intel Wireless WiFi MVM Firmware support
-</pre>
 }}
+
 {{Note|Most of the time, it's equally fine to either modularize ({{c|M}}) or build in ({{c|*}}) a function, as desired; {{c|buildkernel}} [[../Configuring_and_Building_the_Kernel#copy_all_modules_to_initramfs{{!}}copies all modules]] into the initramfs.}}	
 Incidentally, the 7260 device ''also'' supports [[:Wikipedia:WiMAX|WiMAX]], but as of the time of writing, the ebuilds for {{Package|net-misc/networkmanager}} do not, so I have not detailed its activation here.
 
@@ -127,15 +126,14 @@ Like many modern notebooks, the CF-AX3 has an integrated [[:Wikipedia:Bluetooth|
 }}
 
 To enable it on the CF-AX3, set the following options (this will work for many other machines too):
-{{KernelBox
-|title=Configuration options for Bluetooth on the CF-AX3
-|<pre>
+
+{{KernelBox|title=Configuration options for Bluetooth on the CF-AX3|1=
 -*- Networking support  --->
  <M>   Bluetooth subsystem support  --->
   Bluetooth device drivers  --->
    <M>   HCI USB driver
-</pre>
 }}
+
 {{Note|There is no need to {{c|emerge}} {{Package|sys-firmware/bluez-firmware}} for this PC.}}
 
 {{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), you should be able to see and activate Bluetooth devices (e.g., wireless mice) using the Bluetooth control panel. Find this by pressing {{Key|Windows Key}} and then typing 'Bluetooth' (or, by clicking on the 'spanner and screwdriver' icon from the drop-down menu under the rightmost ('power') icon on the top bar).}}
@@ -154,15 +152,14 @@ As is increasingly common, the CF-AX3 has a [[:Wikipedia:Touchscreen|touchscreen
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 To enable the eGalaxTouch device (this will also work for many other touchscreen panels), set the following options:
-{{KernelBox
-|title=Configuration options for touchscreen on the CF-AX3
-|<pre>
+
+{{KernelBox|title=Configuration options for touchscreen on the CF-AX3|1=
 Device Drivers  --->
  HID support  ---> 
   Special HID drivers  --->
    <M>   HID Multitouch panels
-</pre>
 }}
+
 {{Note|When you later restart under your new kernel (see [[#finishing_up_config{{!}}"Finishing Up", below]]) you should be able to make basic touch and drag actions using the screen. However, gesture support is still (as of the time of writing) unimplemented in GNOME.<ref>GNOME wiki: [https://wiki.gnome.org/Design/OS/Gestures "Gestures & Multitouch"]</ref>}}
 
 === <span id="config_webcam">Webcam</span> ===
@@ -176,17 +173,16 @@ The CF-AX3 has an integrated webcam (a common feature on many laptops and netboo
 {{Note|The {{c|hwinfo}} command will output blank-line-separated records about each device found on the PCI and USB busses (your webcam will almost certainly be on one of those, most likely USB). Then the {{c|awk}} command prints any of these records that contain the text "webcam" (not case sensitive), using a blank line as a record separator.}}
 
 To enable the webcam on the CF-AX3 (this will work for many modern machines, as many webcams are [[:Wikipedia:USB_video_device_class|UVC]] devices), set the following options:
-{{KernelBox
-|title=Configuration options for webcam on the CF-AX3
-|<pre>
+
+{{KernelBox|title=Configuration options for webcam on the CF-AX3|1=
 Device Drivers  --->
  <M> Multimedia support  --->
   [*]   Cameras/video grabbers support
   [*]   Media USB Adapters  --->
    <M>   USB Video Class (UVC)  
    [*]     UVC input events device support (NEW) 
-</pre>
 }}
+
 {{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), you should be able to test your webcam using the {{c|Cheese}} application (which is installed with GNOME by default).}}
 {{Note|You may wish to physically cover the webcam's lens (and built-in microphone input apertures) when not in use ^-^}}
 
@@ -199,9 +195,8 @@ The CF-AX3 has an integrated Intel HD audio device, accessed on the PCI bus. You
 }}
 
 As configured, sound works 'out of the box' for the CF-AX3, but the [[:Wikipedia:PulseAudio|{{c|pulseaudio}}]] sound server complains about lack of high resolution timer support, and insufficiently large buffers. To address these problems on the CF-AX3, set the following options
-{{KernelBox
-|title=Configuration options for audio on the CF-AX3
-|<pre>
+
+{{KernelBox|title=Configuration options for audio on the CF-AX3|1=
 General Setup  --->
  Timers subsystem  --->
   [*] High Resolution Timer Support
@@ -212,7 +207,6 @@ Device Drivers  --->
    [*]   PCI sound devices  --->
           HD-Audio  --->
      (2048) Pre-allocated buffer size for HD-audio driver
-</pre>
 }}
 {{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), audio should still be operational; you probably won't notice any difference after making these changes, other than the fewer warnings when emerging sound-related packages.}}
 
