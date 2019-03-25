@@ -100,7 +100,7 @@ The meaning of those {{c|useradd}} options is as follows:
 |-
 | {{c|usb}} || Members of this group can access USB devices.
 |-
-| {{c|video}} || Members of this group can access video devices.
+| {{c|video}} || Members of this group can access video devices. Necessary for use of [[Xorg/Hardware_3D_acceleration_guide#Add_appropriate_user.28s.29_to_the_video_group|direct rendering]].
 |-
 | {{c|cron}} || Members of this group can setup their own [[:Wikipedia:Cron|crontab]] (for regularly scheduled tasks).
 |}
