@@ -343,6 +343,11 @@ Next, we'll create an LVM physical volume (PV) on this partition:
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
+{{Note|If you see a warning such as:{{GenericCmd|<pre>
+  /run/lvm/lvmetad.socket: connect failed: No such file or directory
+  WARNING: Failed to connect to lvmetad. Falling back to internal scanning.
+</pre>}} when running this or subsequent LVM commands, it may generally safely be ignored.}}
+
 Then, we create a volume group (VG) hosting this PV. We'll call the new VG "vg1". Note that since we're using lvm2 format here, there's no need to set a larger physical extent size - the default of 4MiB per PE will be fine <ref>Fedora Forum: [http://forums.fedoraforum.org/showthread.php?t=281745 "LVM PE size - is it important?"]</ref>:
 {{RootCmd
 |vgcreate vg1 /dev/mapper/gentoo

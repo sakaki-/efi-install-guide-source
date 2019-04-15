@@ -965,7 +965,7 @@ That having being done, we need to edit the <code>DISPLAYMANAGER</code> value in
 }}
 and edit the <code>DISPLAYMANAGER</code> stanza, so that it reads:
 {{FileBox|filename=/etc/conf.d/xdm|title=Specify the GNOME display manager, as follows|1=
-# What display manager do you use ?  [ xdm {{!}} gdm {{!} kdm {{!}} gpe {{!}} entrance ]
+# What display manager do you use ?  [ xdm {{!}} gdm {{!}} kdm {{!}} gpe {{!}} entrance ]
 # NOTE: If this is set in /etc/rc.conf, that setting will override this one.
 DISPLAYMANAGER="gdm"
 }}
@@ -1102,15 +1102,6 @@ which will close out the {{c|ssh}} session itself.
 Now, ensure that the USB boot key is inserted in the target PC, and reboot it, by clicking on GNOME's 'power' icon (in the top right of the screen), clicking on the 'power' button in the dropdown menu that then appears, and then clicking on the 'Restart' button in the dialog.
 
 The machine should then power cycle (you will be cleanly logged out of GNOME first). When the machine restarts, as before, you will need to enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]), directly at the target machine keyboard to unlock the LUKS partition. You should then be presented directly with a GNOME login page (as [[#login_to_gnome|above]]). Directly at the target machine, click on your (regular) user name then, when prompted, type in the (regular user) password you set up [[#setup_regular_user|earlier]] (ensure you have the correct keyboard settings, if relevant, as discussed [[#input_source_menu|above]]). GNOME should remember the session type you selected last time (e.g., {{Key|GNOME}}), and default to using that.
-
-{{Tip|If &mdash; after typing your LUKS password, but before GNOME's graphical login screen is displayed &mdash; you are briefly shown a distracting ''textual'' login prompt, then in the first instance try commenting out the last three lines of the {{Path|/etc/local.d/postboot.start}} script you added [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#set_rc_local_openrc{{!}}earlier]], so they now read:
-{{FileBox|filename=/etc/local.d/postboot.start|title=Comment out for a seamless transition to gdm|lang=bash|1=
-#if pgrep "plymouthd" > /dev/null 2>&1; then
-#    plymouth quit
-#fi
-}}
-Leave the rest of the file as is. You should now find you have a seamless graphical transition, next time you reboot.
-}}
 
 Once logged in to GNOME, bring up a web browser: directly at the target machine's keyboard, press the {{Key|Windows Key}} and type 'Web', then press {{Key|Enter}} to start the first item shown. GNOME's default [[:Wikipedia:Web_(web_browser)|web browser]] will start up, (if it initially opens full-screen, you can drag it down by the top bar to make it a normal-sized window). You can then type in the URL for this tutorial (<span id="rejoin">[https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop_under_OpenRC#rejoin https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop_under_OpenRC#rejoin]</span>), so that you can continue to follow it there.
 {{Important|From this point on, all interaction with the target machine will be done directly (and not via the helper PC), unless otherwise noted.}}

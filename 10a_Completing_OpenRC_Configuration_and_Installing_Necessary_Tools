@@ -206,9 +206,8 @@ Ensure that the necessary service will come up on boot, and start it (to pull in
 
 === <span id="set_rc_local_openrc">Post-Boot Script</span> ===
 
-At this point, it's useful to setup an {{Path|/etc/local.d/postboot.start}} script, which will be run each time the main boot process has concluded. We will use this to address two minor glitches:
-# The virtual console does not always fully clear the [[:Wikipedia:Framebuffer|frame buffer]] properly (particularly, when taking over from {{c|plymouth}}), meaning that you sometimes get grey lines at the top or bottom of the console screen.
-# Because {{Package|sys-boot/plymouth}} is not as well integrated with {{c|OpenRC}} as {{c|systemd}}, {{c|plymouthd}} can often be left running in the background even when the boot process itself has finished. This can cause display glitches and, in the worst case, make it impossible to login directly at the machine's keyboard.
+At this point, it's useful to setup an {{Path|/etc/local.d/postboot.start}} script, which will be run each time the main boot process has concluded. We will use this to address the following glitch:
+* The virtual console does not always fully clear the [[:Wikipedia:Framebuffer|frame buffer]] properly (particularly, when taking over from {{c|plymouth}}), meaning that you sometimes get grey lines at the top or bottom of the console screen.
 
 To create the script, issue:
 {{RootCmd
@@ -222,11 +221,6 @@ and place the following text in that file:
 
 # ensure the framebuffer is properly cleared...
 cat /dev/zero > /dev/fb0 2>/dev/null
-
-# ... and that plymouth really has stopped
-if pgrep "plymouthd" > /dev/null 2>&1; then
-    plymouth quit
-fi
 }}
 {{Note|Under {{c|OpenRC}}, the {{c|local}} service (which is enabled by default) will run any executable {{Path|/etc/local.d/<name>.start}} files at the final phase of system startup, and any executable {{Path|/etc/local.d/<name>.stop}} files at the first phase of system shutdown.}}
 {{Note|The {{c|cat}} of zeros will stop automatically when the end of the framebuffer ({{Path|/dev/fb0}}) is reached; this will be after 1920*1080*4 (rgba) {{=}} 8294400 bytes on the CF-AX3, but of course your system may vary.}}
@@ -509,6 +503,7 @@ You can read more about {{c|genup}} via its manpage. However, in summary, when i
 * rebuild any external modules if necessary (such as those for VirtualBox) (using <code>emerge @module-rebuild</code>)
 * rebuild any packages depending on stale libraries (using <code>emerge @preserved-rebuild</code>);
 * update old Perl modules not caught by {{c|emerge}} (using <code>perl-cleaner</code>);
+* remove stale versions of Python from the {{c|eselect}} list (using <code>eselect python cleanup</code>);
 * ''not'' attempt to rebuild the kernel, even if a new version of {{Package|sys-kernel/gentoo-sources}} has become available (because we specified <code>--no-kernel-upgrade</code>);
 * remove any unreferenced packages again (using <code>emerge --depclean</code>);
 * re-emerge any packages depending on libraries removed by the previous step (using <code>revdep-rebuild</code>); 

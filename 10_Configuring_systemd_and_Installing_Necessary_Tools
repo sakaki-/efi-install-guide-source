@@ -578,6 +578,7 @@ You can read more about {{c|genup}} via its manpage. However, in summary, when i
 * rebuild any external modules if necessary (such as those for VirtualBox) (using <code>emerge @module-rebuild</code>)
 * rebuild any packages depending on stale libraries (using <code>emerge @preserved-rebuild</code>);
 * update old Perl modules not caught by {{c|emerge}} (using <code>perl-cleaner</code>);
+* remove stale versions of Python from the {{c|eselect}} list (using <code>eselect python cleanup</code>);
 * ''not'' attempt to rebuild the kernel, even if a new version of {{Package|sys-kernel/gentoo-sources}} has become available (because we specified <code>--no-kernel-upgrade</code>);
 * remove any unreferenced packages again (using <code>emerge --depclean</code>);
 * re-emerge any packages depending on libraries removed by the previous step (using <code>revdep-rebuild</code>); 
