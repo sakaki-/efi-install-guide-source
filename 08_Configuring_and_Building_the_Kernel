@@ -15,7 +15,7 @@ However, don't worry, the process is perfectly manageable! No manual kernel conf
 
 So what is the [[:Wikipedia:Linux_kernel|Linux kernel]] anyway? In essence, it's a privileged, pre-emptive, multitasking resource manager. As such, it's the core element of the operating system, because all 'normal' software (including operating system programs like {{c|cat}} and {{c|ls}})  must go via the kernel to access system hardware (such as disks, screen and keyboard), to request or release system resources (such as memory), or to communicate with other [[:Wikipedia:User_space#Userland|'userland']] software (as the kernel maintains user processes in distinct virtual memory 'silos').
 
-The kernel is ''not'' built using the normal {{c|emerge}} procedure &mdash; {{c|emerge}} ''will'' fetch the necessary source files for us, but configuration, compilation and installation is separate. {{Highlight|Configuration}} here refers to the process of setting (or in come cases, commenting out) key-value pairs in a special {{c|.config}} file. This file sets vital kernel parameters (such as the kernel command line, in the case of a UEFI-bootable system), and instructs the build system which kernel components (including drivers) to omit, which to build as [[:Wikipedia:Loadable_kernel_module|loadable modules]] ('.ko' files), and which to build in to the kernel itself.
+The kernel is ''not'' built using the normal {{c|emerge}} procedure &mdash; {{c|emerge}} ''will'' fetch the necessary source files for us, but configuration, compilation and installation is separate. {{Highlight|Configuration}} here refers to the process of setting (or in some cases, commenting out) key-value pairs in a special {{c|.config}} file. This file sets vital kernel parameters (such as the kernel command line, in the case of a UEFI-bootable system), and instructs the build system which kernel components (including drivers) to omit, which to build as [[:Wikipedia:Loadable_kernel_module|loadable modules]] ('.ko' files), and which to build in to the kernel itself.
 
 Before continuing, it's worth saying a little bit about the EFI boot process here. When your PC boots up (in [[:Wikipedia:Unified_Extensible_Firmware_Interface|EFI]] mode), the UEFI BIOS loads from ROM and runs. Once it has performed initial hardware configuration, this BIOS then looks for any runnable EFI software, proceeding through a list of possible locations (which must be EFI system partitions, if they are storage devices) as specified by you via the BIOS setup screens (or the EFI boot list variable). If it finds such an executable (on 64-bit x86 machines, normally {{Path|/EFI/Boot/bootx64.efi}}, the filename is not (usually!) case sensitive), it will load this and run it.
 
@@ -472,18 +472,18 @@ The below shows a typical configuration run; obviously your values (UUIDs etc) w
 Your configuration file should look something like the below, after running <code>buildkernel --easy-setup</code> (obviously, your values will differ, depending on the choices you make, and the UUIDs etc. on your target machine):
 
 {{FileBox|filename=/etc/buildkernel.conf|title=Example settings for {{c|buildkernel}} after <code>--easy-setup</code> run (your values will differ)|lang=bash|1=
-# Configuration file for /usr/local/sbin/buildkernel
+# Configuration file for /usr/sbin/buildkernel
 # Make sure the below are set correctly for your system!
 
 # following is the partuuid of your EFI system partition
 # (e.g., the first partition on your USB boot key)
 # replace with an appropriate value (find with lsblk and blkid) for your system
-# EFIPARTUUID="2498f874-ad8f-484e-8aba-81ac1c9665b6"
+#EFIPARTUUID="2498f874-ad8f-484e-8aba-81ac1c9665b6"
 
 # following is the partuuid of your LUKS partition (if on a GPT drive)
 # (usually, this will be a partition of a fixed drive in your machine)
 # replace with an appropriate value (find with lsblk and blkid) for your system
-# CRYPTPARTUUID="8111286a-d24e-4ba2-b6af-d0650fab4130"
+#CRYPTPARTUUID="8111286a-d24e-4ba2-b6af-d0650fab4130"
 
 # if your LUKS filesystem is NOT on a GPT partition (for example, if it is
 # on an MBR partition, or if you have luksFormat-ed a top-level drive, rather
@@ -547,6 +547,24 @@ Your configuration file should look something like the below, after running <cod
 # the below (capitalization is unimportant)
 #INITSYSTEM="openrc"
 
+# if you want to revert to the old (<=1.0.29) behaviour of _not_ compressing
+# the built-in initramfs, uncomment the line below; XZ compression is now
+# used by default; some systems will not boot large kernels that contain an
+# uncompressed ramfs, even though the enclosing kernel is itself compressed
+#COMPRESSINITRAMFS=0
+
+# you can manually set the filesystem type for your root partition here.
+# however, doing so should not be necessary.
+#CMDLINE_ROOTFSTYPE="ext4"
+
+# if you sign your kernel modules, configure the signing certificate and key
+# paths to sign external modules as well once built. Setting the variables to
+# "auto" will use the kernel's automatically generated certificate and key if
+# you have configured it to generate them. By default the variable is unset and
+# modules will not be signed.
+#KERNEL_SIGNING_CERT="auto"
+#KERNEL_SIGNING_KEY="auto"
+
 # if you need to conform the config file for some reason, uncomment this
 # hook function and fill it out to suit your requirements
 # NB you should only really need to do this to override a setting forced
@@ -605,7 +623,7 @@ The {{c|buildkernel}} script carries out the following steps in order:
 # If in {{Highlight|interactive}} mode (set by the {{c|--ask}} option), allows you to <span id="make_menuconfig_step">modify the resulting configuration</span>, if you choose, using the standard [[:Wikipedia:Menuconfig|menuconfig]] tool (see [[Kernel/Configuration#Usage|this wiki entry]] for a brief set of usage instructions); (it's fine to elect not to, however, in which case the conformed {{c|.config}} will be silently sanitized/upgraded with {{c|make olddefconfig}}, as it will in non-interactive mode);
 # Cleans the kernel tree (optionally, you can force this with the {{c|--clean}}, and you will be asked in interactive mode);
 # Builds the kernel, and its modules, with the specified configuration; in this first pass, an empty initramfs is used (since it must be incorporated in the kernel, to be protected by UEFI secure boot, but we don't have everything necessary to include in it, yet!);
-# If required (via the {{c|--build-external-modules}} option) builds any external modules (such as those required for VirtualBox), using [[:Kernel/Upgrade#Reinstall_external_kernel_modules|{{c|emerge @module-rebuild}}]];
+# If required (via the {{c|--build-external-modules}} option) builds any external modules (such as those required for VirtualBox), using [[:Kernel/Upgrade#Reinstall_external_kernel_modules|{{c|emerge @module-rebuild}}]] ({{c|buildkernel}} can also be instructed to ''sign'' these modules, by specifying <var>KERNEL_SIGNING_CERT</var> and <var>KERNEL_SIGNING_KEY</var> in {{Path|/etc/buildkernel.conf}}, but this behaviour is disabled by default);
 # Creates a first cut of the [[initramfs]] using [[genkernel|{{c|genkernel}}]] (see [[#genkernel_opts_used_by_buildkernel|below]] for more details); this will contain {{c|genkernel}}'s {{c|init}} script, compiled modules, any necessary firmware (if you haven't [[#deblob_or_not|deblobbed]]), and a minimal set of binaries; it does ''not'' at this point contain a static copy of {{c|gpg}};
 # Unpacks the initramfs, to the {{Path|/boot/initramfs}} directory;
 # <span id="copy_static_gpg">Modifies the initramfs</span> by copying {{c|modprobe.d}} directory contents across to it, and copies the {{c|staticgpg}} binary we discussed [[#staticgpg_intro|earlier]], renaming it as {{c|gpg}} (if {{c|staticgpg}} does not exist, {{c|buildkernel}} will {{c|emerge}} it);

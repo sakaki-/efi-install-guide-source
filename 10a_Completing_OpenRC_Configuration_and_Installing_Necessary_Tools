@@ -509,7 +509,8 @@ You can read more about {{c|genup}} via its manpage. However, in summary, when i
 * re-emerge any packages depending on libraries removed by the previous step (using <code>revdep-rebuild</code>); 
 * rebuild any packages depending on stale libraries again (using <code>emerge @preserved-rebuild</code>);
 * remove any unused source tarballs (using <code>eclean --deep distfiles</code>); and
-* update environment settings as a precautionary measure (using <code>env-update</code>); and
+* update environment settings as a precautionary measure (using <code>env-update</code>);
+* update {{c|eix}} package metadata (using <code>eix-sync -0</code>); and
 * run any custom updaters in {{Path|/etc/genup/updaters.d}}.
 
 {{Note|If you should have any issues when running {{c|genup}}, particularly the deep {{c|emerge}} stage, then you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build|these earlier notes]]. (As of version 1.0.4, {{c|genup}} will ''automatically'' retry failed {{c|emerge}} runs with make parallelism inhibited.)}}
