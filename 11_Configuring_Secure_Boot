@@ -29,6 +29,8 @@ The steps we'll be undertaking are as follows (see [[#secure_boot_intro|below]] 
 
 {{Important|Users who do ''not'' wish to set up secure boot should click [[#verify_win8_secure_boot{{!}}here]] to skip directly to the next relevant section instead ("Verifying Secure Boot with Windows (and Fixing RTC)"). In such a case, ensure secure boot is turned off when using Gentoo.}}
 
+{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|systemd}} init, rather than {{c|OpenRC}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Configuring_Secure_Boot_under_OpenRC{{!}}click here]] to go to the default ({{c|OpenRC}}) version of this page.}}
+
 Let's get started!
 
 == <span id="secure_boot_intro">Introduction</span> ==

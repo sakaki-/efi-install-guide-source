@@ -15,8 +15,6 @@ Once this is complete, we'll be in a position to configure secure boot, and brin
 
 So, let's get going with the configuration!
 
-{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|OpenRC}} init, rather than {{c|systemd}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Configuring_systemd_and_Installing_Necessary_Tools{{!}}click here]] to go to the default ({{c|systemd}}) version of this page.}}
-
 == <span id="bring_back_ssh">Noting IP Address and Re-Establishing {{c|ssh}}</span> ==
 
 Our first order of business is to check our IP address (the network connection - whether wired or wireless - should have started automatically, given that we set up {{c|dhcpcd}} to come up on boot [[../Final_Preparations_and_Reboot_into_EFI#setup_networking_openrc|earlier]]), and then {{c|ssh}} in again, so that we can use the facilities of the helper machine to complete the install.
@@ -116,10 +114,11 @@ Begin by listing the available locales. Issue:
 |output=<pre>
 Available targets for the LANG variable:
   [1]   C *
-  [2]   POSIX
-  [3]   en_GB
-  [4]   en_GB.iso88591
-  [5]   en_GB.utf8
+  [2]   C.utf8
+  [3]   POSIX
+  [4]   en_GB
+  [5]   en_GB.iso88591
+  [6]   en_GB.utf8
   [ ]   (free form)
 </pre>
 }}
@@ -127,11 +126,11 @@ Available targets for the LANG variable:
 The current <var>LANG</var> target is shown with a {{c|*}}. Now choose a [[:Wikipedia:UTF-8|UTF-8]] variant from the list (per the [[Handbook:AMD64/Installation/Base#Configure_locales|Gentoo handbook]]). For my particular case, that's option 5 in the list, {{c|en_GB.utf8}}, but yours will most likely vary. Issue:
 
 {{RootCmd
-|eselect locale set 5
+|eselect locale set 6
 |source /etc/profile
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute for the number <code>5</code> in the above, with the correct value to select your UTF-8 profile from the list provided by <code>eselect locale list</code>.}}
+{{Note|Substitute for the number <code>6</code> in the above, with the correct value to select your UTF-8 profile from the list provided by <code>eselect locale list</code>.}}
 
 Check that this choice has been reflected in the file {{Path|/etc/env.d/02locale}}; issue:
 {{RootCmd
@@ -220,7 +219,7 @@ and place the following text in that file:
 # commands in this script will be run once the main boot process is complete
 
 # ensure the framebuffer is properly cleared...
-cat /dev/zero > /dev/fb0 2>/dev/null
+cat /dev/zero > /dev/fb0 2>/dev/null {{!}}{{!}} true
 }}
 {{Note|Under {{c|OpenRC}}, the {{c|local}} service (which is enabled by default) will run any executable {{Path|/etc/local.d/<name>.start}} files at the final phase of system startup, and any executable {{Path|/etc/local.d/<name>.stop}} files at the first phase of system shutdown.}}
 {{Note|The {{c|cat}} of zeros will stop automatically when the end of the framebuffer ({{Path|/dev/fb0}}) is reached; this will be after 1920*1080*4 (rgba) {{=}} 8294400 bytes on the CF-AX3, but of course your system may vary.}}
@@ -349,7 +348,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 }}
 {{Note|As [[../Building_the_Gentoo_Base_System_Minus_Kernel#use_showem|before]], you can switch to the second console to watch the progress with {{c|showem}}, if you like.}}
 
-Per {{Bug|406623}}, we need to make a [http://forums.gentoo.org/viewtopic-t-917418-start-0.html minor configuration change] to avoid binary zero characters getting written to the {{Path|/var/log/messages}} file (making it look like a binary file to tools like {{c|grep}}). Issue:
+Per {{Bug|406623}}, we need to make a [http://forums.gentoo.org/viewtopic-t-917418-start-0.html minor configuration change] to avoid binary zero characters getting written to the {{Path|/var/log/messages}} file (making it look like a binary file to tools like {{c|grep}}; although marked as fixed in the bug tracker, the issue appears to affect some later versions too, so the below workaround is still recommended on modern systems). Issue:
 {{RootCmd
 |sed -i 's/threaded(yes)/threaded(no)/g' /etc/syslog-ng/syslog-ng.conf
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -423,7 +422,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 }}
 {{Note|This package is required when working with UEFI volumes (in particular, for the {{c|mkfs.vfat}} command<ref>[http://linux.die.net/man/8/mkfs.vfat {{c|mkfs.vfat}} manpage]</ref>), so it is strongly recommended that you install it (and the rest of this tutorial assumes you have indeed done so).}}
 
-We have [[../Final_Preparations_and_Reboot_into_EFI/#setup_dhcpcd_openrc|already]] installed and activated {{c|dhcpcd}}, and I will assume you do not require any additional networking tools installed at this point (if you do, please see the [[Handbook:AMD64/Installation/Tools#Networking_tools|relevant section]] of the Gentoo handbook for more details).
+We have [[../Final_Preparations_and_Reboot_into_EFI#setup_dhcpcd_openrc|already]] installed and activated {{c|dhcpcd}}, and I will assume you do not require any additional networking tools installed at this point (if you do, please see the [[Handbook:AMD64/Installation/Tools#Networking_tools|relevant section]] of the Gentoo handbook for more details).
 
 Next, we'll add some useful utilities that let you discover information about the hardware in your system (this will come in handy when e.g., pruning kernel drivers). Issue:
 {{RootCmd
@@ -515,6 +514,8 @@ You can read more about {{c|genup}} via its manpage. However, in summary, when i
 
 {{Note|If you should have any issues when running {{c|genup}}, particularly the deep {{c|emerge}} stage, then you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build|these earlier notes]]. (As of version 1.0.4, {{c|genup}} will ''automatically'' retry failed {{c|emerge}} runs with make parallelism inhibited.)}}
 
+{{Note|With [[../Building_the_Gentoo_Base_System_Minus_Kernel#switch_back_to_rsync|`rsync`-based updates]] over a slow network connection, you will sometimes encounter the situation when the update of the `gentoo` repository fails validation (as a change is committed to it mid-download, making the overall `gemato` signature incorrect). If this happens to you, simply run `genup` again. And if you have the problem repeatedly, switch to using `webrsync`, as described [[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|stick_with_webrsync]].}}
+
 {{Note|For avoidance of doubt, {{c|genup}} ''will'' signature-verify the Gentoo repo before using it, since we set things up that way earlier ([[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|here]] and [[../Building_the_Gentoo_Base_System_Minus_Kernel#switch_back_to_rsync|here]]). As before, warnings that the <code>key is not certified with a trusted signature</code> are to be expected<ref>Information Security Stack Exchange: [http://security.stackexchange.com/questions/6841/ways-to-sign-gpg-public-key-so-it-is-trusted "Ways to sign gpg public key so it is trusted?"]</ref> and do not impact the signature check validity.}}
 
 Assuming that completed successfully (you receive the message <code>All done - your system is now up-to-date!</code>), look at the preceding few lines of output from {{c|genup}}. If you see:
@@ -543,13 +544,6 @@ and follow the prompts to accept, zap (ignore) or merge each proposed change.
 
 {{Note|For avoidance of doubt, the [[World set (Portage)|@world]] set ''includes'' the [[System set (Portage)|@system]] set.}}
 
-Finally, since this is the first full package update, and it is possible that the Portage tree snapshot has not changed since you fetched it [[../Building_the_Gentoo_Base_System_Minus_Kernel#update_portage_tree|originally]], issue the following command to make completely sure the {{c|eix}} index has updated:
-{{RootCmd
-|eix-sync -0
-|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
-}}
-(that's a zero).
-{{Tip|You only need to run this command at this point in the tutorial, it is ''not'' a generally required follow-on to {{c|genup}}. However, if you find at any time in the future that {{c|eix}} is giving you strange output to your package queries, or appears to be missing new versions of packages etc., you can simply run <code>eix-sync -0</code> to bring its index up-to-date (NB the repositories on your machine are ''not'' affected by running eix-sync with the <code>-0</code> option, it does not hit the network).}}
 
 == <span id="efivarfs_rw">Ensuring {{c|efivarfs}} is Writable</span> ==
 
@@ -793,9 +787,9 @@ When <span id="entering_plymouth_LUKS_password">the target system restarts</span
 (The exact display you see may differ from the above.)
 
 {{Important|With certain graphics cards, {{c|plymouth}} may actually '''not''' be able to display a graphical boot splash at this point in the install, due to missing kernel graphics drivers. If this happens to you, and you get a textual prompt for your {{c|gpg}} passphrase, ''despite'' having enabled {{c|plymouth}}, there is no need to worry. Just type in your passphrase and continue with the install; {{c|plymouth}} ''is'' running. Once you set up the correct kernel graphics drivers, which we will get to [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#install_drm_driver|shortly]], {{c|plymouth}}'s graphical boot splash should also (automatically) start working.}}
+{{Tip|If you are having difficulties with the graphical LUKS keyfile {{c|gpg}} passphrase entry screen, pressing {{Key|Esc}} will revert {{c|plymouth}} to a text-based mode, where you can see any error messages etc. Also, '''if the boot process appears to 'hang'''' at the graphical splash screen ''after'' typing the passphrase, reboot, and then try this approach (i.e., pressing {{Key|Esc}}).}}
 {{Note|Similarly, depending on your installed version of {{Package|sys-boot/plymouth}}, under OpenRC you may only see a simplified 'three square boxes' startup progress screen, rather than the full animation shown in the screenshots above. However, once you set up the correct [[:Wikipedia:Direct_Rendering_Manager|Direct Rendering Manager]] graphics drivers in the kernel [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#install_drm_driver|shortly]], you should find that it is replaced by a properly rendered graphic (as above). It won't otherwise affect the operation of your system.}}
 {{Note|Due to [[Genkernel|{{c|genkernel}}]] not including certain {{c|plymouth}} modules into the initramfs, you normally won't get any textual prompts or progress indicators overlaid on the graphical splash during boot (unless {{c|plymouth}} has to fall back completely into text mode, as just mentioned). I haven't fixed this here as I quite like the resulting minimalist look.}}
-{{Tip|If you are having difficulties with the graphical LUKS keyfile {{c|gpg}} passphrase entry screen, pressing {{Key|Esc}} will revert {{c|plymouth}} to a text-based mode, where you can see any error messages etc.}}
 
 Once you receive the login prompt, enter 'root' as the user (again, directly at the keyboard, without quotes), and then type the root password you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]].
 
@@ -847,7 +841,7 @@ otherwise, if you have run {{c|buildkernel}} more than once since changing the p
 }}
 }}
 
-{{Note|If you happen to have used {{c|buildkernel}}'s <code>--snapshot-backup</code> option in the past (to ensure a 'known good' kernel was preserved), you'll also see (kernel and config) files in {{Path|/mnt/tmpefi/EFI/Boot}} with prefixed timestamps. For example, if you had previously issued <code>buildkernel --snapshot-backup</code> on 4 May 2014 at 12:23:07 say, you would see the files <code>2014-05-04-12-23-07-gentoo.efi.old</code> and {{c|2014-05-04-12-23-07-config.old}} in the {{Path|/mnt/tmpefi/EFI/Boot}} directory. You can use such files instead of {{c|gentoo.efi.old}} and {{c|config.old}}, if you like.}}
+{{Note|If you happen to have used {{c|buildkernel}}'s <code>--snapshot-backup</code> option in the past (to ensure a 'known good' kernel was preserved), you'll also see (kernel and config) files in {{Path|/mnt/tmpefi/EFI/Boot}} with prefixed timestamps. For example, if you had previously issued <code>buildkernel --snapshot-backup</code> on 4 May 2014 at 12:23:07 say, you would see the files {{c|2014-05-04-12-23-07-gentoo.efi.old}} and {{c|2014-05-04-12-23-07-config.old}} in the {{Path|/mnt/tmpefi/EFI/Boot}} directory. You can use such files instead of {{c|gentoo.efi.old}} and {{c|config.old}}, if you like.}}
 
 Finally, ensure the data has been written, unmount the USB key, and remove the temporary mountpoint you created, then exit back to the normal user. Issue
 {{RootCmd

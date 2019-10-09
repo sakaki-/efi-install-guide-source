@@ -11,10 +11,11 @@ This section of the tutorial has no precise analogue in the Gentoo manual, altho
 We will also address some additional miscellaneous issues at the end of this chapter, namely:
 * pruning your kernel image (by removing unused modules and firmware files);
 * getting suspend and hibernate working properly;
-* setting the system default {{c|python}} interpreter; and
 * disabling {{c|sshd}} (as we no longer need it).
 
 Let's get started!
+
+{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|systemd}} init, rather than {{c|OpenRC}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Final_Configuration_Steps_under_OpenRC{{!}}click here]] to go to the default ({{c|OpenRC}}) version of this page.}}
 
 == <span id="general_approach">General Approach</span> ==
 
@@ -27,11 +28,11 @@ Let's get started!
 * If the device description should match one given in the specific CF-AX3 instructions below, implement the given kernel configuration shorthand fragment (using the <code>buildkernel --menuconfig</code> interface).
 * Otherwise, search (still via the {{c|menuconfig}} interface; see the [[../Setting_up_the_GNOME_3_Desktop#make_menuconfig_intro|tutorial earlier]]) for a suitable option, and then enable (or modularize) it (and any dependencies). If you can't find anything suitable this way, do a web search based on the information collected. (Unfortunately, there is no automated tool to do this for you).
 * Once you have made all desired changes, exit and save <code>make menuconfig</code>, thereby allowing {{c|buildkernel}} to continue and create a new kernel; and then reboot. With luck, your desired feature should now be operational.
-* If all else fails, invoke <code>buildkernel --menuconfig</code> again, try modularizing ''all'' options under the appropriate sub-menu in the <code>make menuconfig</code> interface, then save and exit, to create a new kernel as before. If, after a reboot, the desired feature is operational, you should then be able to locate its driver using <code>hwinfo --pci --usb</code>(after which you can rerun <code>buildkernel --menuconfig</code> if you like, to turn off all other unneeded items and recompile). This approach (i.e., turn on pretty much everything so that ''something'' will work ^-^) is actually the one taken by many Linux distributions (such as Ubuntu) for their 'generic' kernels, so don't feel shy to try it if need be.
+* If all else fails, invoke <code>buildkernel --menuconfig</code> again, try modularizing ''all'' options under the appropriate sub-menu in the <code>make menuconfig</code> interface, then save and exit, to create a new kernel as before. If, after a reboot, the desired feature is operational, you should then be able to locate its driver using <code>hwinfo --pci --usb</code> (after which you can rerun <code>buildkernel --menuconfig</code> if you like, to turn off all other unneeded items and recompile). This approach (i.e., turn on pretty much everything so that ''something'' will work ^-^) is actually the one taken by many Linux distributions (such as Ubuntu) for their 'generic' kernels, so don't feel shy to try it if need be.
 
 Tweaking your kernel configuration to enable machine features is one of the more frustrating tasks you have to do when bringing up a system under Linux. In this tutorial, I've deliberately postponed it till near the end - when you already have all the other elements of a functioning system in place.
 
-{{Tip|Depending on the popularity of your target machine with other Linux users, you may be also able to find useful kernel &mdash; and other &mdash; configuration information by searching online.}}
+{{Tip|Depending on the popularity of your target machine with other Linux users, you may also be able to find useful kernel &mdash; and other &mdash; configuration information by searching online.}}
 
 To make the process concrete, I'll now lay out the changes necessary to enable the main features of the Panasonic CF-AX3 laptop. You will obviously need to adapt what follows depending on your particular target machine.
 
@@ -102,8 +103,9 @@ On the CF-AX3, the built-in Ethernet adaptor is (obviously!) already working und
 Now, while the firmware for this 7260 ''is'' already included in {{Package|sys-kernel/linux-firmware}} (which we installed [[../Configuring_and_Building_the_Kernel#install_firmware|earlier]]), using it requires MVM firmware support (which, at the time of writing, the minimal-install kernel configuration has disabled).
 
 Set the following options (within {{c|buildkernel}}) to rectify this, and thereby activate [[:Wikipedia:Wi-Fi|WiFi]]:
-
-{{KernelBox|title=Configuration options for 7260 wireless card (WiFi) on the CF-AX3|1=
+{{KernelBox
+|title=Configuration options for 7260 wireless card (WiFi) on the CF-AX3
+|1=
 Device Drivers  --->
  -*- Network device support  --->
   [*]   Wireless LAN  --->
@@ -126,8 +128,9 @@ Like many modern notebooks, the CF-AX3 has an integrated [[:Wikipedia:Bluetooth|
 }}
 
 To enable it on the CF-AX3, set the following options (this will work for many other machines too):
-
-{{KernelBox|title=Configuration options for Bluetooth on the CF-AX3|1=
+{{KernelBox
+|title=Configuration options for Bluetooth on the CF-AX3
+|1=
 -*- Networking support  --->
  <M>   Bluetooth subsystem support  --->
   Bluetooth device drivers  --->
@@ -152,8 +155,9 @@ As is increasingly common, the CF-AX3 has a [[:Wikipedia:Touchscreen|touchscreen
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 To enable the eGalaxTouch device (this will also work for many other touchscreen panels), set the following options:
-
-{{KernelBox|title=Configuration options for touchscreen on the CF-AX3|1=
+{{KernelBox
+|title=Configuration options for touchscreen on the CF-AX3
+|1=
 Device Drivers  --->
  HID support  ---> 
   Special HID drivers  --->
@@ -173,8 +177,9 @@ The CF-AX3 has an integrated webcam (a common feature on many laptops and netboo
 {{Note|The {{c|hwinfo}} command will output blank-line-separated records about each device found on the PCI and USB busses (your webcam will almost certainly be on one of those, most likely USB). Then the {{c|awk}} command prints any of these records that contain the text "webcam" (not case sensitive), using a blank line as a record separator.}}
 
 To enable the webcam on the CF-AX3 (this will work for many modern machines, as many webcams are [[:Wikipedia:USB_video_device_class|UVC]] devices), set the following options:
-
-{{KernelBox|title=Configuration options for webcam on the CF-AX3|1=
+{{KernelBox
+|title=Configuration options for webcam on the CF-AX3
+|1=
 Device Drivers  --->
  <M> Multimedia support  --->
   [*]   Cameras/video grabbers support
@@ -195,8 +200,9 @@ The CF-AX3 has an integrated Intel HD audio device, accessed on the PCI bus. You
 }}
 
 As configured, sound works 'out of the box' for the CF-AX3, but the [[:Wikipedia:PulseAudio|{{c|pulseaudio}}]] sound server complains about lack of high resolution timer support, and insufficiently large buffers. To address these problems on the CF-AX3, set the following options
-
-{{KernelBox|title=Configuration options for audio on the CF-AX3|1=
+{{KernelBox
+|title=Configuration options for audio on the CF-AX3
+|1=
 General Setup  --->
  Timers subsystem  --->
   [*] High Resolution Timer Support
@@ -345,7 +351,7 @@ Obviously, your output will differ, depending upon your kernel version, the numb
 
 {{Note|Yes, the size ''is'' still large, and that's due to the included firmware files, an issue we will address [[#remove_unnecessary_firmware{{!}}shortly]].}}
 
-{{Note|If you chose [[../Configuring_and_Building_the_Kernel/#deblob_or_not{{!}}earlier]] to ''deblob'' your kernel, use <code>/boot/vmlinuz*-ck</code> in place of <code>/boot/vmlinuz*-gentoo</code> in the above. For avoidance of doubt, this will ''not'' apply to most users.}}
+{{Note|If you chose [[../Configuring_and_Building_the_Kernel#deblob_or_not{{!}}earlier]] to ''deblob'' your kernel, use <code>/boot/vmlinuz*-ck</code> in place of <code>/boot/vmlinuz*-gentoo</code> in the above. For avoidance of doubt, this will ''not'' apply to most users.}}
 
 Then &mdash; leaving the USB key inserted &mdash; reboot, and login again, in the normal manner. 
 
@@ -357,7 +363,7 @@ If you find, when rebooted, that some previously working facilities of your targ
 
 <span id="remove_unnecessary_firmware">With the module set reduced</span>, we can now turn our attention to the ''major'' driver of kernel image size &mdash; the default inclusion of a complete copy of {{Path|/lib/firmware/<...>}} in its integral initramfs.
 
-{{Note|Obviously, this subsection does ''not'' apply to those who chose [[../Configuring_and_Building_the_Kernel/#deblob_or_not{{!}}earlier]] to ''deblob'' their kernel, and such users should [[#suspend_hibernate{{!}}click here]] to skip to the next section now (for avoidance of doubt though, most users of this guide will ''not'' be deblobbing, and so should continue reading ^-^).}}
+{{Note|Obviously, this subsection does ''not'' apply to those who chose [[../Configuring_and_Building_the_Kernel#deblob_or_not{{!}}earlier]] to ''deblob'' their kernel, and such users should [[#suspend_hibernate{{!}}click here]] to skip to the next section now (for avoidance of doubt though, most users of this guide will ''not'' be deblobbing, and so should continue reading ^-^).}}
 
 Fortunately, we can easily pare down what is included here, through use of the <code>user_modify_initramfs()</code> function in {{Path|/etc/buildkernel.conf}}. Recall that when {{c|buildkernel}} runs, it creates an [[../Configuring_and_Building_the_Kernel#initramfs_copy_location|uncompressed staging copy]] of the initramfs filestructure at {{Path|/boot/initramfs}}, then calls <code>user_modify_initramfs()</code> (if defined), then repacks the (possibly modified) initramfs filestructure again for inclusion into the final kernel image.
 
@@ -734,46 +740,6 @@ HibernateMode=shutdown
 Save and exit the {{c|nano}} editor (you can also close out the terminal if you have no further use for it).
 
 After this, hibernate should work properly (on the CF-AX3). Press {{Key|Fn}}{{Key|F10}} and the machine will write its memory to the LVM swap partition on the LUKS encrypted volume ({{c|buildkernel}} conforms the kernel command line to specify this, as noted [[../Configuring_and_Building_the_Kernel#real_resume_var|earlier]]), and then automatically power off. To resume, ensure that the boot USB key is inserted, and slide the power key. Enter your LUKS password when prompted, log in to GNOME, and you should find your desktop just as you left it. As this feature uses encrypted swap, it is relatively safe to travel with the laptop hibernated in this fashion (you should unplug and carry the boot USB key separately, of course).
-
-== <span id="set_default_python">Setting the System Default {{c|python}} Interpreter</span> ==
-
-This is a bit of an odd one, but it does seem to catch people out. [[:Wikipedia:Python_(programming_language)|Python]] is a widely used dynamic language. There are two major versions (2.x and 3.x),<ref>python.org wiki: [https://wiki.python.org/moin/Python2orPython3 "Should I use Python 2 or Python 3 for my development activity?"]</ref> and a ''lot'' of python scripts that you find on the web use the older version. The problem is that these scripts also often start with a ''versionless'' [[:Wikipedia:Shebang_(Unix){{!}}shebang]] like:
-{{GenericCmd|<pre>
-#!/usr/bin/env python
-</pre>
-}}
-On Gentoo, this will end up invoking Python 3.x (''not'' 2.x),<ref>Gentoo Forums: [https://forums.gentoo.org/viewtopic-t-921776-start-0.html#7025204 "python update 2.7 --> 3.2"]</ref> thereby (often) causing the script to break.
-
-It's generally safe to set the default {{Path|/usr/bin/python}} to refer to version 2.7 instead (since scripts that ''require'' version 3 will explicitly call it). 
-
-To do so, open a root terminal in GNOME (if you don't already have one open): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
-{{Cmd
-|su --login root
-|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
-|output=<pre>
-Password: <enter root password>
-</pre>
-}}
-The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
-
-Then in this terminal, issue:
-{{RootCmd
-|eselect python list
-|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
-|output=<pre>
-Available Python interpreters, in order of preference:
-   [1]   python3.6
-   [2]   python2.7 (fallback)
-</pre>
-}}
-Your output may very somewhat from the above, but if the top line is '''not''' the '2.7' version (it is {{c|[2]}} in the above), set it as the default:
-{{RootCmd
-|eselect python set 2
-|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
-}}
-{{Note|Substitute the correct index for python 2.7 (in the list returned on your system) for {{c|2}} in the above command.}}
-
-That's it!
 
 == <span id="disabling_sshd">Disabling {{c|sshd}}</span> ==
 

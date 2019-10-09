@@ -38,7 +38,7 @@ This section has no direct equivalent in the Gentoo Handbook (although the part 
 
 {{Note|You may find the articles [[GNOME/Guide{{!}}"GNOME Configuration HOWTO"]] and [[Systemd/Installing Gnome3 from scratch{{!}}"systemd/Installing Gnome3 from scratch"]] (both from the Gentoo wiki) useful background reading.}}
 
-{{Note|The transition from GNOME 2 to 3 has caused some controversy in the Linux community, as it involves a significant shift away from the more 'traditional' desktop metaphor (see [[:Wikipedia:Controversy_over_GNOME_3{{!}}this Wikipedia article]] for example). And forces you to use {{c|systemd}} (unless of course you [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}avail yourself]] of Dantrell B.'s overlays)...
+{{Note|The transition from GNOME 2 to 3 has caused some controversy in the Linux community, as it involves a significant shift away from the more 'traditional' desktop metaphor (see [[:Wikipedia:Controversy_over_GNOME_3{{!}}this Wikipedia article]] for example). And, until the advent of Dantrell B.'s patchset (and subsequent formal {{c|elogind}} support in the main Gentoo tree), forced you to use {{c|systemd}}...
 
 If the newer look is not for you, don't despair. Although GNOME 2 is no longer supported in Gentoo, other similar desktops are; for example:
 * [[:Wikipedia:LXDE{{!}}LXDE]] (via package {{Package|lxde-base/lxde-meta}}), 
@@ -47,6 +47,8 @@ If the newer look is not for you, don't despair. Although GNOME 2 is no longer s
 However, installing these is beyond the scope of this guide. In what follows, I'm going to assume you want to use the GNOME 3 desktop.}}
 
 Right, let's get started!
+
+{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|systemd}} init, rather than {{c|OpenRC}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC{{!}}click here]] to go to the default ({{c|OpenRC}}) version of this page.}}
 
 == <span id="add_regular_user">Adding a User for Daily Use</span> ==
 
@@ -119,7 +121,7 @@ Leave the rest of the file as-is. Save, and exit {{c|nano}}.
 Next, we'll install an X11<ref name="x11_guide">Wikibooks: [https://en.wikibooks.org/wiki/Guide_to_X11 ''Guide to X11'']</ref> server.
 
 {{Note|Although we'll using {{c|wayland}} as our primary graphical platform for GNOME, we need to ensure X11 is working too, because:
-* apps not yet ported to use {{c|wayland}} will be hosted in a shared, rootless X11 server (the so-called '[[:Wikipedia:http://en.wikipedia.org/wiki/Wayland_(display_server_protocol)#Compatibility_with_X{{!}}XWayland]]' approach), and;
+* apps not yet ported to use {{c|wayland}} will be hosted in a shared, rootless X11 server (the so-called '[[:Wikipedia:Wayland_(display_server_protocol)#Compatibility_with_X{{!}}XWayland]]' approach), and;
 * we also want to allow the use of 'old-school' X11-based GNOME sessions as a fallback.}}
 
 We need to set two additional <var>USE</var> flags for {{Package|media-libs/mesa}} (an OpenGL-like library which X pulls in as a dependency), and while we're at it, set a few others that we'll need shortly for GNOME, so issue:
@@ -208,7 +210,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 and the X11 server will be downloaded, compiled and installed. Note that we use <code>--oneshot</code> here to avoid adding it to your [[World set (Portage){{!}}@world]] set (this is slightly cleaner, as it will become a dependency of GNOME, once it is installed later).
 
 {{Tip|<span id{{=}}"virtualbox_hints">If you are installing onto a [[VirtualBox]] client</span> (and this '''won't''' apply to most readers, who will instead be installing onto a 'real' target PC), please note the following:
-* You cannot simply set <code>VIDEO_CARDS{{=}}"vesa"</code> when using VirtualBox with EFI emulation turned on.<ref>Red Hat Bugzilla: [https://bugzilla.redhat.com/show_bug.cgi?id{{=}}742695 "EFI install in VirtualBox results in text install "]</ref> You need to use <code>VIDEO_CARDS{{=}}"virtualbox"</code> instead.
+* You cannot simply set <code>VIDEO_CARDS{{=}}"vesa"</code> when using VirtualBox with EFI emulation turned on.<ref>Red Hat Bugzilla: [https://bugzilla.redhat.com/show_bug.cgi?id{{=}}742695 "EFI install in VirtualBox results in text install "]</ref> You need to use <code>VIDEO_CARDS{{=}}"fbdev virtualbox vmware"</code> instead. Then, for best results, enable {{c|CONFIG_DRM_VMWGFX}} and {{c|CONFIG_DRM_VMWGFX_FBCON}} in the kernel, and opt to use {{c|VMSVGA}} (or, as a fallback, {{c|VboxSVGA}}) as the VirtualBox graphics controller.
 * Under EFI boot, you may find it more reliable to use {{c|ALSA Audio Driver}} / {{c|Intel HD Audio}} on your virtual machine (selectable in the VirtualBox control panel, under "Audio").
 * It is generally useful to {{c|emerge}} the {{Package|app-emulation/virtualbox-guest-additions}} in your guest (and set it to start on boot, via <code>emerge -v virtualbox-guest-additions && systemctl enable virtualbox-guest-additions</code>), to enable enhanced services (this does not entail installing any binary blobs). Also, if you do use this package, also remember to add your user(s) to the {{c|vboxguest}} group (with <code>gpasswd -a <username> vboxguest</code>).
 * To get (standard) {{c|wayland}} support, {{c|CONFIG_DRM}} <u>must</u> be enabled in the kernel, along with {{c|CONFIG_DRM_TTM}}. The simplest way to do this (for a VirtualBox guest) is to enable support for one of the 'normal' graphics card drivers (e.g. {{c|CONFIG_DRM_VIRTIO_GPU}}), in the [[#install_drm_driver{{!}}later]] kernel configuration section (this is safe to do, even though enabled driver won't be directly used).
@@ -526,6 +528,7 @@ Before we can try out X11, we need to instruct it which window manager to use, a
 {{Note|Obviously, the name that you see in the prompt will reflect that of the regular user you added (and which you just {{c|su}}-d to).}}
 Put the following text in the {{c|.xinitrc}} (replacing the current contents, if any):
 {{FileBox|filename=~/.xinitrc|title=A basic setup to start TWM and some simple applications|lang=bash|1=
+#!/bin/sh
 twm &
 xsetroot -solid CornflowerBlue &
 xclock -geometry 100x100-1+1 &
@@ -569,7 +572,6 @@ If all goes well, the screen of your target PC should now be displaying somethin
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}Once this has been installed, you can then add add the following line to your {{Path|.xinitrc}}, after the <code>start twm&</code> line:
 {{FileBox|filename=~/.xinitrc|title=Example monitor rotation fix (add after twm &) |lang=bash|1=
-#!/bin/sh
 xrandr --rotate right
 }}Leave the rest of the file as-is, and try <code>startx</code> again (other rotations are available besides <code>right</code>, please see the {{c|xrandr}} manpage).<br>For avoidance of doubt, most users will ''not'' be affected by this issue, and can safely ignore the contents of this tip.
 }}
@@ -620,11 +622,13 @@ Would you like to unmerge these packages? [Yes/No] <press y, then press Enter>
 
 {{Note|Using the <code>--depclean</code> option to {{c|emerge}} in this way is a common idiom to safely uninstall packages in Gentoo. If any of the specified [[../Installing_the_Gentoo_Stage_3_Files#atoms_etc{{!}}atoms]] happens to be a dependency of another (uncited) installed package (even transitively), it will not be removed.}}
 
-Next, decide whether you wish to disable GNOME's "[[:Wikipedia:Tracker_(search_software)|{{c|tracker}}]]" file and search indexing framework (it is enabled in GNOME by default). Two reasons you may wish to do so are:
+<span id="tracker_disable">Next, decide whether you wish to disable</span> GNOME's "[[:Wikipedia:Tracker_(search_software)|{{c|tracker}}]]" file and search indexing framework (it is enabled in GNOME by default). Two reasons you may wish to do so are:
 # it runs content-based indexing on your filesystem, which can create high CPU loading for densely-populated media;<ref name="tracker_cpu">Yao, M. [https://www.soimort.org/notes/171103/ "Go Away, {{c|tracker-store}}"]</ref><ref name="disable_tracker_how">Fedora Project Forum: [https://ask.fedoraproject.org/en/question/9822/how-do-i-disable-tracker-in-gnome/ "How Do I Disable Tracker in GNOME?"]</ref> and
 # there is a self-evident privacy (and attack surface) issue presented by using such software.
 
 {{Note|If {{c|tracker}} is disabled, the packages {{Package|gnome-extra/gnome-documents}}, {{Package|media-gfx/gnome-photos}} and {{Package|media-sound/gnome-music}} (which rely upon it) will ''not'' be installed as part of GNOME.}}
+
+{{Note|With modern GNOME, even if you disable the {{c|tracker}} USE flag, it will still be installed as it is a hard dependency of {{Package|gnome-base/nautilus}}, the default file manager for the GNOME desktop. The further measure required to stop it running at all (should you elect) will be described [[#tracker_fully_off{{!}}later in the chapter]].}}
 
 If you decide you'd rather retain {{c|tracker}}, click [[#ready_to_install_gnome|here]] to skip the following optional step.
 
@@ -641,6 +645,8 @@ USE="${USE} -tracker"
 }}
 
 Leave the rest of the file as-is. Save, and exit {{c|nano}}.
+
+{{Note|As the {{c|tracker}} USE flag is used by a number of applications, we set it globally here, rather than in {{Path|/etc/portage/package.use/gnome-extra-apps}}.}}
 
 <span id="ready_to_install_gnome">Now we are ready</span> to install GNOME!
 
@@ -835,8 +841,7 @@ Assuming that worked, <span id="login_to_gnome">you should now</span> be able to
 Next, directly at the target machine, click on the (regular) user name tile, then click on the 'cogwheel' icon, and select {{Key|GNOME on Wayland}} from the drop-down menu, as shown:
 [[File:Gnome_login_wayland.jpg|thumb|none|400px|Using a Wayland Session with GNOME]]
 
-{{Note|If you ''don't'' see the {{Key|GNOME on Wayland}} menu item offered, you should in the first instance try selecting the straight {{Key|GNOME}} entry instead: the "GNOME on Wayland" entry itself is actually distribution-local, and reflects [https://github.com/gentoo/gentoo/blob/af3838a2f381e0ccb1a3aeb726dce0a5f0ce7d77/gnome-base/gnome-session/gnome-session-3.24.2-r1.ebuild#L124-L138 a decision by the Gentoo GNOME team] to use X11 sessions as the default for GNOME 3.24 (normally, GNOME would use Wayland sessions by default, where available). This decision is likely to be reversed for future GNOME releases, so, if you are using one of these, the {{Key|GNOME}} menu item will probably perform the equivalent function of {{Key|GNOME on Wayland}} under 3.24. In any event, we're going to verify which of {{c|wayland}} or X11 is in use [[#verify_xdg_session_type{{!}}in just a moment]].}}
-{{Tip|<span id{{=}}"x11_gnome_session">For future reference</span>, if you ''are'' using GNOME 3.24, and wish to use GNOME on X11 for a particular session (perhaps because you need to use an application that doesn't yet work properly under {{c|wayland}} (even with [[:Wikipedia:Wayland_(display_server_protocol)#Compatibility_with_X{{!}}XWayland]] compatibility)), then simply choose {{Key|GNOME}} from the drop-down menu here (NB: this '''isn't''' something you should do at this stage in the install, it is just presented here for future reference).<br>NB: in more modern versions of GNOME, the menu item you'll need for this is called {{Key|GNOME on Xorg}} instead (the default {{Key|GNOME}} session therein having been changed to run {{c|wayland}}, as just mentioned).<br>For avoidance of doubt, the {{Key|XSession}} menu item is ''not'' the correct entry to choose to run GNOME under X11 (as, ''inter alia'', it requires a separate program, {{Package|x11-apps/xsm}}, which we do not have installed).}}
+{{Tip|<span id{{=}}"x11_gnome_session">If you wish to use GNOME on X11</span> for a particular session (perhaps because you need to use an application that doesn't yet work properly under {{c|wayland}} (even with [[:Wikipedia:Wayland_(display_server_protocol)#Compatibility_with_X{{!}}XWayland]] compatibility)), then simply choose {{Key|GNOME on Xorg}} from the drop-down menu here (NB: this '''isn't''' something you should do at this stage in the install, it is just presented here for future reference).<br>For avoidance of doubt, the {{Key|XSession}} menu item is ''not'' the correct entry to choose to run GNOME under X11 (as, ''inter alia'', it requires a separate program, {{Package|x11-apps/xsm}}, which we do not have installed).}}
 
 Next, type in the (regular user) password you set up [[#setup_regular_user|earlier]], and click {{Key|Sign In}} (or just press {{Key|Enter}}).
 {{Note|If your password is rejected, it may be because you do not (yet) have the correct keyboard settings in GNOME (particularly if you have a non-US keyboard, as the Panasonic CF-AX3 does, for example). You can click on the 'man in a circle' accessibility icon in the top bar, and use the on-screen keyboard to enter your password in this case. Afterwards, it is easy to change your keyboard setup via the 'Region & Language' settings panel in GNOME, as described [[#gnome_keyboard_settings{{!}}below]].}}
@@ -892,7 +897,7 @@ Once you have the network set up, you should be able to browse the web etc. Try 
 |[[File:Gnome_with_browser.jpg|thumb|none|400px|...And Using the Default Browser]]
 |}
 
-{{Note|This browser (called {{c|epiphany}}) is quite basic; as of the time of writing it won't do a great job with more complex sites. For this, consider installing (and [[../Sandboxing_the_Firefox_Browser_with_Firejail{{!}}sandboxing]]) a full-scale browser such as {{Package|www-client/firefox}} once your system is fully configured and running (but please also have a look at [[../Using_Your_New_Gentoo_System#play_mp4_in_gnome{{!}}these later notes]], if your issue is only a lack of video in {{c|epiphany}}, when viewing sites like YouTube).}}
+{{Note|This browser (called {{c|epiphany}}) is quite basic; as of the time of writing it won't do a great job with more complex sites. For this, consider installing (and [[../Sandboxing_the_Firefox_Browser_with_Firejail{{!}}sandboxing]]) a full-scale browser such as {{Package|www-client/firefox}} once your system is fully configured and running (but please also have a look at [[../Using_Your_New_Gentoo_System#play_mp4_in_gnome{{!}}these later notes]], if your issue is only a lack of video in {{c|epiphany}}, when viewing sites like YouTube (unlikely to be an issue with modern systems)).}}
 
 === <span id="gnome_keyboard_settings">GNOME Keyboard Settings</span> ===
 
@@ -925,6 +930,14 @@ The settings should now be preserved across a reboot.
 
 {{Note|You may also need to change your output settings in the GNOME 'Sound' control panel to hear anything: on the CF-AX3, you need to choose the 'Analog Output' option, which is not selected by default.}}
 
+=== <span id="tracker_fully_off">Turning tracker Fully Off</span> ===
+
+Next, if you wish to ensure that GNOME's {{c|tracker}} software is disabled completely for your current user (this step is optional), click on {{Key|Windows Key}}, then type "{{c|search}}" (and press {{Key|Enter}}; you may need to press twice). Then ensure the slider on the ''top bar'' of the shown dialog is turned '''off'''.
+
+{{Tip|Instead of turning {{c|tracker}} off entirely, you can fine-tune the and apps that it queries using this dialog (and, via the 'cogwheel' icon, which file locations it indexes).}}
+
+Close out the dialog window when done.
+
 === <span id="restart_to_gnome">Restarting into GNOME!</span> ===
 
 We are now ready to bid farewell to the services of the helper PC, as all further steps can now be done on the target machine directly. Close out the {{c|ssh}}/{{c|screen}} terminal. Issue:
@@ -947,7 +960,7 @@ which will close out the {{c|ssh}} session itself.
 
 Now, ensure that the USB boot key is inserted in the target PC, and reboot it, by clicking on GNOME's 'power' icon (in the top right of the screen), clicking on the 'power' button in the dropdown menu that then appears, and then clicking on the 'Restart' button in the dialog.
 
-The machine should then power cycle (you will be cleanly logged out of GNOME first). When the machine restarts, as before, you will need to enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]), directly at the target machine keyboard to unlock the LUKS partition. You should then be presented directly with a GNOME login page (as [[#login_to_gnome|above]]). Directly at the target machine, click on your (regular) user name then, when prompted, type in the (regular user) password you set up [[#setup_regular_user|earlier]] (ensure you have the correct keyboard settings, if relevant, as discussed [[#input_source_menu|above]]). GNOME should remember the session type you selected last time (e.g., {{Key|GNOME on Wayland}}), and default to using that.
+The machine should then power cycle (you will be cleanly logged out of GNOME first). When the machine restarts, as before, you will need to enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]), directly at the target machine keyboard to unlock the LUKS partition. You should then be presented directly with a GNOME login page (as [[#login_to_gnome|above]]). Directly at the target machine, click on your (regular) user name then, when prompted, type in the (regular user) password you set up [[#setup_regular_user|earlier]] (ensure you have the correct keyboard settings, if relevant, as discussed [[#input_source_menu|above]]). GNOME should remember the session type you selected last time (e.g., {{Key|GNOME}}), and default to using that.
 
 Once logged in to GNOME, bring up a web browser: directly at the target machine's keyboard, press the {{Key|Windows Key}} and type 'Web', then press {{Key|Enter}} to start the first item shown. GNOME's default [[:Wikipedia:Web_(web_browser)|web browser]] will start up, (if it initially opens full-screen, you can drag it down by the top bar to make it a normal-sized window). You can then type in the URL for this tutorial (<span id="rejoin">[https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop#rejoin https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop#rejoin]</span>), so that you can continue to follow it there.
 {{Important|From this point on, all interaction with the target machine will be done directly (and not via the helper PC), unless otherwise noted.}}

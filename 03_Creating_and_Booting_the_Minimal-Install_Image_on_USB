@@ -14,7 +14,7 @@ Firstly, identify the name of the current release of the minimal install ISO (we
 
 {{Note|The variant part of the name is a ''timestamp'' &mdash; the first component of which is a date, then a 'T' separator, then a time, then finally a 'Z' (to denote UTC, or 'zero hours offset'). So for example, a real filename might be {{c|install-amd64-minimal-20180107T214502Z.iso}}, indicating that it was written at 9:45pm (and 2 seconds), on the 7th of January 2018.}}
 
-{{Note|We'll be using the {{c|amd64}} architecture (processor family) in what follows. The reference to 'amd' is an [[AMD64/FAQ{{!}}historical artefact]]; ''all'' modern 64-bit x86 CPUs (including those from Intel) should use this architecture in Gentoo.}}
+{{Note|We'll be using the {{c|amd64}} architecture (processor family) in what follows. The reference to 'amd' is an [[AMD64/FAQ{{!}}historical artifact]]; ''all'' modern 64-bit x86 CPUs (including those from Intel) should use this architecture in Gentoo.}}
 
 Open a terminal window on the helper PC, and download the necessary files (the ISO, a contents list for that ISO, and a signed digest list):
 {{Cmd
@@ -54,9 +54,10 @@ You should next verify that the key's ''full'' fingerprint matches that listed o
 |gpg --fingerprint 2D182910
 |prompt=user@pc2 $
 |output=<pre>
-pub   rsa4096 2009-08-25 [SC] [expires: 2019-08-22]
+pub   rsa4096 2009-08-25 [SC] [expires: 2020-07-01]
       13EB BDBE DE7A 1277 5DFD  B1BA BB57 2E0E 2D18 2910
 uid           [ unknown] Gentoo Linux Release Engineering (Automated Weekly Release Key) <releng@gentoo.org>
+sub   rsa2048 2019-02-23 [S] [expires: 2020-07-01]
 </pre>
 }}
 {{Note|Although correct at the time of writing, the key ID you need to enter in the above command may differ from <code>2D182910</code>, as may the fingerprint data shown. Always use the [[Project:RelEng#Keys|Release Engineering]] page data as your primary reference.}}

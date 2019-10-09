@@ -31,8 +31,6 @@ The steps we'll be undertaking are as follows (see [[#secure_boot_intro|below]] 
 
 Let's get started!
 
-{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|OpenRC}} init, rather than {{c|systemd}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Configuring_Secure_Boot{{!}}click here]] to go to the default ({{c|systemd}}) version of this page.}}
-
 == <span id="secure_boot_intro">Introduction</span> ==
 
 We'll begin with a (very brief) primer on secure boot. (For a more in-depth review, please refer to James Bottomley's article "The Meaning of all the UEFI Keys"<ref name="uefi_key_meanings">Bottomley, J. [http://blog.hansenpartnership.com/the-meaning-of-all-the-uefi-keys/ "The Meaning of all the UEFI Keys"]</ref>, Greg Kroah-Hartman's article "Booting a Self-signed Linux Kernel"<ref name="boot_self_signed">Kroah-Hartman, G. [http://www.kroah.com/log/blog/2013/09/02/booting-a-self-signed-linux-kernel/ "Booting a Self-signed Linux Kernel"]</ref>, Rod Smith's article "Managing EFI Boot Loaders for Linux: Dealing with Secure Boot" ''ff.''<ref>Smith, Rod. [http://www.rodsbooks.com/efi-bootloaders/secureboot.html "Managing EFI Boot Loaders for Linux: Dealing with Secure Boot"]</ref> and of course the UEFI specification itself<ref name="uefi_spec">''Unified Extensible Firmware Specification'', Version 2.4, April 2014. Download available after registration from [http://www.uefi.org/specifications UEFI]</ref>.)
@@ -82,7 +80,7 @@ We begin by re-establishing an {{c|ssh}} connection, as before (as it will make 
 Password: <enter root password>
 ... additional output suppressed ...
 </pre>}}
-{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#post_reboot_ip{{!}}earlier]] for 192.168.1.106 in the above command. It is possible (although unlikely, with modern DHCP) that the target's IP address will have changed during the reboot for {{c|plymouth}} testing. If so, log in directly at the target machine's keyboard, use {{c|ifconfig}} to find out the new address, then issue the above {{c|ssh}} command citing that address. As before, in such a case you may need to clean out any previous record of {{c|ssh}} connections to (other machines at) that new address (since the fingerprints will not match), using:
+{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#post_reboot_ip{{!}}earlier]] for <code>192.168.1.106</code> in the above command. It is possible (although unlikely, with modern DHCP) that the target's IP address will have changed during the reboot for {{c|plymouth}} testing. If so, log in directly at the target machine's keyboard, use {{c|ifconfig}} to find out the new address, then issue the above {{c|ssh}} command citing that address. As before, in such a case you may need to clean out any previous record of {{c|ssh}} connections to (other machines at) that new address (since the fingerprints will not match), using:
 {{Cmd
 |sed -i '/^[^[:digit:]]*192.168.1.106[^[:digit:]]/d' ~/.ssh/known_hosts
 |prompt=user@pc2 $}}

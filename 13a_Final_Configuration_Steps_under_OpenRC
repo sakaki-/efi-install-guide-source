@@ -11,12 +11,9 @@ This section of the tutorial has no precise analogue in the Gentoo manual, altho
 We will also address some additional miscellaneous issues at the end of this chapter, namely:
 * pruning your kernel image (by removing unused modules and firmware files);
 * getting suspend and hibernate working properly;
-* setting the system default {{c|python}} interpreter; and
 * disabling {{c|sshd}} (as we no longer need it).
 
 Let's get started!
-
-{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|OpenRC}} init, rather than {{c|systemd}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Final_Configuration_Steps{{!}}click here]] to go to the default ({{c|systemd}}) version of this page.}}
 
 == <span id="general_approach">General Approach</span> ==
 
@@ -114,6 +111,7 @@ Device Drivers  --->
    <M>	  Intel Wireless WiFi DVM Firmware support
    <M>    Intel Wireless WiFi MVM Firmware support
 }}
+
 {{Note|Most of the time, it's equally fine to either modularize ({{c|M}}) or build in ({{c|*}}) a function, as desired; {{c|buildkernel}} [[../Configuring_and_Building_the_Kernel#copy_all_modules_to_initramfs{{!}}copies all modules]] into the initramfs.}}	
 Incidentally, the 7260 device ''also'' supports [[:Wikipedia:WiMAX|WiMAX]], but as of the time of writing, the ebuilds for {{Package|net-misc/networkmanager}} do not, so I have not detailed its activation here.
 
@@ -136,6 +134,7 @@ To enable it on the CF-AX3, set the following options (this will work for many o
   Bluetooth device drivers  --->
    <M>   HCI USB driver
 }}
+
 {{Note|There is no need to {{c|emerge}} {{Package|sys-firmware/bluez-firmware}} for this PC.}}
 
 {{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), you should be able to see and activate Bluetooth devices (e.g., wireless mice) using the Bluetooth control panel. Find this by pressing {{Key|Windows Key}} and then typing 'Bluetooth' (or, by clicking on the 'spanner and screwdriver' icon from the drop-down menu under the rightmost ('power') icon on the top bar).}}
@@ -162,6 +161,7 @@ Device Drivers  --->
   Special HID drivers  --->
    <M>   HID Multitouch panels
 }}
+
 {{Note|When you later restart under your new kernel (see [[#finishing_up_config{{!}}"Finishing Up", below]]) you should be able to make basic touch and drag actions using the screen. However, gesture support is still (as of the time of writing) unimplemented in GNOME.<ref>GNOME wiki: [https://wiki.gnome.org/Design/OS/Gestures "Gestures & Multitouch"]</ref>}}
 
 === <span id="config_webcam">Webcam</span> ===
@@ -185,6 +185,7 @@ Device Drivers  --->
    <M>   USB Video Class (UVC)  
    [*]     UVC input events device support (NEW) 
 }}
+
 {{Note|When you later restart under your new kernel and log in again to GNOME (see [[#finishing_up_config{{!}}"Finishing Up", below]]), you should be able to test your webcam using the {{c|Cheese}} application (which is installed with GNOME by default).}}
 {{Note|You may wish to physically cover the webcam's lens (and built-in microphone input apertures) when not in use ^-^}}
 
@@ -348,7 +349,7 @@ Obviously, your output will differ, depending upon your kernel version, the numb
 
 {{Note|Yes, the size ''is'' still large, and that's due to the included firmware files, an issue we will address [[#remove_unnecessary_firmware{{!}}shortly]].}}
 
-{{Note|If you chose [[../Configuring_and_Building_the_Kernel/#deblob_or_not{{!}}earlier]] to ''deblob'' your kernel, use <code>/boot/vmlinuz*-ck</code> in place of <code>/boot/vmlinuz*-gentoo</code> in the above. For avoidance of doubt, this will ''not'' apply to most users.}}
+{{Note|If you chose [[../Configuring_and_Building_the_Kernel#deblob_or_not{{!}}earlier]] to ''deblob'' your kernel, use <code>/boot/vmlinuz*-ck</code> in place of <code>/boot/vmlinuz*-gentoo</code> in the above. For avoidance of doubt, this will ''not'' apply to most users.}}
 
 Then &mdash; leaving the USB key inserted &mdash; reboot, and login again, in the normal manner. 
 
@@ -360,7 +361,7 @@ If you find, when rebooted, that some previously working facilities of your targ
 
 <span id="remove_unnecessary_firmware">With the module set reduced</span>, we can now turn our attention to the ''major'' driver of kernel image size &mdash; the default inclusion of a complete copy of {{Path|/lib/firmware/<...>}} in its integral initramfs.
 
-{{Note|Obviously, this subsection does ''not'' apply to those who chose [[../Configuring_and_Building_the_Kernel/#deblob_or_not{{!}}earlier]] to ''deblob'' their kernel, and such users should [[#suspend_hibernate{{!}}click here]] to skip to the next section now (for avoidance of doubt though, most users of this guide will ''not'' be deblobbing, and so should continue reading ^-^).}}
+{{Note|Obviously, this subsection does ''not'' apply to those who chose [[../Configuring_and_Building_the_Kernel#deblob_or_not{{!}}earlier]] to ''deblob'' their kernel, and such users should [[#suspend_hibernate{{!}}click here]] to skip to the next section now (for avoidance of doubt though, most users of this guide will ''not'' be deblobbing, and so should continue reading ^-^).}}
 
 Fortunately, we can easily pare down what is included here, through use of the <code>user_modify_initramfs()</code> function in {{Path|/etc/buildkernel.conf}}. Recall that when {{c|buildkernel}} runs, it creates an [[../Configuring_and_Building_the_Kernel#initramfs_copy_location|uncompressed staging copy]] of the initramfs filestructure at {{Path|/boot/initramfs}}, then calls <code>user_modify_initramfs()</code> (if defined), then repacks the (possibly modified) initramfs filestructure again for inclusion into the final kernel image.
 
@@ -737,46 +738,6 @@ HIBERNATE_MODE=shutdown
 Save and exit the {{c|nano}} editor (you can also close out the terminal if you have no further use for it).
 
 After this, hibernate should work properly (on the CF-AX3). Press {{Key|Fn}}{{Key|F10}} and the machine will write its memory to the LVM swap partition on the LUKS encrypted volume ({{c|buildkernel}} conforms the kernel command line to specify this, as noted [[../Configuring_and_Building_the_Kernel#real_resume_var|earlier]]), and then automatically power off. To resume, ensure that the boot USB key is inserted, and slide the power key. Enter your LUKS password when prompted, log in to GNOME, and you should find your desktop just as you left it. As this feature uses encrypted swap, it is relatively safe to travel with the laptop hibernated in this fashion (you should unplug and carry the boot USB key separately, of course).
-
-== <span id="set_default_python">Setting the System Default {{c|python}} Interpreter</span> ==
-
-This is a bit of an odd one, but it does seem to catch people out. [[:Wikipedia:Python_(programming_language)|Python]] is a widely used dynamic language. There are two major versions (2.x and 3.x),<ref>python.org wiki: [https://wiki.python.org/moin/Python2orPython3 "Should I use Python 2 or Python 3 for my development activity?"]</ref> and a ''lot'' of python scripts that you find on the web use the older version. The problem is that these scripts also often start with a ''versionless'' [[:Wikipedia:Shebang_(Unix){{!}}shebang]] like:
-{{GenericCmd|<pre>
-#!/usr/bin/env python
-</pre>
-}}
-On Gentoo, this will end up invoking Python 3.x (''not'' 2.x),<ref>Gentoo Forums: [https://forums.gentoo.org/viewtopic-t-921776-start-0.html#7025204 "python update 2.7 --> 3.2"]</ref> thereby (often) causing the script to break.
-
-It's generally safe to set the default {{Path|/usr/bin/python}} to refer to version 2.7 instead (since scripts that ''require'' version 3 will explicitly call it). 
-
-To do so, open a root terminal in GNOME (if you don't already have one open): press the {{Key|Windows Key}}, and type 'terminal', then press {{Key|Enter}}. A standard-issue terminal window should open. Become root:
-{{Cmd
-|su --login root
-|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
-|output=<pre>
-Password: <enter root password>
-</pre>
-}}
-The password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]] in the tutorial (and have used when {{c|ssh}}-ing in).
-
-Then in this terminal, issue:
-{{RootCmd
-|eselect python list
-|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
-|output=<pre>
-Available Python interpreters, in order of preference:
-  [1]   python3.6
-  [2]   python2.7 (fallback)
-</pre>
-}}
-Your output may very somewhat from the above, but if the top line is '''not''' the '2.7' version (it is {{c|[2]}} in the above), set it as the default:
-{{RootCmd
-|eselect python set 2
-|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
-}}
-{{Note|Substitute the correct index for python 2.7 (in the list returned on your system) for {{c|2}} in the above command.}}
-
-That's it!
 
 == <span id="disabling_sshd">Disabling {{c|sshd}}</span> ==
 

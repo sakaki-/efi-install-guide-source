@@ -1,3 +1,5 @@
+<!-- Page: Booting_Legacy_Images_on_EFI_using_kexec -->
+
 {{Warning|September 2018: this is a draft article, currently under review / testing, and is subject to change. Please be cautious if using it!}}
 
 Some modern PC systems &mdash; particularly tablets and ultra-compacts &mdash; support ''only'' UEFI booting, and have no 'legacy'/'CSM' boot option available in their BIOS GUIs.<ref name="class_3">So-called 'class-3' UEFI systems, see e.g. Microsoft Docs: [https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-8.1-and-8/hh824898(v=win.10) "UEFI Firmware"]</ref> As such, bootable images ''without'' EFI support (for example, Gentoo minimal install images issued prior to August 2018<ref name="min_install_no_efi">Gentoo Forums: [https://forums.gentoo.org/viewtopic-t-1041178.html "The Gentoo minimal installation CD doesn't boot in UEFI"]</ref>) ''cannot'' be used in native form with such machines.
@@ -31,7 +33,7 @@ Accordingly, in this mini-guide, we will run through the following steps:
 
 Once you've run through this process the first time, you can then just skip directly to step 11 to convert other (legacy boot) Gentoo minimal install images in future. Furthermore, even if you subsequently want to adapt a ''completely different'' legacy image for EFI boot, you will generally only need to modify the {{Path|./kexec.sourceme}} shell script fragment within the untarred filesystem &mdash; no recompilation will be required.
 
-{{Note|If you have a legacy image you need to convert for EFI booting ASAP, and you already have an [[#setup_helper_pc{{!}}appropriately configured helper PC]] available, you can skip directly to step 11, and just use my pre-created tarball (download link provided in the text). To do so, click [[#modify_existing_image|here]].}}
+{{Note|If you have a legacy image you need to convert for EFI booting ASAP, and you already have an [[#setup_helper_pc{{!}}appropriately configured helper PC]] available, you can skip directly to step 11, and just use my pre-created tarball (download link provided in the text). To do so, click [[#adapting_a_target_image|here]].}}
 
 Now, if you are ready to build your own {{c|kexec}}-based bootloader from scratch, let's go!
 

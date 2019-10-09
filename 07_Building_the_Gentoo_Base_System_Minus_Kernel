@@ -15,10 +15,9 @@ The process we'll be following in this section is:
 # Rebuilding everything in the {{c|@world}} set using the new toolchain (optional);
 # Verifying that all executables and libraries have been rebuilt (optional);
 # Configuring your system to use authenticated Portage snapshots by default;
-# Choosing whether to use {{c|systemd}} or {{c|OpenRC}} (some brief guidance is given to help you decide); then:
-#* ''Either'', setting the final target profile (for GNOME/{{c|systemd}});
-#* ''Or'', installing the necessary patchset overlays, and then setting the appropriate target profile (for GNOME/{{c|OpenRC}});
-# Updating the {{c|@world}} set to reflect the new profile (whether {{c|systemd}} or {{c|OpenRC}}).
+# Choosing whether to use {{c|OpenRC}} or {{c|systemd}} (some brief guidance is given to help you decide); then:
+#* ''Either'', setting the final target profile (for GNOME/{{c|OpenRC}});
+#* ''Or'', setting the final target profile (for GNOME/{{c|systemd}}).
 
 Instructions will also be provided for those who don't want to spend the time necessary to perform a full bootstrap. Let's get started!
 
@@ -33,7 +32,7 @@ We begin by setting up appropriate the server URIs, which portage will search wh
 <navigate through the list, and select all mirrors in your region>
 </pre>
 }}
-{{Note|Use the cursor keys and {{Key|Page Up}} and {{Key|Page Down}} to navigate, and {{Key|Space}} to toggle a mirror on and off; then {{Key|Enter}} to save and exit when done. You do not need to select ''all'' available protocols for all servers in your region; generally, choosing the HTTP protocol entry only (for each desired server) will suffice.}}
+{{Note|Use the cursor keys and {{Key|Page Up}} and {{Key|Page Down}} to navigate, and {{Key|Space}} to toggle a mirror on and off; then {{Key|Enter}} to save and exit when done. You do not need to select ''all'' available protocols for all servers in your region; generally, choosing the HTTP (or HTTPS, where available) protocol entry only (for each desired server) will suffice.}}
 
 Make sure something appropriate was written to {{Path|/mnt/gentoo/etc/portage/make.conf}}:
 {{RootCmd
@@ -65,10 +64,9 @@ and edit the file, so it reads:
 {{FileBox|filename=/mnt/gentoo/etc/portage/repos.conf/gentoo.conf|title=Setting up repository information for Portage|lang=ini|1=
 [DEFAULT]
 main-repo = gentoo
-sync-allow-hardlinks = yes
 
 [gentoo]
-location = /usr/portage
+location = /var/db/repos/gentoo
 sync-type = webrsync
 #sync-type = rsync
 sync-uri = rsync://rsync.gentoo.org/gentoo-portage
@@ -78,6 +76,7 @@ auto-sync = yes
 sync-rsync-verify-jobs = 1
 sync-rsync-verify-metamanifest = yes
 sync-rsync-verify-max-age = 24
+sync-openpgp-keyserver = hkps://keys.gentoo.org
 sync-openpgp-key-path = /usr/share/openpgp-keys/gentoo-release.asc
 sync-openpgp-key-refresh-retry-count = 40
 sync-openpgp-key-refresh-retry-overall-timeout = 1200
@@ -89,8 +88,8 @@ Any additional commented lines (e.g., regarding {{c|squashfs}} snapshots) presen
 
 The above simply says that:
 * The main repository is set to be {{c|gentoo}}, for all other repositories (such as overlays) that do not specify masters;
-* Sync operations for this repo will use hardlinks<ref name="portage_hardlink"/> to ensure that if a repo fails validation (see below) it will be safely left unchanged in its prior state (available as of Portage version 2.3.42);
-* The repository location is set to be {{Path|/usr/portage}} (within the {{c|chroot}}, that is);
+* By default,<ref name="sync_hardlinks">author [https://www.gentoo.org/support/news-items/2018-07-11-portage-sync-allow-hardlinks.html "Gentoo rsync hardlink support"]</ref> sync operations for this repo will use hardlinks<ref name="portage_hardlink"/> to ensure that if a repo fails validation (see below) it will be safely left unchanged in its prior state (available as of Portage version 2.3.42);
+* The repository location is set to be {{Path|/var/db/repos/gentoo}} (within the {{c|chroot}}, that is);
 * The repository is temporarily set to use {{c|webrsync}}, with signature verification (this is an efficient way to load the whole repository ''en bloc''; but we will switch it back later to synchronize via the {{c|rsync}} protocol &mdash; the latter ({{c|rsync}}) is much more efficient for deltas, and Gentoo now provides its own signature checking for this protocol too, as discussed next);
 * The URI for use with the {{c|rsync}} protocol is set to <code>rsync://rsync.gentoo.org/gentoo-portage</code> &mdash; this will actually allocate a mirror dynamically, based on rotation. It is now the recommended handbook default, since using it provides a fail-safe in case a particular mirror is offline, and also allows for load-balancing across Gentoo infrastructure globally.
 * The repository will be synced during <code>emerge --sync</code> and <code>emaint sync --auto</code> runs;
@@ -160,7 +159,7 @@ For security, Portage snapshots are digitally signed by Gentoo Release Engineeri
 |emaint sync --auto
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 |output=<pre>
->>> Syncing repository 'gentoo' into '/usr/portage'...
+>>> Syncing repository 'gentoo' into '/var/db/repos/gentoo'...
  * Using keys from /usr/share/openpgp-keys/gentoo-release.asc
  * Refreshing keys from keyserver ...                                    [ ok ]
 Fetching most recent snapshot ...
@@ -188,11 +187,9 @@ This may take some time to complete, depending on the speed of your network conn
 
 {{Note|The above command will update all repositories whose <var>auto-sync</var> value (in {{Path|/etc/portage/repos.conf/<reponame>.conf}}) has been set to <code>yes</code> &mdash; at this point in the install, that refers only to the {{c|gentoo}} repo.}}
 
-{{Warning|The default Handbook flow suggests (and, to be fair, earlier versions of this guide also suggested) that you [https://wiki.gentoo.org/wiki/Handbook:AMD64/Installation/Base#Installing_an_ebuild_repository_snapshot_from_the_web perform] a 'vanilla' (no-signature-verification) {{c|emerge-webrsync}}, to download and install the Portage repository tree, at this stage in the installation process.<br>However, doing so will update the repo in an ''unauthenticated'' manner (viz., an unchecked tarball fetched (usually) via [[:Wikipedia:Hypertext_Transfer_Protocol{{!}}HTTP]]). Doing so makes it possible for a [[:Wikipedia:Man-in-the-middle_attack{{!}}'man-in-the-middle']] attacker to tamper with the repo without your knowing, and to cause arbitrary code to be executed with root privileges on your machine thereby (see e.g. {{Bug|597804}}).<br>As such, in this guide we force snapshot authentication (using <code>sync-webrsync-verify-signature {{=}} true</code> in {{Path|/etc/portage/repos.conf/gentoo.conf}}, [[#setup_gentoo_dot_conf{{!}}above]]).<br>If you still wish to use 'vanilla' {{c|emerge-webrsync}}, do so at your own risk.}}
-
 <span id="switch_back_to_rsync">Next,</span> now that we have a ''baseline'' tree in place, we can switch to the more efficient {{c|rsync}} protocol to keep it updated going forward. Issue:
 {{RootCmd
-|nano -w etc/portage/repos.conf/gentoo.conf
+|nano -w /etc/portage/repos.conf/gentoo.conf
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
 and edit the <var>sync-type</var> lines in that file, so they read:
@@ -209,7 +206,7 @@ With that done, you can bring your Portage tree right up to date. Issue (again):
 |emaint sync --auto
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 |output=<pre>
->>> Syncing repository 'gentoo' into '/usr/portage'...
+>>> Syncing repository 'gentoo' into '/var/db/repos/gentoo'...
  * Using keys from /usr/share/openpgp-keys/gentoo-release.asc
  * Refreshing keys from keyserver ...                                    [ ok ]
 >>> Starting rsync with rsync://<ip_addr>/gentoo-portage...
@@ -220,9 +217,71 @@ Action: sync for repo: gentoo, returned code = 0
 
 Notice how {{c|rsync}} is used this time.
 
-{{Note|What is happening under the covers here is interesting &mdash; the sync is actually first performed into a special {{Path|/usr/portage/.tmp-unverified-download-quarantine}} subdirectory, using {{c|rsync}}'s <code>--link-dest</code> option. This creates [[:Wikipedia:Hard_link{{!}}hardlinks]] to the original versions of ''unchanged'' files, which allows the quarantined copy to be constructed in a space-efficient manner (very similar to how the "TimeMachine" backup system works<ref name="time_machine">Pond, James. [http://www.baligu.com/pondini/TM/Works.html#id3 "How Time Machine Works its Magic: Hard Links"]</ref>). Once complete, this quarantined copy is then checked using the {{Package|app-portage/gemato}} signed hash verification tool and, if passed, the changes are then committed into the 'real' directory ({{Path|/usr/portage}}), again using {{c|rsync}}, after which the quarantine directory is deleted. In the event of {{c|gemato}} detecting a problem, however, a non-zero (i.e., error) status will be reported, and the changes will ''not'' be committed up from the quarantine directory (which will then be preserved, for further analysis).}}
+{{Note|What is happening under the covers here is interesting &mdash; the sync is actually first performed into a special {{Path|/var/db/repos/gentoo/.tmp-unverified-download-quarantine}} subdirectory, using {{c|rsync}}'s <code>--link-dest</code> option. This creates [[:Wikipedia:Hard_link{{!}}hardlinks]] to the original versions of ''unchanged'' files, which allows the quarantined copy to be constructed in a space-efficient manner (very similar to how the "TimeMachine" backup system works<ref name="time_machine">Pond, James. [http://www.baligu.com/pondini/TM/Works.html#id3 "How Time Machine Works its Magic: Hard Links"]</ref>). Once complete, this quarantined copy is then checked using the {{Package|app-portage/gemato}} signed hash verification tool and, if passed, the changes are then committed into the 'real' directory ({{Path|/var/db/repos/gentoo}}), again using {{c|rsync}}, after which the quarantine directory is deleted. In the event of {{c|gemato}} detecting a problem, however, a non-zero (i.e., error) status will be reported, and the changes will ''not'' be committed up from the quarantine directory (which will then be preserved, for further analysis).}}
 
-Now we have a known-valid current Portage ebuild repository, we can use {{c|emerge}} to install (or update, delete etc.) packages. Our first task is to ensure that Portage itself is up-to-date (again [[#reading_news|temporarily]] postponing reading those news articles ^-^). Issue:
+Now we have a known-valid current Portage ebuild repository, we can use {{c|emerge}} to install (or update, delete etc.) packages. But just before that, we need to ensure we also have a valid '''profile''' set.
+
+== <span id="check_base_profile">Ensuring that the Base Profile is Set</span> ==
+
+As was mentioned [[../Installing_the_Gentoo_Stage_3_Files#variable_check_order|earlier]], Gentoo uses ''profiles'' to set important variables (such as <var>USE</var>, <var>CFLAGS</var>, etc.) relevant to your particular architecture and usage scenario (e.g., a machine running the GNOME desktop). Profiles also constrain the versions of packages that can be installed. This is all maintained on your behalf by the Gentoo developers.
+
+At this point, we just need to check that we are running the baseline 17.1 {{c|amd64}} profile (we should be): '''we'll change this to the 'real' profile post-bootstrap.'''
+
+{{Note|Remember, on Gentoo, the {{c|amd64}} architecture is appropriate for {{c|x86_64}} processors from both AMD ''and'' Intel &mdash; the vendor-specific name is a (somewhat unfortunate) [[AMD64/FAQ{{!}}historical artefact]].}}
+
+Issue:
+
+{{RootCmd
+|eselect profile list
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+|output=<pre>
+  [1]   default/linux/amd64/17.0 (stable)
+  [2]   default/linux/amd64/17.0/selinux (stable)
+... additional output suppressed ...
+  [16]  default/linux/amd64/17.1 (stable) *
+... additional output suppressed ...
+  [21]  default/linux/amd64/17.1/desktop/gnome (stable)
+  [22]  default/linux/amd64/17.1/desktop/gnome/systemd (stable)
+... additional output suppressed ...
+  [33]  default/linux/amd64/17.0/uclibc (exp)
+  [34]  default/linux/amd64/17.0/uclibc/hardened (exp)
+</pre>
+}}
+
+{{Note|The profile list (and numbering) shown on your machine may differ slightly from the above.}}
+
+Double-check that the {{c|default/linux/amd64/17.1}} entry is marked with an asterisk, indicating that it is active (the profile ''name'' is what is important, not its exact position on the list, which may be different on your system).
+
+{{Important|Pay particular attention to the 'decimal-number' part of the asterisked profile in the output of the above command (the profile's ''version''), and make sure it is {{c|17.1}}. If not, particularly if reads as {{c|13.0}} or {{c|17.0}}, you are most likely working from an out-of-date stage 3 tarball (perhaps one that you had lying around already, and reused to save on download time). Given that profile upgrades are [https://www.gentoo.org/support/news-items/2017-11-30-new-17-profiles.html non-trivial] on Gentoo, in such a case I recommend you close out the {{c|chroot}}, backtrack to the [[../Installing_the_Gentoo_Stage_3_Files{{!}}previous chapter]], download a fresh stage 3, and try again.<br>For avoidance of doubt, users who have been following along with these instructions step-by-step should ''not'' face this issue.}}
+
+If the currently active (asterisked) profile ''is'' one of the {{c|17.1}} 'family', but ''not'' {{c|default/linux/amd64/17.1}} (which is very unlikely if you have been following these instructions), issue:
+
+{{RootCmd
+|eselect profile set "default/linux/amd64/17.1"
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+to correct it.
+
+You can see the various (cumulative) variables assignments (to {{c|USE}} etc.) associated with a profile by looking at its {{Path|make.defaults}} file, and those of its parents. Specifically, the {{c|eselect profile set N}} command creates a [[:Wikipedia:Symbolic_link|symbolic link]] at {{Path|/etc/portage/make.profile}}. If you follow this link, and then look at the {{Path|make.defaults}} files in that directory (and in any of the directories listed by the {{Path|parent}} text file therein (transitively)), you will see how it works. Note that <var>USE</var> flags accumulate (<var>USE</var> being an incremental variable), but a flag prefixed by a minus sign gets removed from the list (and, as a special case, "<code>-*</code>" removes ''everything'' accumulated to that point).
+
+{{Important|Don't be tempted to change anything inside the {{Path|/etc/portage/make.profile}} directory; it'll be overwritten on the next Portage update.}}
+
+You can also see the net effect of the profile, your {{Path|make.conf}}, environment etc. by issuing (this is a useful sanity check):
+{{RootCmd
+|emerge --info
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+
+Lastly, if you are unsure of the meaning of any use flag, you can look it up as follows:
+{{RootCmd
+|grep -i useflag /var/db/repos/gentoo/profiles/use.desc
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+{{Note|Replace <code>useflag</code> in the above command with the flag you want to query, for example <code>multilib</code>.}}
+
+== <span id="updating_portage">Ensuring portage is Up-to-Date</span> ==
+
+Now we have a valid profile, we can ensure that Portage itself is up-to-date (again [[#reading_news|temporarily]] postponing reading those news articles ^-^). Issue:
 {{RootCmd
 |emerge --ask --verbose --oneshot portage
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
@@ -260,63 +319,6 @@ You can purge (optional) all read news items with:
 }}
 
 If you like, you can read more about the Gentoo news system on its manual page (using {{c|man news.eselect}}).
-
-== <span id="check_base_profile">Ensuring that the Base Profile is Set</span> ==
-
-As was mentioned [[../Installing_the_Gentoo_Stage_3_Files#variable_check_order|earlier]], Gentoo uses profiles to set important variables (such as <var>USE</var>, <var>CFLAGS</var>, etc.) relevant to your particular architecture and usage scenario (e.g., a machine running the GNOME desktop). Profiles also constrain the versions of packages that can be installed. This is all maintained on your behalf by the Gentoo developers.
-
-At this point, we just need to check that we are running the baseline 17.0 {{c|amd64}} profile (we should be): '''we'll change this to the 'real' profile post-bootstrap.'''
-
-{{Note|Remember, on Gentoo, the {{c|amd64}} architecture is appropriate for {{c|x86_64}} processors from both AMD ''and'' Intel &mdash; the vendor-specific name is a (somewhat unfortunate) [[AMD64/FAQ{{!}}historical artefact]].}}
-
-Issue:
-
-{{RootCmd
-|eselect profile list
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-|output=<pre>
-  [1]   default/linux/amd64/13.0 (stable)
-  [2]   default/linux/amd64/13.0/selinux (dev)
-... additional output suppressed ...
-  [12]  default/linux/amd64/17.0 (stable) *
-... additional output suppressed ...
-  [18]  default/linux/amd64/17.0/desktop/gnome/systemd (stable)
-... additional output suppressed ...
-  [55]  default/linux/amd64/17.0/uclibc (exp)
-  [56]  default/linux/amd64/17.0/uclibc/hardened (exp)
-</pre>
-}}
-
-{{Note|The profile list (and numbering) shown on your machine may differ slightly from the above.}}
-
-Double-check that the {{c|default/linux/amd64/17.0}} entry is marked with an asterisk, indicating that it is active (the profile ''name'' is what is important, not its exact position on the list, which may be different on your system).
-
-{{Important|Pay particular attention to the 'decimal-number' part of the asterisked profile in the output of the above command (the profile's ''version''), and make sure it is {{c|17.0}}. If not, particularly if reads as {{c|13.0}}, you are most likely working from an out-of-date stage 3 tarball (perhaps one that you had lying around already, and reused to save on download time). Given that profile upgrades are [https://www.gentoo.org/support/news-items/2017-11-30-new-17-profiles.html non-trivial] on Gentoo, in such a case I recommend you close out the {{c|chroot}}, backtrack to the [[../Installing_the_Gentoo_Stage_3_Files{{!}}previous chapter]], download a fresh stage 3, and try again.<br>For avoidance of doubt, users who have been following along with these instructions step-by-step should ''not'' face this issue.}}
-
-If the currently active (asterisked) profile ''is'' one of the {{c|17.0}} 'family', but ''not'' {{c|default/linux/amd64/17.0}} (which is very unlikely if you have been following these instructions), issue:
-
-{{RootCmd
-|eselect profile set "default/linux/amd64/17.0"
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-}}
-to correct it.
-
-You can see the various (cumulative) variables assignments (to {{c|USE}} etc.) associated with a profile by looking at its {{Path|make.defaults}} file, and those of its parents. Specifically, the {{c|eselect profile set N}} command creates a [[:Wikipedia:Symbolic_link|symbolic link]] at {{Path|/etc/portage/make.profile}}. If you follow this link, and then look at the {{Path|make.defaults}} files in that directory (and in any of the directories listed by the {{Path|parent}} text file therein (transitively)), you will see how it works. Note that <var>USE</var> flags accumulate (<var>USE</var> being an incremental variable), but a flag prefixed by a minus sign gets removed from the list (and, as a special case, "<code>-*</code>" removes ''everything'' accumulated to that point).
-
-{{Important|Don't be tempted to change anything inside the {{Path|/etc/portage/make.profile}} directory; it'll be overwritten on the next Portage update.}}
-
-You can also see the net effect of the profile, your {{Path|make.conf}}, environment etc. by issuing (this is a useful sanity check):
-{{RootCmd
-|emerge --info
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-}}
-
-Lastly, if you are unsure of the meaning of any use flag, you can look it up as follows:
-{{RootCmd
-|grep -i useflag /usr/portage/profiles/use.desc
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-}}
-{{Note|Replace <code>useflag</code> in the above command with the flag you want to query, for example <code>multilib</code>.}}
 
 == <span id="set_timezone">Setting Up Timezone and Locale</span> ==
 
@@ -372,10 +374,11 @@ Assuming that completes successfully, you then must then specify the default loc
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 |output=<pre>
   [1]   C
-  [2]   en_GB
-  [3]   en_GB.iso88591
-  [4]   en_GB.utf8
-  [5]   POSIX
+  [2]   C.utf8
+  [3]   POSIX
+  [4]   en_GB
+  [5]   en_GB.iso88591
+  [6]   en_GB.utf8
   [ ]   (free form)
 </pre>
 }}
@@ -488,7 +491,7 @@ and add the following content to that file:
 # Various utility ebuilds for Gentoo on EFI
 # Maintainer: sakaki (sakaki@deciban.com)
 
-location = /usr/local/portage/sakaki-tools
+location = /var/db/repos/sakaki-tools
 sync-type = git
 sync-uri = https://github.com/sakaki-/sakaki-tools.git
 priority = 50
@@ -497,7 +500,7 @@ Save, and exit {{c|nano}}.
 
 The above simply specifies that:
 * The repository is called {{c|sakaki-tools}};
-* It should be cloned to the {{Path|/usr/local/portage/sakaki-tools}} directory;
+* It should be cloned to the {{Path|/var/db/repos/sakaki-tools}} directory;
 * It is a git archive, which may be synchronized via the URI https://github.com/sakaki-/sakaki-tools.git;
 * It has 'priority' 50 (ebuilds with higher priority override those of lower priority, in the event of a name clash; the default {{c|gentoo}} tree has priority -1000); and
 * It will be automatically synced during during <code>emerge --sync</code> or <code>emaint sync --auto</code> runs. 
@@ -619,7 +622,7 @@ And the point of this whole exercise? Simply put, it is to ensure the integrity 
 Nevertheless, although such attack vectors exist, they are relatively complex to exploit compared to the simplicity of producing and distributing a tainted high-level system binary (signatures notwithstanding). As such, there is still value to doing a ground-up rebuild, in my view. Should you ''not'' wish to do so, but would rather rely on the shipped stage 3 binaries, you can simply skip down to the section [[#choose_systemd_or_openrc{{!}}"Choosing between systemd or OpenRC Init"]]. (Note though, that with Gentoo, you'll probably end up rebuilding most everything over time anyway!).}}
 
 In Gentoo parlance, people speak of three [[:Wikipedia:Gentoo_Linux#Stages|'stages']] of bootstrapping (and their corresponding file system tarballs):
-# '''Stage 1''': When starting from a stage 1 tarball, the base toolchain (GCC, standard C libary etc.) must be built using the existing (binary) host system toolchain, under direction of the {{Path|/usr/portage/scripts/bootstrap.sh}} script. This yields a:
+# '''Stage 1''': When starting from a stage 1 tarball, the base toolchain (GCC, standard C libary etc.) must be built using the existing (binary) host system toolchain, under direction of the {{Path|/var/db/repos/gentoo/scripts/bootstrap.sh}} script. This yields a:
 # '''Stage 2''' system. Here, we still need to {{c|emerge}} (build) the core [[World set (Portage)|{{c|@world}}]] package set, using our new toolchain. This yields a: 
 #'''Stage 3''' system, in which the toolchain has been bootstrapped, and the important system binaries and libraries have been compiled using it. A tarball of such a stage 3 system's directories is now provided as a default part of the Gentoo distribution (stage 1 and stage 2 tarballs are not available to end-users anymore).
 
@@ -630,20 +633,20 @@ Although we have [[../Installing_the_Gentoo_Stage_3_Files#download_stage_3_tarba
 Right, let's get going. First, we'll need to build ourselves a toolchain! We'll switch to the correct directory, and then do a dummy run to see what the supplied {{c|bootstrap.sh}} script wants to do:
 
 {{RootCmd
-|cd /usr/portage/scripts
+|cd /var/db/repos/gentoo/scripts
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
 then:
 {{RootCmd
 |./bootstrap.sh --pretend
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 |output=<pre>
 ... additional output suppressed ...
 -------------------------------------------------------------------------------
   [[ (0/3) Locating packages ]]
  * Using baselayout : >=sys-apps/baselayout-2
  * Using portage    : portage
- * Using os-headers : >=sys-kernel/linux-headers-4.4
+ * Using os-headers : >=sys-kernel/linux-headers-4.19
  * Using binutils   : sys-devel/binutils
  * Using gcc        : sys-devel/gcc
  * Using gettext    : gettext
@@ -661,16 +664,16 @@ The exact versions (and packages) shown in your output may differ.
 {{Note|You can ignore any additional information/warnings about slot conflicts, packages forcing rebuilds etc. at this stage. The bootstrap is an extremely 'low level' build and will almost always go through successfully.}}
 {{Note|The most direct way to make sense of the reported set of packages (and build order) output by the <code>./bootstrap.sh --pretend</code> command, is to look at a minimal, ground-up Linux installation like ''Linux from Scratch'' - this has an excellent handbook, which runs though the process you'd be going through by hand, if Portage didn't exist!<ref>Beekmans, Gerard. [http://www.linuxfromscratch.org/lfs/view/stable/ ''Linux from Scratch'']. Burgess, Matthew et. al. eds. 2017</ref>}}
 
-The Gentoo [[FAQ#How_do_I_Install_Gentoo_Using_a_Stage1_or_Stage2_Tarball?|FAQ]] suggests you may wish to edit the {{Path|/usr/portage/scripts/bootstrap.sh}} script after reviewing it - and indeed, we will do so, because there are two 'gotchas' lurking in the above proposed {{c|emerge}} list. The first problem is that the [[:Wikipedia:C_standard_library|C standard library]] that the bootstrap intends to rebuild is a [https://devmanual.gentoo.org/general-concepts/virtuals/ ''virtual''] ({{Package|virtual/libc}}); however, in Portage, emerging a virtual package does ''not'', by default, cause any already-installed package that satisfies that virtual (in our case, {{Package|sys-libs/glibc}}) to be rebuilt - which we want.
+The Gentoo [[FAQ#How_do_I_Install_Gentoo_Using_a_Stage1_or_Stage2_Tarball?|FAQ]] suggests you may wish to edit the {{Path|/var/db/repos/gentoo/scripts/bootstrap.sh}} script after reviewing it - and indeed, we will do so, because there are two 'gotchas' lurking in the above proposed {{c|emerge}} list. The first problem is that the [[:Wikipedia:C_standard_library|C standard library]] that the bootstrap intends to rebuild is a [https://devmanual.gentoo.org/general-concepts/virtuals/ ''virtual''] ({{Package|virtual/libc}}); however, in Portage, emerging a virtual package does ''not'', by default, cause any already-installed package that satisfies that virtual (in our case, {{Package|sys-libs/glibc}}) to be rebuilt - which we want.
 
 We'll edit {{Path|bootstrap.sh}} so that it builds the underlying C library instead. Issue:
 {{RootCmd
 |nano -w bootstrap.sh
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 
 Once {{c|nano}} opens, issue {{Key|Ctrl}}{{Key|w}} to start a search, and then type <kbd>should never fail</kbd> and press {{Key|Enter}}. Navigate down to the line setting <var>myLIBC</var> and modify it so the block now reads:
-{{FileBox|filename=/usr/portage/scripts/bootstrap.sh|title=Ensuring glibc gets rebuilt during bootstrap|lang=bash|1=
+{{FileBox|filename=/var/db/repos/gentoo/scripts/bootstrap.sh|title=Ensuring glibc gets rebuilt during bootstrap|lang=bash|1=
 # This stuff should never fail but will if not enough is installed.
 [[ -z ${myBASELAYOUT} ]] && myBASELAYOUT=">=$(portageq best_version / sys-apps/baselayout)"
 [[ -z ${myPORTAGE}    ]] && myPORTAGE="portage"
@@ -689,14 +692,14 @@ You only need modify the one line, replacing "<code>&&</code>" with "<code>;</co
 Ensure that will do what we intended:
 {{RootCmd
 |./bootstrap.sh --pretend
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 |output=<pre>
 ... additional output suppressed ...
 -------------------------------------------------------------------------------
   [[ (0/3) Locating packages ]]
  * Using baselayout : >=sys-apps/baselayout-2
  * Using portage    : portage
- * Using os-headers : >=sys-kernel/linux-headers-4.4
+ * Using os-headers : >=sys-kernel/linux-headers-4.19
  * Using binutils   : sys-devel/binutils
  * Using gcc        : sys-devel/gcc
  * Using gettext    : gettext
@@ -717,7 +720,7 @@ Ensure that will do what we intended:
 }} will be built for {{c|libc}}, not the virtual) - but a second remains. Specifically, the line <code>!!! CONFIG_PROTECT is empty</code> is telling you that the bootstrap process will ''not'' preserve any configuration files you may have modified, if any of the packages to be installed try to overwrite them. We have modified (as opposed to created from scratch) two such configuration files so far ([[#modify_locale_gen|here]] and [[#set_post_boot_keymap|here]]), so lets use the (supplied) [[Q_applets#How_to_find_a_package_to_which_a_file_belongs_.28qfile.29|{{c|qfile}}]] utility to check if either is affected (this shows us which package 'owns' a given file):
 {{RootCmd
 |qfile /etc/locale.gen /etc/conf.d/keymaps
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 |output=<pre>
 sys-apps/openrc (/etc/conf.d/keymaps)
 sys-libs/glibc (/etc/locale.gen)
@@ -731,14 +734,14 @@ As the bootstrap is proposing to emerge the second of these packages, we will ne
 Issue:
 {{RootCmd
 |cp -v /etc/locale.gen{,.bak}
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 {{Note|Although we ''did'' modify (rather than create from scratch) {{Path|/etc/portage/make.conf}} [[../Installing_the_Gentoo_Stage_3_Files#setup_make_conf|earlier]], this particular file is not owned by any package, as you can verify yourself using {{c|qfile}}, if you like.}}
 
 OK, now we are good to go, so let's start the bootstrap for real:
 {{RootCmd
 |./bootstrap.sh
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 
 This will take a while! You can <span id=use_showem>now switch to the second {{c|screen}} console we prepared</span> [[#second_virtual_console|earlier]], and see what is going on (as the files download, build etc.). Hit {{Key|Ctrl}}{{Key|a}} then {{Key|n}} to switch to the second console (you can do this while the bootstrap is running), and issue:
@@ -759,7 +762,7 @@ Assuming the {{c|bootstrap.sh}} script completes successfully, you next need to 
 
 {{RootCmd
 |gcc-config --list-profiles
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 
 If (and ''only'' if) the output tells you your current config is invalid, per [[Upgrading GCC|these notes]], issue the following to fix it:
@@ -772,7 +775,7 @@ If (and ''only'' if) the output tells you your current config is invalid, per [[
 Would you like to merge these packages? [Yes/No] <press y, then Enter>
 ... additional output suppressed ...
 </pre>
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 (That's a one as an argument to {{c|gcc-config}} by the way, not an 'ell'!)
 
@@ -788,7 +791,7 @@ Next, we'll run the {{c|bootstrap.sh}} script ''again'', to ensure that everythi
 
 {{RootCmd
 |./bootstrap.sh
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 |output=<pre>
  * System has been bootstrapped already!
  * If you re-bootstrap the system, you must complete the entire bootstrap process
@@ -805,14 +808,14 @@ Once the toolchain bootstrap has completed (for the second time), we're nearly r
 
 {{RootCmd
 |gcc-config --list-profiles
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 
 With that done, restore the configuration file you backed-up [[#cache_modified_config|above]], and regenerate the locale information (as this will also have been purged by the bootstrap). Issue:
 {{RootCmd
 |mv -v /etc/locale.gen{.bak,}
 |locale-gen
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 
 Double-check that your current locale is still set to 'C' (as was specified [[#set_C_locale|earlier]]):
@@ -822,13 +825,13 @@ Double-check that your current locale is still set to 'C' (as was specified [[#s
 LANG variable in profile:
   C
 </pre>
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 
 And finally, revert back to the root directory:
 {{RootCmd
 |cd /
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/usr/portage/scripts #</span>
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
 }}
 
 === <span id="bootstrap_from_2_to_3">Gentoo Bootstrap Remix: Progressing from Stage 2 to Stage 3</span> ===
@@ -945,7 +948,7 @@ In this case, a build failure occurred while emerging the {{Package|media-libs/m
 * Sometimes, ''intermittent issues occur due to the very parallel build architecture'' we have [[../Installing_the_Gentoo_Stage_3_Files#parallel_emerge|specified]]. These issues will often resolve themselves if the build is recommenced. Fortunately, there's a flag for that. Issue {{RootCmd|emerge --resume|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }} and {{c|emerge}} will try to pick up where it left off, with all the same settings. Alternatively, you can try to resume the {{c|emerge}} with parallel {{c|make}} temporarily switched off; to do so, issue {{RootCmd|MAKEOPTS{{=}}"-j1" EMERGE_DEFAULT_OPTS{{=}}"--jobs{{=}}1"  emerge --resume|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>}} If that works OK, great, you're done. If not, proceed to the next step.
 * If you are ''building on a system with little RAM'' (e.g. an old computer or a virtual machine) or your build log ends with a killed compiler process, you might be running out of memory. On a VM, consider shutting it down, giving it more RAM, starting it again, and chrooting back into your installation if you still don't have a bootable system; you will be able to resume your build with <code>emerge --resume</code>. Alternatively, you might be running too many concurrent build jobs and / or compilations; in this case, go to {{Path|/root/.bashrc}} and crank down the <code>--load-average=Y</code> and <code>--jobs=Z</code> parameters on your <var>EMERGE_DEFAULT_OPTS</var> and crank down the <code>-j</code> and <code>-l</code> options on <var>MAKEOPTS</var>. If your build still fails, try creating a paging file on your hard drive and enabling it to have at least some extra virtual memory as follows: {{RootCmd|dd if{{=}}/dev/zero of{{=}}/pagefile bs{{=}}1M count{{=}}1024|mkswap /pagefile|swapon /pagefile|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>}}
-* If you're still experiencing compiler processes axed by the OOM killer, you can try enabling {{c|ccache}} and trying the build again as many times as necessary. {{c|ccache}} in the context of Portage functions as a checkpointing tool, and allows you to quickly resume a failed build where it stopped before by saving a copy of each compiled file to a directory in your hard disk, and by later fetching previously compiled files from said cache instead of compilling them from scratch when you kick off the failed build again. For further info, read [[Handbook:AMD64/Working/Features#Caching_compilation_objects|Gentoo Handbook: Working with Portage: Features: Caching compilation objects]].
+* If you're still experiencing compiler processes axed by the OOM killer, you can try enabling {{c|ccache}} and trying the build again as many times as necessary. {{c|ccache}} in the context of Portage functions as a checkpointing tool, and allows you to quickly resume a failed build where it stopped before by saving a copy of each compiled file to a directory in your hard disk, and by later fetching previously compiled files from said cache instead of compilling them from scratch when you kick off the failed build again. For further info, read [[Handbook:Parts/Working/Features#Caching_compilation_objects|Gentoo Handbook: Working with Portage: Features: Caching compilation objects]].
 * Since you are (at the moment) running on a fairly 'vanilla' system, it's likely that ''others will have seen the build problem you're experiencing, and have already reported it''. Gentoo has a pretty quick turnaround for fixes, which are posted to the Portage (ebuild) tree when signed off. Therefore, the next-lowest-overhead way to fix a build problem is simply to a day or so (if it's a major issue, you shouldn't have to wait long), then resync Portage (using the instructions [[#update_portage_tree|given above]], to ensure authentication), and try the {{c|emerge}} again (NB, but not using <code>--resume</code> here, since we've sync'd in between): {{RootCmd
 |emerge --ask --verbose --emptytree --with-bdeps{{=}}y @world|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }} Hopefully, that fixed your problem. If not (or you don't want to wait), keep going...
@@ -1018,7 +1021,7 @@ And, the way we [[#switch_back_to_rsync|left things]], {{c|rsync}} remains the m
 
 Users wishing to follow this updated recommendation, and so retain {{c|rsync}}, should simply [[#choose_systemd_or_openrc|click here]] to jump the following (optional) step.
 
-However, if you'd rather use {{c|webrsync}} snapshots instead, then simply issue:
+<span id="stick_with_webrsync">However</span>, if you'd rather use {{c|webrsync}} snapshots instead, then simply issue:
 {{RootCmd
 |nano -w etc/portage/repos.conf/gentoo.conf
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
@@ -1035,157 +1038,28 @@ Leave the rest of the file as-is (in particular, don't change the <var>sync-webr
 
 == <span id="choose_systemd_or_openrc">Choosing between systemd or OpenRC Init</span> ==
 
-At this point, you need to choose which [[:Wikipedia:Init|init system]] you want to use on your target machine: [[systemd]] or [[OpenRC]].
+At this point, you need to choose which [[:Wikipedia:Init|init system]] you want to use on your target machine: [[OpenRC]] or [[systemd]].
 
-{{c|systemd}} is the default choice, since a 'vanilla' (unpatched) GNOME 3.8+ system requires it to run properly.<ref name="gnome_systemd_runtime_dep"/> It is currently the most widely adopted<ref>Wikipedia: [https://en.wikipedia.org/wiki/Systemd#Adoption_and_reception "systemd: Adoption and reception"]</ref> init system amongst Linux distributions.
+Gentoo's own init system ([[OpenRC]]) is now the default choice in this guide, as GNOME 3 can now be used successfully (with full session tracking and power management) under it ''without'' any patchsets applied, (given recent work<ref name="elogind_gnome">Gentoo News: [https://gentoo.org/news/2019/03/27/gnome-330-openrc.html "Gentoo GNOME 3.30 for all init systems"]</ref> on {{c|elogind}} in the official tree).
 
-However, please be aware that there ''is'' an alternative, for those who would rather not use {{c|systemd}}. This involves installing a patchset provided by Dantrell B., which enables Gentoo users to enjoy the full GNOME experience (including session tracking and power management) under Gentoo's own init system ([[OpenRC]]).
+The alternative is, of course, {{c|systemd}}, which is the most widely adopted<ref>Wikipedia: [https://en.wikipedia.org/wiki/Systemd#Adoption_and_reception "systemd: Adoption and reception"]</ref> init system amongst Linux distributions.
 
 {{Important|Don't stress out about making this choice! If:
-* you want to use Gentoo's standard repositories and profiles for GNOME; or
-* you have no strong preference; or
-* you're not really sure what all this init system stuff is about anyway ^-^,
-then you should select {{c|systemd}}, as doing so will leave you on the 'mainstream' track, where you will find it more straightforward to receive timely security updates, obtain support via the forums etc.}}
-
-If you choose to go the {{c|OpenRC}} route, and so use Dantrell's patchset for GNOME (full instructions for which are provided in this guide), please be aware that, as with any third-party overlay:
-* you may find it more difficult to get support via the normal Gentoo channels (the forums etc.) when using an 'unofficial' patchset such as this one;
-* security fixes etc. may take longer to be released, and the overlays may themselves contain security holes;
-* the patchset's author (Dantrell B.) may cease support for this patchset in the future.
-
-Having said that:
-* the vast majority of the GNOME code is unaffected by the patches;
-* the patchset code itself is largely shared with [http://www.funtoo.org Funtoo], who use it in their mainline distribution,<ref>Funtoo Linux FAQ: [http://www.funtoo.org/Funtoo_Linux_FAQ#Do_you_support_systemd.3F "Do you support systemd?"]</ref> so you will not be alone;
-* Dantrell B. [https://github.com/dantrell/gentoo-project-gnome-without-systemd/blob/master/GOVERNANCE.md#long-term-support has stated] his intention to support this patchset for Gentoo (at least until either a proper answer for the GNOME/systemd issue is arrived at, he ceases to use GNOME, or the complexity gets out of control).
+* you want to use Gentoo's original init system, select {{c|OpenRC}}; ''but''
+* if you want to maximise familiarity against other mainstream distros (for example, Arch), choose {{c|systemd}} instead.}}
 
 Ultimately, as with all things Gentoo, the choice is yours ^-^
 
 When you have decided, continue as below:
-* For {{c|systemd}}, follow the [[#choose_systemd_profile|"Option 1"]] text below, and then read the rest of this guide following the 'default' flow. Do not follow "Option 2" or read any of the 'alternative track' chapters (they are clearly marked). Be sure also to follow any specific instructions in chapters 8 and 9 that are marked for the attention of {{c|systemd}} users; or
-* For {{c|OpenRC}}, follow the [[#choose_openrc_profile|"Option 2"]] text below, and then read the rest of this guide, following the 'alternative track' for Chapters 10 onwards (you will see the branch point clearly marked at the end of Chapter 9). Be sure also to follow any specific instructions in chapters 8 and 9 that are marked for the attention of {{c|OpenRC}} users.
 
-=== <span id="choose_systemd_profile">Option 1: Setting a systemd Profile</span> ===
+* For {{c|OpenRC}}, follow the [[#choose_openrc_profile|"Option 1"]] text below, and then read the rest of this guide following the 'default' flow. Do not follow "Option 2" or read any of the 'alternative track' chapters (they are clearly marked). Be sure also to follow any specific instructions in chapters 8 and 9 that are marked for the attention of {{c|OpenRC}} users; or
+* For {{c|systemd}}, follow the [[#choose_systemd_profile|"Option 2"]] text below, and then read the rest of this guide, following the 'alternative track' for Chapters 10 onwards (you will see the branch point clearly marked at the end of Chapter 9). Be sure also to follow any specific instructions in chapters 8 and 9 that are marked for the attention of {{c|systemd}} users.
 
-{{Note|Remember: if you want to use OpenRC as your init system, please do ''not'' carry out the instructions in this section, but read [[#choose_openrc_profile{{!}}"Option 2"]] instead.}}
+=== <span id="choose_openrc_profile">Option 1: Setting an OpenRC Profile</span> ===
 
-OK, so let's <span id="set_systemd_profile">set our [[Profile|Portage profile]]</span> to the version we actually want to use going forward (we avoided doing so earlier, to minimize the scope of the bootstrap).
+{{Note|Remember: if you want to use {{c|systemd}} as your init system, please do ''not'' carry out the instructions in this section, but read [[#choose_systemd_profile{{!}}"Option 2"]] instead.}}
 
-Issue:
-
-{{RootCmd
-|eselect profile list
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-|output=<pre>
-  [1]   default/linux/amd64/13.0 (stable)
-  [2]   default/linux/amd64/13.0/selinux (dev)
-... additional output suppressed ...
-  [12]  default/linux/amd64/17.0 (stable) *
-... additional output suppressed ...
-  [18]  default/linux/amd64/17.0/desktop/gnome/systemd (stable)
-... additional output suppressed ...
-  [55]  default/linux/amd64/17.0/uclibc (exp)
-  [56]  default/linux/amd64/17.0/uclibc/hardened (exp)
-</pre>
-}}
-The current (default) profile is shown marked with an asterisk. However, the most correct profile for our purposes is the '''17.0''' 'desktop' variant that cites GNOME and {{c|systemd}}. In the above list, this is number 18 (but your output may differ).
-{{Note|The output shown is just an example and will change over time. Note also that the 'dev' profiles are for Gentoo internal development; if you just want to develop regular software on your system, you don't need to select one of these.}}
-
-To switch, issue:
-
-{{RootCmd
-|eselect profile set "default/linux/amd64/17.0/desktop/gnome/systemd"
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-}}
-
-Now, continue reading at [[#update_world|"Updating @world to Reflect the New Profile"]], below (i.e., please skip the "Option 2" text below, as it does not apply).
-
-=== <span id="choose_openrc_profile">Option 2: Adding Dantrell's Ebuild Repositories (Overlays) and Setting an OpenRC Profile</span> ===
-
-{{Note|Remember: if you want to use {{c|systemd}} as your init system, please do ''not'' carry out the instructions in this section, but read [[#choose_systemd_profile{{!}}"Option 1"]] instead.}}
-
-To use GNOME with OpenRC, you will first need to install a few custom ebuild repositories (aka 'overlays'), to apply Dantrell B.'s [https://github.com/dantrell/gentoo-project-gnome-without-systemd patchset for GNOME] (see the background reading section [[../Installing_the_Gentoo_Stage_3_Files#overlays|earlier]] for a brief overview of ebuild repositories).
-
-At the time of writing there are ten repos to install: a 'common' one, and one for each of GNOME 3.14, 3.16, 3.18, 3.20, 3.22, 3.24, 3.26, 3.28 and 3.30. We'll create configuration files in {{Path|/etc/portage/repos.conf}} for each of these.
-
-{{Note|It is also possible to install and use [[layman]] to manage the repositories, rather than specifying them in {{Path|/etc/portage/repos.conf}}. For details of this alternative approach, please see the Gentoo Wiki page [[GNOME/GNOME_Without_systemd{{!}}GNOME Without systemd]]; however, in this tutorial, I'm going to assume you want to install the repos directly.}}
-
-{{Important|Users targeting {{c|systemd}}: not only should you be reading [[#choose_systemd_profile{{!}}"Option 1"]] rather than this section ^-^, you should also ''not'' place the Dantrell entries in {{Path|/etc/portage/repos.conf}}, since (even in the absence of any {{c|dantrell-gnome-...}} profile selection) these may cause some ebuilds to be taken from a dantrell, rather than a vanilla Gentoo, repository. Users targeting {{c|OpenRC}} may of course disregard this note &mdash; you absolutely do need to install the Dantrell repos, as described next.}}
-
-Begin with the 'common' ebuild repository; issue:
-
-{{RootCmd
-|nano -w /etc/portage/repos.conf/dantrell-gnome.conf
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-}}
-and enter the following text:
-{{FileBox|filename=/etc/portage/repos.conf/dantrell-gnome.conf|title=Configuration for dantrell-gnome repo|lang=ini|1=
-[dantrell-gnome]
-
-# Dantrell B.'s Gentoo ebuild repository ('overlay') for GNOME (generic)
-# Maintainer: Dantrell B. (email: see CONTRIBUTING.md in main GitHub project)
-# Homepage: https://github.com/dantrell/gentoo-project-gnome-without-systemd
-
-location = /usr/local/portage/dantrell-gnome
-sync-type = git
-sync-uri = https://github.com/dantrell/gentoo-overlay-dantrell-gnome.git
-priority = 150
-auto-sync = yes
-}}
-Save, and exit {{c|nano}}.
-
-The above simply specifies that:
-* The (common GNOME) repository is called {{c|dantrell-gnome}};
-* It should be cloned to the {{Path|/usr/local/portage/dantrell-gnome}} directory;
-* It is a [[:Wikipedia:Git_(software)|{{c|git}}]] archive, which may be synchronized via the URI https://github.com/dantrell/gentoo-overlay-dantrell-gnome.git;
-* It has 'priority' 150 (ebuilds with higher priority override those of lower priority, in the event of a name clash; the default {{c|gentoo}} tree has priority -1000); and
-* It will be automatically synced during during {{c|emerge --sync}} or {{c|emaint sync --auto}} runs.
-
-
-Next, the 3.14 ebuild repository. Issue:
-
-{{RootCmd
-|nano -w /etc/portage/repos.conf/dantrell-gnome-3-14.conf
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-}}
-and enter the following text:
-{{FileBox|filename=/etc/portage/repos.conf/dantrell-gnome-3-14.conf|title=Configuration for dantrell-gnome-3-14 repo|lang=ini|1=
-[dantrell-gnome-3-14]
- 
-# Dantrell B.'s Gentoo ebuild repository ('overlay') for GNOME (3.14)
-# Maintainer: Dantrell B. (email: see CONTRIBUTING.md in main GitHub project)
-# Homepage: https://github.com/dantrell/gentoo-project-gnome-without-systemd
- 
-location = /usr/local/portage/dantrell-gnome-3-14
-sync-type = git
-sync-uri = https://github.com/dantrell/gentoo-overlay-dantrell-gnome-3-14.git
-priority = 100
-auto-sync = yes
-}}
-Save, and exit {{c|nano}}. (The contents should be self-explanatory).
-
-We can use this file as a basis for the other (3.16 &rarr; 3.30) variants, rather than entering them manually. To do so, issue:
-{{RootCmd
-|for ((R{{=}}16;R<{{=}}30;R+{{=}}2)); do cp -v /etc/portage/repos.conf/dantrell-gnome-3-{14,${R}&#125;.conf; sed -e "s/14/${R}/g" -i /etc/portage/repos.conf/dantrell-gnome-3-${R}.conf; done
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-}}
-
-Note that it is fine to have multiple versions installed, as the profile &mdash; which we will select shortly &mdash; will decide which takes precedence.
-
-{{Note|If you are ''sure'' you only want to use one version of GNOME, for example 3.24, then it suffices to create the {{Path|/etc/portage/repos.conf/...}} file specific to it (in this example, that would be {{Path|/etc/portage/repos.conf/dantrell-gnome-3-24.conf}}, in addition of course to the common repository ({{Path|/etc/portage/repos.conf/dantrell-gnome.conf}}). However, to allow later flexibility, I recommend setting up all nine variants (3.14, 3.16, 3.18, 3.20, 3.22, 3.24, 3.26, 3.28 and 3.30) now, per the main body of the text (the profile, which we will set shortly, will determine which version takes precedence on your system).}}
-
-Now, pull in the ebuild repositories themselves (in this case, via [[:Wikipedia:HTTPS|HTTPS]] to GitHub):
-
-{{RootCmd
-|emaint sync --auto
-|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
-}}
-
-{{Note|You may recall [[#overlay_hygiene{{!}}the advice given earlier]] to apply a global mask / selective unmask strategy to third-party ebuild repositories, as a hygiene measure. Due to the size of the Dantrell repos, we won't do that here, but feel free to cast an eye over the provided ebuilds if you like, before proceeding further.}}
-
-{{Note|Assuming you have set up {{Path|/etc/portage/repos.conf/gentoo.conf}} and {{Path|/etc/portage/repos.conf/sakaki-tools.conf}} as specified earlier ([[#setup_gentoo_dot_conf|here]] and [[#setup_st_repo_dot_conf|here]]), this command will also cause the main Gentoo repo and the {{c|sakaki-tools}} repo to be sync'd (as they too have been marked with <code>auto-sync {{=}} yes</code>). However, the whole process should still take no more than a few minutes to complete.}}
-
-The Dantrell ebuild repositories (aka 'overlays') we just installed provide (''inter alia'') a bundled set of [[Profile|Portage profiles]]; these allow you to conveniently set {{c|USE}} flags, masks etc. and thereby ensure that subsequent installation of GNOME proceeds smoothly.
-
-{{Note|For each version of GNOME (3.14 thru 3.30) a 'standard' (no-suffix) and 'extended' profile are provided (for each of profile 13.0 &mdash; now deprecated &mdash; and 17.0, making ''four'' profiles in total per GNOME version at the time of writing). The 'extended' profiles attempt to match many of the standard USE flags that a desktop install of GNOME in Gentoo would have (whereas the 'standard' profiles are more minimal in scope). As such, I recommend that you use an 'extended' 17.0 profile in what follows.<br>Incidentally, the use of the {{c|dantrell-gnome-reparent}} profiles (mentioned in earlier versions of this guide) is no longer recommended. Please choose a corresponding Dantrell 'extended' profile instead (as now recommended in the main body of this text), as these perform essentially the same function.}}
+{{Note|You '''no longer''' require Dantrell B.'s excellent [https://github.com/dantrell/gentoo-project-gnome-without-systemd patchset for GNOME] in order to use it under {{c|OpenRC}}, as this option is now officially supported in the main tree.<ref name="elogind_gnome"/> Some users may still wish to use this patchset, as it provides e.g. additional aesthetic enhancements; should you wish to do so, please refer to [[GNOME/GNOME_Without_systemd{{!}}these notes]] for further details.}}
 
 Accordingly, we next <span id="set_openrc_profile">set our profile</span> to the version we actually want to use going forward (we avoided doing so earlier, to minimize the scope of the bootstrap).
 
@@ -1195,65 +1069,67 @@ Issue:
 |eselect profile list
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 |output=<pre>
-  [1]   default/linux/amd64/13.0 (stable)
-  [2]   default/linux/amd64/13.0/selinux (dev)
+  [1]   default/linux/amd64/17.0 (stable)
+  [2]   default/linux/amd64/17.0/selinux (stable)
 ... additional output suppressed ...
-  [12]  default/linux/amd64/17.0 (stable) *
+  [16]  default/linux/amd64/17.1 (stable) *
 ... additional output suppressed ...
-  [57]  dantrell-gnome:default/linux/amd64/13.0/desktop/gnome+plasma (stable)
-  [58]  dantrell-gnome:default/linux/amd64/17.0/desktop/gnome+plasma (stable)
-  [59]  dantrell-gnome-3-14:default/linux/amd64/13.0/desktop/gnome/3.14 (stable)
-  [60]  dantrell-gnome-3-14:default/linux/amd64/13.0/desktop/gnome/3.14/extended (stable)
-  [61]  dantrell-gnome-3-14:default/linux/amd64/17.0/desktop/gnome/3.14 (stable)
-  [62]  dantrell-gnome-3-14:default/linux/amd64/17.0/desktop/gnome/3.14/extended (stable)
-  [63]  dantrell-gnome-3-16:default/linux/amd64/13.0/desktop/gnome/3.16 (stable)
-  [64]  dantrell-gnome-3-16:default/linux/amd64/13.0/desktop/gnome/3.16/extended (stable)
-  [65]  dantrell-gnome-3-16:default/linux/amd64/17.0/desktop/gnome/3.16 (stable)
-  [66]  dantrell-gnome-3-16:default/linux/amd64/17.0/desktop/gnome/3.16/extended (stable)
+  [21]  default/linux/amd64/17.1/desktop/gnome (stable)
 ... additional output suppressed ...
-  [87]  dantrell-gnome-3-28:default/linux/amd64/13.0/desktop/gnome/3.28 (stable)
-  [88]  dantrell-gnome-3-28:default/linux/amd64/13.0/desktop/gnome/3.28/extended (stable)
-  [89]  dantrell-gnome-3-28:default/linux/amd64/17.0/desktop/gnome/3.28 (stable)
-  [90]  dantrell-gnome-3-28:default/linux/amd64/17.0/desktop/gnome/3.28/extended (stable)
-  [91]  dantrell-gnome-3-30:default/linux/amd64/13.0/desktop/gnome/3.30 (stable)
-  [92]  dantrell-gnome-3-30:default/linux/amd64/13.0/desktop/gnome/3.30/extended (stable)
-  [93]  dantrell-gnome-3-30:default/linux/amd64/17.0/desktop/gnome/3.30 (stable)
-  [94]  dantrell-gnome-3-30:default/linux/amd64/17.0/desktop/gnome/3.30/extended (stable)
+  [33]  default/linux/amd64/17.0/uclibc (exp)
+  [34]  default/linux/amd64/17.0/uclibc/hardened (exp)
 </pre>
 }}
-(Your output may vary.)
-{{Note|Although you will see 'dev' profiles in this list, don't be concerned - these are for Gentoo internal development only, you can still develop regular software on your system under any of the profiles, including the one we will choose.}}
+The current (default) profile is shown marked with an asterisk. However, the most correct profile for our purposes is the '''17.1''' 'desktop' variant that cites GNOME (but ''not'' {{c|systemd}}). In the above list, this is number 21 (but your output may differ).
+{{Note|The output shown is just an example and will change over time. Note also that the 'dev' profiles are for Gentoo internal development; if you just want to develop regular software on your system, you don't need to select one of these.}}
 
-The current (default) profile is shown marked with an asterisk. However, the safest profile for our purposes is the 'extended' '''17.0''' variant whose version matches the current 'stable' version of GNOME in mainline Gentoo. To find out what version this is (version 3.24, at the time of writing), consult the table in {{Package|gnome-base/gnome}}, and look for the green box with a plus sign in it, under the {{c|amd64}} heading (there may be more than one, in which case it is generally best to select the most modern 'plus signed' variant listed).
+To switch, issue:
 
-{{Note|Users who have elected to use the 'testing' branch ({{c|~amd64}} rather than {{c|amd64}}) [[../Installing_the_Gentoo_Stage_3_Files#set_keywords{{!}}earlier]] may use any available 'dantrell-gnome' profile. You may wish to take note of the 'grading' status of the available GNOME versions on Dantrell's page [https://github.com/dantrell/gentoo-project-gnome-without-systemd#overview here], when making your choice.}}
-{{Note|If you wish to do so, GNOME will also build fine with the appropriate Dantrell 'unextended' profile selected. However, you may find your experience is impaired due to missing codecs etc., when compared to a 'standard' Gentoo GNOME desktop. In what follows, I'm going to assume you have chosen a 'extended' profile.}}
-
-Having found the stable version of GNOME, select the appropriate profile; for example, to use GNOME 3.24 (matching one of the 'stable' Gentoo versions at the time of writing; adapt as appropriate), issue:
 {{RootCmd
-|eselect profile set "dantrell-gnome-3-24:default/linux/amd64/17.0/desktop/gnome/3.24/extended"
+|eselect profile set "default/linux/amd64/17.1/desktop/gnome"
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
-{{Note|Obviously, substitute for the <code>dantrell-gnome-3-24:default/linux/amd64/17.0/desktop/gnome/3.24/extended</code> profile name in the above command if necessary; for example, if targeting GNOME 3.30 instead, you would use <code>dantrell-gnome-3-30:default/linux/amd64/17.0/desktop/gnome/3.30/extended</code>.}}
-{{Important|Please '''do not''' choose any profile other than an extended (or, should you wish, a standard) {{c|dantrell-gnome}} variant, if you intend to use GNOME with {{c|OpenRC}}: doing so will almost certainly fail later in the install, unless you are very sure of what you are doing.}}
-Check that the new profile is now active:
+
+Now, continue reading at [[#update_world|"Updating @world to Reflect the New Profile"]], below (i.e., please skip the "Option 2" text below, as it does not apply).
+
+=== <span id="choose_systemd_profile">Option 2: Setting a systemd Profile</span> ===
+
+{{Note|Remember: if you want to use OpenRC as your init system, please do ''not'' carry out the instructions in this section, but read [[#choose_openrc_profile{{!}}"Option 1"]] instead.}}
+
+OK, so let's <span id="set_systemd_profile">set our [[Profile|Portage profile]]</span> to the version we actually want to use going forward (we avoided doing so earlier, to minimize the scope of the bootstrap).
+
+Issue:
+
 {{RootCmd
-|eselect profile show
+|eselect profile list
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 |output=<pre>
-Current /etc/portage/make.profile symlink:
-  dantrell-gnome-3-24:default/linux/amd64/17.0/desktop/gnome/3.24/extended
+  [1]   default/linux/amd64/17.0 (stable)
+  [2]   default/linux/amd64/17.0/selinux (stable)
+... additional output suppressed ...
+  [16]  default/linux/amd64/17.1 (stable) *
+... additional output suppressed ...
+  [22]  default/linux/amd64/17.1/desktop/gnome/systemd (stable)
+... additional output suppressed ...
+  [33]  default/linux/amd64/17.0/uclibc (exp)
+  [34]  default/linux/amd64/17.0/uclibc/hardened (exp)
 </pre>
 }}
-The output you see may differ from the above, but should reflect the profile choice you just made.
+The current (default) profile is shown marked with an asterisk. However, the most correct profile for our purposes is the '''17.1''' 'desktop' variant that cites GNOME and {{c|systemd}}. In the above list, this is number 22 (but your output may differ).
+{{Note|The output shown is just an example and will change over time. Note also that the 'dev' profiles are for Gentoo internal development; if you just want to develop regular software on your system, you don't need to select one of these.}}
 
-{{Note|To remove these repositories (should you wish to do so at some future time), simply switch your profile back (for example, to {{c|default/linux/amd64/17.0}}), move any {{Path|dantrell-gnome*.conf}} files out of {{Path|/etc/portage/repos.conf/}}, and update {{c|@world}}. That isn't something you should do at this point in time, obviously!}}
+To switch, issue:
+
+{{RootCmd
+|eselect profile set "default/linux/amd64/17.1/desktop/gnome/systemd"
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
 
 Having now successfully set up the appropriate custom profile, continue reading below.
 
 == <span id="update_world">Updating @world to Reflect the New Profile</span> ==
 
-Having chosen a target init system ({{c|systemd}} or {{c|OpenRC}}), and selected the appropriate profile, we must update {{c|@world}} set, to pull in (and build from source) any new packages required, and to reflect any USE flag changes to existing packages (by rebuilding them as necessary).
+Having chosen a target init system ({{c|OpenRC}} or {{c|systemd}}), and selected the appropriate profile, we must update {{c|@world}} set, to pull in (and build from source) any new packages required, and to reflect any USE flag changes to existing packages (by rebuilding them as necessary).
 {{Note|({{c|systemd}} users only) It is no longer necessary to do a two-stage {{Package|sys-apps/dbus}}/{{Package|sys-apps/systemd}} {{c|emerge}} (as you will sometimes see reported); the circular dependency on {{Package|sys-fs/udev-init-scripts-25}} was broken by moving it to [http://devmanual.gentoo.org/general-concepts/dependencies/#post-merge-dependencies <var>PDEPEND</var>], as of revision 1.9 of the {{c|systemd-208-r2.ebuild}}.<ref>Portage Attic: [http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/sys-apps/systemd/systemd-208-r2.ebuild?hideattic{{=}}0&r1{{=}}1.8&r2{{=}}1.9 Diff between v1.9 and v1.8 of {{Path|/sys-apps/systemd/systemd-208-r2.ebuild}}]</ref>}}
 
 Issue:
@@ -1291,9 +1167,8 @@ Here's <span id="world_update_params">what those {{c|emerge}} parameters mean</s
 {{Note|Do not worry if you are warned about kernel configuration options not being set correctly, we will create an appropriate kernel in the next chapter.}}
 {{Note|This {{c|emerge}} will take some time. While it is running, as we discussed [[#use_showem{{!}}earlier in the bootstrapping section]], you can switch to the second {{c|screen}} virtual console and review progress with {{c|showem}}, if you like.}}
 {{Note|'''If your {{c|emerge}} exits with an error''', see the section [[#troubleshooting_failed_build{{!}}"Troubleshooting a Failed Build"]] above, for some hints. In particular, make sure you always try restarting the {{c|emerge}} at least once (with <code>emerge --resume</code>) ''if'' it does not complete successfully on the first attempt.}}
-{{Note|({{c|OpenRC}} users only) If you are having trouble with the {{c|emerge}}, try switching from the 'extended' to the 'standard' {{c|dantrell-gnome}} profile for your chosen version of GNOME (as the 'standard' variants specify fewer USE flags than their 'extended' siblings). For example, if you are having trouble emerging under the {{c|dantrell-gnome-3-22:default/linux/amd64/17.0/desktop/gnome/3.22/extended}} profile, try switching to the {{c|dantrell-gnome-3-22:default/linux/amd64/17.0/desktop/gnome/3.22}} profile, and then attempting the {{c|emerge}} again.}}
 {{Note|Because of the profile change, the {{c|emerge}} command may tell you there are news items to read. Feel free to read any fresh news items now, if you like, following the [[#reading_news{{!}}earlier instructions]].}}
-{{Tip|If you do not want to rebuild packages whose available USE flags have been changed, but where those changes are orthogonal to your currently installed version's configuration (e.g., the addition of a non-default USE flag), then you can specify <code>--changed-use</code> instead of the (more conservative) <code>--newuse</code> in the above command.}}
+{{Tip|If you do not want to rebuild packages whose available USE flags have been changed, but where those changes are ''orthogonal'' to your currently installed version's configuration (e.g., the addition of a non-default USE flag), then you can specify <code>--changed-use</code> instead of the (more conservative) <code>--newuse</code> in the above command.}}
 
 Whether or not {{c|emerge}} warns you that you have configuration files that need updating as a result of the above update, it is good hygiene to run:
 {{RootCmd
@@ -1303,7 +1178,7 @@ Whether or not {{c|emerge}} warns you that you have configuration files that nee
 
 Then follow the prompts to review each proposed change, if any.
 
-{{Note|Assuming no modified configuration files have been modified (in a manner that cannot be mechanically reconciled) by the update (the most likely scenario), then {{c|dispatch-conf}} will simply exit immediately, printing nothing. However, there's no harm in running it. (OpenRC users ''may'' find they are notified that the file {{Path|/etc/conf.d/keymaps}} needs modifying: in such a case, as before simply press {{Key|z}}, to 'zap' (discard) the changes, and keep your original, edited version which you created [[#set_post_boot_keymap|earlier]]. This only happens with certain Dantrell profiles though.)
+{{Note|Assuming no configuration files have been modified (in a manner that cannot be mechanically reconciled) by the update (the most likely scenario), then {{c|dispatch-conf}} will simply exit immediately, printing nothing. However, there's no harm in running it. (OpenRC users ''may'' find they are notified that the file {{Path|/etc/conf.d/keymaps}} needs modifying: in such a case, as before simply press {{Key|z}}, to 'zap' (discard) the changes, and keep your original, edited version which you created [[#set_post_boot_keymap|earlier]].)
 <br>For proposed modifications to files ''other'' than {{Path|/etc/locale.gen}} or {{Path|/etc/conf.d/keymaps}} &mdash; should you be presented with any by {{c|dispatch-conf}} &mdash; it is generally safe, at this stage in the install, to press {{Key|u}} to '''u'''se the newer version of the file.
 <br>The [[Handbook:AMD64/Portage/Tools#dispatch-conf|{{c|dispatch-conf}}]] tool is discussed in more detail in the bootstrapping section [[#using_dispatch_conf{{!}}above]].}}
 

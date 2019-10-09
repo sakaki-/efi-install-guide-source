@@ -2,7 +2,7 @@
 
 <span id="setup_gnome_desktop">In this section</span>, we'll be setting up {{Highlight|GNOME 3}} on your machine, using the modern [[:Wikipedia:Wayland_(display_server_protocol)|Wayland]] platform (including [https://wayland.freedesktop.org/xserver.html XWayland] support for legacy X11 applications).
 
-GNOME 3 is a feature-rich desktop environment provided by the [https://www.gnome.org GNOME Project]. It is one of the most widely-used Linux desktops. Version 3 has now been stabilized on Gentoo, and the older version 2 is no longer supported (reflecting an upstream decision). Thanks to Dantrell B.'s [https://github.com/dantrell/gentoo-project-gnome-without-systemd patchset] (a variant of which is used by [http://www.funtoo.org Funtoo] in their mainline distribution), users can enjoy GNOME 3 under {{c|OpenRC}} with all features intact.
+GNOME 3 is a feature-rich desktop environment provided by the [https://www.gnome.org GNOME Project]. It is one of the most widely-used Linux desktops. Version 3 has now been stabilized on Gentoo, and the older version 2 is no longer supported (reflecting an upstream decision). Thanks to recent work on {{c|elogind}} within the official Gentoo tree,<ref name="elogind_gnome">Gentoo News: [https://gentoo.org/news/2019/03/27/gnome-330-openrc.html "Gentoo GNOME 3.30 for all init systems"]</ref> users can enjoy GNOME 3 under {{c|OpenRC}} with all features intact.
 
 GNOME's user interface is known as the [[:Wikipedia:GNOME_Shell|"GNOME Shell"]]. It provides core user functions,<ref>[https://wiki.gnome.org/Projects/GnomeShell/CheatSheet GNOME Shell Cheat Sheet"</ref> such as:
 * launching applications, 
@@ -38,19 +38,17 @@ This section has no direct equivalent in the Gentoo Handbook (although the part 
 
 {{Note|You may find the article [[GNOME/Guide{{!}}"GNOME Configuration HOWTO"]] (from the Gentoo wiki) useful background reading.}}
 
-{{Note|The transition from GNOME 2 to 3 has caused some controversy in the Linux community, as it involves a significant shift away from the more 'traditional' desktop metaphor (see [[:Wikipedia:Controversy_over_GNOME_3{{!}}this Wikipedia article]] for example). And, until the advent of Dantrell B.'s patchset, forced you to use {{c|systemd}}...
+{{Note|The transition from GNOME 2 to 3 has caused some controversy in the Linux community, as it involves a significant shift away from the more 'traditional' desktop metaphor (see [[:Wikipedia:Controversy_over_GNOME_3{{!}}this Wikipedia article]] for example). And, until the advent of Dantrell B.'s patchset (and subsequent formal {{c|elogind}} support in the main Gentoo tree), forced you to use {{c|systemd}}...
 
 If the newer look is not for you, don't despair. Although GNOME 2 is no longer supported in Gentoo, other similar desktops are; for example:
 * [[:Wikipedia:LXDE{{!}}LXDE]] (via package {{Package|lxde-base/lxde-meta}}), 
 * [[:Wikipedia:XFCE{{!}}XFCE]] (via package {{Package|xfce-base/xfce-meta}}) etc. 
 
-A further alternative is to use [[KDE]] with OpenRC. Reportedly, it is possible to install this successfully (with EFI, secure boot etc.) by using this guide (together with the relevant [[KDE{{!}}Gentoo Wiki page]]) as a basis,  but making the obvious changes where needed (e.g., ''not'' installing the {{c|dantrell-gnome}} overlays, selecting {{c|default/linux/amd64/17.0/desktop/kde}} as the profile etc.)
+A further alternative is to use [[KDE]] with OpenRC. Reportedly, it is possible to install this successfully (with EFI, secure boot etc.) by using this guide (together with the relevant [[KDE{{!}}Gentoo Wiki page]]) as a basis, but making the obvious changes where needed (e.g., selecting {{c|default/linux/amd64/17.0/desktop/kde}} as the profile etc.)
 
 However, installing any of the above is currently beyond the explicit scope of this guide. In what follows, I'm going to assume you want to use the GNOME 3 desktop.}}
 
 Right, let's get started!
-
-{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|OpenRC}} init, rather than {{c|systemd}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Setting_up_the_GNOME_3_Desktop{{!}}click here]] to go to the default ({{c|systemd}}) version of this page.}}
 
 == <span id="add_regular_user">Adding a User for Daily Use</span> ==
 
@@ -114,7 +112,7 @@ The meaning of those {{c|useradd}} options is as follows:
 
 == <span id="enabling_wayland">Enabling Wayland</span> ==
 
-Next, we'll activate the {{c|wayland}} USE flag globally on your system, and ensure that the {{Package|sys-auth/elogind}} session manager (a {{c|wayland}} requirement) is used in preference to {{Package|sys-auth/consolekit}} (we'll rebuild any existing installed packages affected by these changes in the subsequent section). Issue:
+Next, we'll activate the {{c|wayland}} USE flag globally on your system (we'll rebuild any existing installed packages affected by these changes in the subsequent section). Issue:
 
 {{RootCmd
 |nano -w /etc/portage/make.conf
@@ -126,7 +124,7 @@ and ''append'' the following lines to that file:
 {{FileBox|filename=/etc/portage/make.conf|title=Append the following lines, to enable {{c|wayland}}|lang=bash|1=
 # Globally enable Wayland; use elogind rather than consolekit;
 # support OpenGL for embedded systems.
-USE="${USE} wayland -ck elogind egl"
+USE="${USE} wayland"
 }}
 
 Leave the rest of the file as-is. Save, and exit {{c|nano}}.
@@ -136,7 +134,7 @@ Leave the rest of the file as-is. Save, and exit {{c|nano}}.
 Next, we'll install an X11<ref name="x11_guide">Wikibooks: [https://en.wikibooks.org/wiki/Guide_to_X11 ''Guide to X11'']</ref> server.
 
 {{Note|Although we'll using {{c|wayland}} as our primary graphical platform for GNOME, we need to ensure X11 is working too, because:
-* apps not yet ported to use {{c|wayland}} will be hosted in a shared, rootless X11 server (the so-called '[[:Wikipedia:http://en.wikipedia.org/wiki/Wayland_(display_server_protocol)#Compatibility_with_X{{!}}XWayland]]' approach), and;
+* apps not yet ported to use {{c|wayland}} will be hosted in a shared, rootless X11 server (the so-called '[[:Wikipedia:Wayland_(display_server_protocol)#Compatibility_with_X{{!}}XWayland]]' approach), and;
 * we also want to allow the use of 'old-school' X11-based GNOME sessions as a fallback.}}
 
 We need to set an additional <var>USE</var> flag for {{Package|media-libs/mesa}} (an OpenGL-like library which X pulls in as a dependency), so issue:
@@ -197,7 +195,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 and the X11 server will be downloaded, compiled and installed. Note that we use <code>--oneshot</code> here to avoid adding it to your [[World set (Portage){{!}}@world]] set (this is slightly cleaner, as it will become a dependency of GNOME, once it is installed later).
 
 {{Tip|<span id{{=}}"virtualbox_hints">If you are installing onto a [[VirtualBox]] client</span> (and this '''won't''' apply to most readers, who will instead be installing onto a 'real' target PC), please note the following:
-* You cannot simply set <code>VIDEO_CARDS{{=}}"vesa"</code> when using VirtualBox with EFI emulation turned on.<ref>Red Hat Bugzilla: [https://bugzilla.redhat.com/show_bug.cgi?id{{=}}742695 "EFI install in VirtualBox results in text install "]</ref> You need to use <code>VIDEO_CARDS{{=}}"virtualbox"</code> instead.
+* You cannot simply set <code>VIDEO_CARDS{{=}}"vesa"</code> when using VirtualBox with EFI emulation turned on.<ref>Red Hat Bugzilla: [https://bugzilla.redhat.com/show_bug.cgi?id{{=}}742695 "EFI install in VirtualBox results in text install "]</ref> You need to use <code>VIDEO_CARDS{{=}}"fbdev virtualbox vmware"</code> instead. Then, for best results, enable {{c|CONFIG_DRM_VMWGFX}} and {{c|CONFIG_DRM_VMWGFX_FBCON}} in the kernel, and opt to use {{c|VMSVGA}} (or, as a fallback, {{c|VboxSVGA}}) as the VirtualBox graphics controller.
 * Under EFI boot, you may find it more reliable to use {{c|ALSA Audio Driver}} / {{c|Intel HD Audio}} on your virtual machine (selectable in the VirtualBox control panel, under "Audio").
 * It is generally useful to {{c|emerge}} the {{Package|app-emulation/virtualbox-guest-additions}} in your guest (and set it to start on boot, via <code>emerge -v virtualbox-guest-additions && rc-update add virtualbox-guest-additions default</code>), to enable enhanced services (this does not entail installing any binary blobs). Also, if you do use this package, also remember to add your user(s) to the {{c|vboxguest}} group (with <code>gpasswd -a <username> vboxguest</code>).
 * To get (standard) {{c|wayland}} support, {{c|CONFIG_DRM}} <u>must</u> be enabled in the kernel, along with {{c|CONFIG_DRM_TTM}}. The simplest way to do this (for a VirtualBox guest) is to enable support for one of the 'normal' graphics card drivers (e.g. {{c|CONFIG_DRM_VIRTIO_GPU}}), in the [[#install_drm_driver{{!}}later]] kernel configuration section (this is safe to do, even though enabled driver won't be directly used).
@@ -237,8 +235,8 @@ Next, since {{c|wayland}} requires you to have an appropriate [[:Wikipedia:Direc
 {{Note|Your presently running kernel, the configuration of which was [[../Configuring_and_Building_the_Kernel#kernel_opts_set_by_buildkernel{{!}}based]] upon the Gentoo minimal install image's, does not currently have ''any'' DRM components enabled. We'll fix that problem in this section also.}}
 
 Two commonly used [[:Wikipedia:Direct_Rendering_Manager|DRM]]/[[:Wikipedia:Direct_Rendering_Infrastructure|DRI]] [[:Wikipedia:Direct_Rendering_Manager#Kernel_Mode_Setting|KMS]] drivers are:
-* the {{c|DRM_I915}} driver; this is needed for the integrated [[:Wikipedia:Intel_HD_and_Iris_Graphics|"HD Graphics"]] on many [[:Wikipedia:Ultrabook|Ultrabooks]] (such as the Panasonic CF-AX3); you'll need to activate it if you have an "{{c|intel}}", "{{c|intel i915}}" or "{{c|intel i965}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] setting in {{Path|/etc/portage/make.conf}};
-*the {{c|DRM_NOUVEAU}} driver; this is an open-source driver that [[:Wikipedia:Nouveau_(software)|supports]] many nVidia graphics cards (which are popular on desktop machines); you'll need to activate it if you have a "{{c|nouveau}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}{{c|VIDEO_CARDS}}]] setting in {{Path|/etc/portage/make.conf}}.
+* the {{c|DRM_I915}} driver; this is needed for the integrated [[:Wikipedia:Intel_HD_and_Iris_Graphics|"HD Graphics"]] on many [[:Wikipedia:Ultrabook|Ultrabooks]] (such as the Panasonic CF-AX3); you'll need to activate it if you have an "{{c|intel}}", "{{c|intel i915}}" or "{{c|intel i965}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] setting in {{Path|/etc/portage/make.conf}};
+*the {{c|DRM_NOUVEAU}} driver; this is an open-source driver that [[:Wikipedia:Nouveau_(software)|supports]] many nVidia graphics cards (which are popular on desktop machines); you'll need to activate it if you have a "{{c|nouveau}}" [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] setting in {{Path|/etc/portage/make.conf}}.
 
 (There are others too, of course, these are simply the most frequently encountered.)
 
@@ -373,6 +371,7 @@ to close the second one. Then, ensure the boot USB key is still inserted in the 
 }}
 {{Note|If you have problems rebooting with this new kernel, you can follow the instructions [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#revert_to_previous_kernel{{!}}given earlier]] to revert back to the backup (previous) version on the boot USB key - which won't have your configuration changes - and try again.}}
 {{Note|<span id{{=}}"kernel_config_shorthand_note">It's useful to</span> relate the process just described to the 'kernel configuration shorthand' you will often see on the Gentoo wiki, and many other places on the web. For example, looking at the [[Intel{{!}}"intel"]] page on the wiki, we read that you need to enable the following kernel options:
+
 {{KernelBox|title=linux-4.4|1=
         Device Drivers  --->
             Graphics support  --->
@@ -392,6 +391,7 @@ to close the second one. Then, ensure the boot USB key is still inserted in the 
                 -*- Backlight & LCD device support  --->
                 ...
 }}
+
 This is really just informing you of the menu locations (and prompts) of the options you need to choose, and how to set them (here, all have asterisks, so implying you should ideally select, rather than modularize). All of the above should be familiar from the process just described, those that we didn't cover are either selected by default on the current Gentoo minimal install kernel configuration, or are automatically selected by {{c|DRM_I915}}.
 
 Generally speaking, when presented with a configuration list like this, you can just work through the menus in the order provided and enable the items - the author will have done the 'depth first' dependency pass for you. However, this isn't foolproof, so if an item referred to in such a list appears missing, simply search for it, and check that its dependencies are set, as we have done above.
@@ -607,157 +607,13 @@ Would you like to unmerge these packages? [Yes/No] <press y, then press Enter>
 
 {{Note|Using the <code>--depclean</code> option to {{c|emerge}} in this way is a common idiom to safely uninstall packages in Gentoo. If any of the specified [[../Installing_the_Gentoo_Stage_3_Files#atoms_etc{{!}}atoms]] happens to be a dependency of another (uncited) installed package (even transitively), it will not be removed.}}
 
-Now for GNOME itself. One important decision here is which applications (web browser etc.) to build as part of the 'baseline' set.
-
-{| class="wikitable"
-|-
-! USE flag
-! Default
-! Recommended
-! Description
-|-
-| <code>anjuta</code>
-| 
-| 
-| Install the {{Package|dev-util/anjuta}} IDE for GNOME.
-|-
-| <code>bijiben</code>
-| {{Yes}}
-| {{Yes}}
-| Install the {{Package|app-misc/bijiben}} note editor. If targeting GNOME 3.14, you will need to enable this to get a successful build (at the time of writing).
-|-
-| <code>boxes</code>
-| 
-| 
-| Install the {{Package|gnome-extra/gnome-boxes}} remote and virtual system manager.
-|-
-| <code>builder</code>
-| 
-| 
-| Install the {{Package|gnome-extra/gnome-builder}} IDE (only present in GNOME 3.16 or greater).
-|-
-| <code>california</code>
-| 
-| 
-| Install the {{c|gnome-extra/california}} calendar (not in the standard Gentoo packages at time of writing, although available from the Dantrell overlays).
-|-
-| <code>empathy</code>
-| 
-| 
-| Install the {{Package|net-im/empathy}} chat client.
-|-
-| <code>epiphany</code>
-| 
-| {{Yes}}
-| Install the {{Package|www-client/epiphany}} web browser.
-|-
-| <code>evolution</code>
-| {{Yes}}
-| {{Yes}}
-| Install the {{Package|mail-client/evolution}} mail client.
-|-
-| <code>flashback</code>
-| 
-| 
-| Install the {{Package|gnome-base/gnome-flashback}} session and helper application. (This is currently marked as a "work in progress" in Dantrell's overlays, so be cautious if installing it.)
-|-
-| <code>fonts</code>
-| {{Yes}}
-| {{Yes}}
-| Install {{Package|media-fonts/noto}}, {{Package|media-fonts/symbola}} and {{Package|media-fonts/unifont}} to complement {{Package|media-fonts/cantarell}}.
-|-
-| <code>games</code>
-| {{Yes}}
-| {{Yes}}
-| Install various GNOME games ({{Package|games-board/gnome-chess}}, {{Package|games-puzzle/gnome-sudoku}} and others).
-|-
-| <code>geary</code>
-| 
-| 
-| Install the {{Package|mail-client/geary}} mail client.
-|-
-| <code>gnote</code>
-| 
-| 
-| Install the {{Package|app-misc/gnote}} note editor.
-|-
-| <code>latexila</code>
-| 
-| 
-| Install the {{Package|app-editors/latexila}} integrated [[:Wikipedia:LaTeX{{!}}LaTeX]] environment.
-|-
-| <code>multi-writer</code>
-| 
-| 
-| Install the {{Package|gnome-extra/gnome-multi-writer}} USB device writer (only in GNOME 3.16 or later).
-|-
-| <code>recipes</code>
-| {{Yes}}
-| {{Yes}}
-| Install the {{c|gnome-extra/gnome-recipes}} live cookbook (only present in GNOME 3.22 or greater; not in the standard Gentoo packages at time of writing, although available from the Dantrell overlays).
-|-
-| <code>share</code>
-| {{Yes}}
-| {{Yes}}
-| Install the {{Package|gnome-extra/gnome-user-share}} personal file sharing tool.
-|-
-| <code>shotwell</code>
-| {{Yes}}
-| {{Yes}}
-| Install the {{Package|media-gfx/shotwell}} photo manager.
-|-
-| <code>simple-scan</code>
-| 
-| {{Yes}}
-| Install the {{Package|media-gfx/simple-scan}} document scanning utility.
-|-
-| <code>todo</code>
-| {{Yes}}
-| {{Yes}}
-| Install the {{Package|gnome-extra/gnome-builder}} task manager (only present in GNOME 3.18 or greater).
-|-
-| <code>tracker</code>
-| {{Yes}}
-| ''See note [[#tracker_disable{{!}}below]]''
-| Install the {{Package|app-misc/tracker}} indexer and the GNOME packages that require it, such as {{Package|media-gfx/gnome-photos}}.
-|-
-| <code>usage</code>
-| {{Yes}}
-| {{Yes}}
-| Install the {{Package|gnome-extra/gnome-usage}} system resources monitor (only present in GNOME 3.28 or greater).
-|}
-
-Make your own choices, and then add any default USE flag overrides to the file {{Path|/etc/portage/package.use/gnome-extra-apps}}.
-
-For example, since it is generally useful to have a web browser and document scanning utility available, per the above recommendations you could elect to add {{c|epiphany}} and {{c|simple-scan}} to the default set. To do so, issue:
-{{RootCmd
-|nano -w /etc/portage/package.use/gnome-extra-apps
-|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
-}}
-and then place the following text in the file:
-{{FileBox|filename=/etc/portage/package.use/gnome-extra-apps|title=Changes to default set of gnome-extra-apps|1=
-# Add a simple web browser and scan utility for GNOME
-gnome-base/gnome-extra-apps epiphany simple-scan
-}}
-Save, and exit {{c|nano}}.
-{{Note|Substitute your own choices here, of course. Separate USE flags by spaces, and use a 'minus sign' prefix to turn off a flag that is on by default. Also, don't worry, once GNOME is installed you will still be able to {{c|emerge}} any additional packages you wish, the choice here is really to get a convenient starting set.}}
-{{Note|The {{c|ephiphany}} browser is quite basic; as of the time of writing it won't do a great job with more complex sites. For this, consider installing (and [[../Sandboxing_the_Firefox_Browser_with_Firejail{{!}}sandboxing]]) a full-scale browser such as {{Package|www-client/firefox}} once your system is fully configured and running (but please also have a look at [[../Using_Your_New_Gentoo_System_under_OpenRC#play_mp4_in_gnome{{!}}these later notes]], your issue is a lack of video in {{c|epiphany}}, when viewing sites like YouTube).}}
-{{Note|There are some additional GNOME 'quality of life' improvements in Dantrell's patchset (background resolution etc.), which are controlled by USE flags on certain packages. The defaults will probably be suitable for most users, but for more details please see [https://github.com/dantrell/gentoo-project-gnome-without-systemd#configuration-optional-quality-of-life-improvements here].}}
-
-Next, if you are installing the GNOME games (this is the default), you will need to allow the license for {{Package|games-board/crafty}}, a back-end engine used by {{Package|games-board/gnome-chess}}. You can review the license at {{Path|/usr/portage/licenses/crafty}}, then, if happy to proceed (it isn't particularly egregious ^-^), issue:
-
-{{RootCmd
-|echo "games-board/crafty crafty" >> /etc/portage/package.license/crafty
-|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
-}}
-
-{{Note|If you ''don't'' want to accept this license, you can instead add <code>-games</code> to your list of USE flags in {{Path|/etc/portage/package.use/gnome-extra-apps}}, which will have the effect of preventing ''all'' the GNOME games from being installed.}}
-
 <span id="tracker_disable">Next, decide whether you wish to disable</span> GNOME's "[[:Wikipedia:Tracker_(search_software)|{{c|tracker}}]]" file and search indexing framework (it is enabled in GNOME by default). Two reasons you may wish to do so are:
 # it runs content-based indexing on your filesystem, which can create high CPU loading for densely-populated media;<ref name="tracker_cpu">Yao, M. [https://www.soimort.org/notes/171103/ "Go Away, {{c|tracker-store}}"]</ref><ref name="disable_tracker_how">Fedora Project Forum: [https://ask.fedoraproject.org/en/question/9822/how-do-i-disable-tracker-in-gnome/ "How Do I Disable Tracker in GNOME?"]</ref> and
 # there is a self-evident privacy (and attack surface) issue presented by using such software.
 
 {{Note|If {{c|tracker}} is disabled, the packages {{Package|gnome-extra/gnome-documents}}, {{Package|media-gfx/gnome-photos}} and {{Package|media-sound/gnome-music}} (which rely upon it) will ''not'' be installed as part of GNOME.}}
+
+{{Note|With modern GNOME, even if you disable the {{c|tracker}} USE flag, it will still be installed as it is a hard dependency of {{Package|gnome-base/nautilus}}, the default file manager for the GNOME desktop. The further measure required to stop it running at all (should you elect) will be described [[#tracker_fully_off{{!}}later in the chapter]].}}
 
 If you decide you'd rather retain {{c|tracker}}, click [[#ready_to_install_gnome|here]] to skip the following optional step.
 
@@ -853,7 +709,7 @@ Again, you may need to repeat this step multiple times (and should do so as long
 
 If the restricted parallelism {{c|emerge}} finishes with the output <code>GNOME emerged OK</code> then congratulations, you have successfully installed GNOME &mdash; [[#gnome_built_ok|click here]] to skip to the next step.
 
-However, if, after all this, you ''still'' experience build errors emerging {{Package|gnome-base/gnome}} (the restricted parallelism {{c|emerge}} finishes by outputting <code>GNOME emerge not yet completed</code>), you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build{{!}}these earlier notes]]. It is also possible to {{c|emerge}} the smaller package {{Package|gnome-base/gnome-light}} (instead of {{Package|gnome-base/gnome}}), and then add applications later. You can also post a question to Dantrell's "official", sticky [https://forums.gentoo.org/viewtopic-t-1022050.html support thread] on the Gentoo forums, if you like. Take the necessary steps and then rejoin the tutorial here when ready: in what follows, I am going to assume that you '''have''' successfully installed GNOME.
+However, if, after all this, you ''still'' experience build errors emerging {{Package|gnome-base/gnome}} (the restricted parallelism {{c|emerge}} finishes by outputting <code>GNOME emerge not yet completed</code>), you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build{{!}}these earlier notes]]. It is also possible to {{c|emerge}} the smaller package {{Package|gnome-base/gnome-light}} (instead of {{Package|gnome-base/gnome}}), and then add applications later. You can also post a question to Leio's "official", sticky [https://forums.gentoo.org/viewtopic-t-1094796.html support thread] on the Gentoo forums, if you like. Take the necessary steps and then rejoin the tutorial here when ready: in what follows, I am going to assume that you '''have''' successfully installed GNOME.
 
 <span id="gnome_built_ok">Once the build process has completed successfully,</span> ensure you are back in the virtual terminal from where you issued the {{c|emerge}} command (i.e., not the {{c|showem}} virtual terminal / console), and then issue the following to ensure your environment is up-to-date post-install:
 {{RootCmd
@@ -867,9 +723,9 @@ Hit {{Key|Ctrl}}{{Key|a}} then {{Key|n}} to go to the second {{c|screen}} consol
 }}
 Then press {{Key|Ctrl}}{{Key|a}} then {{Key|p}} to switch back to the original console again.
 
-You should also ensure that the {{Package|sys-apps/dbus}} message bus system, and the {{Package|sys-auth/elogind}} daemon (which mimics the {{c|systemd}} project's {{c|logind}}) are added to the appropriate runlevel (and are also started now, if not already running). To do so, issue:
+You should also ensure that the {{Package|sys-auth/elogind}} daemon (which mimics the {{c|systemd}} project's {{c|logind}}) is added to the appropriate runlevel (and is also started now, if not already running). To do so, issue:
 {{RootCmd
-|rc-update add dbus default
+|pkill elogind
 |rc-update add elogind boot
 |openrc
 |prompt=<span style{{=}}"color:gray;">(2)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
@@ -924,11 +780,11 @@ And hopefully you should be greeted with a (rather startlingly empty!) GNOME 3 d
 
 {{Note|The precise layout etc. that you see may of course differ, due to version changes in GNOME. Also, you may experience some issues the first time you try running GNOME in this manner (strange display glitches etc.); if so, simply try quitting (by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal) and then running {{c|startx}} again.}}
 
-You can try playing around with it briefly if you like (some simple instructions may be found [https://wiki.gnome.org/Projects/GnomeShell/CheatSheet here] - or just get started by moving your mouse pointer up to the top left corner of the screen (and optionally, clicking on 'Activities'), or by pressing {{Key|Windows Key}}), using the target machine keyboard and mouse / touchpad directly. Note, however, that this isn't a properly logged-in instance, so certain of the standard features will not function as you expect.
+You can try playing around with it briefly if you like (some simple instructions may be found [https://wiki.gnome.org/Projects/GnomeShell/CheatSheet here] - or just get started by moving your mouse pointer up to the top left corner of the screen (and optionally, clicking on 'Activities'), or by pressing {{Key|Windows Key}}), using the target machine keyboard and mouse / touchpad directly. Note, however, that this isn't a properly logged-in instance, so certain of the standard features will not function as you expect. You should be able to start a terminal etc. however.
 
 {{Tip|<span id{{=}}"set_gnome_display">If your screen appears</span> ''rotated'' when logged in under GNOME under {{c|wayland}}, you don't use {{c|xrandr}} to fix it (as described [[#xrandr_fix|earlier]]), instead press the {{Key|Windows Key}}, then type <code>displays</code> and press {{Key|Enter}}. You should then be able to choose an orientation for your primary display.}}
 
-You should be able to start a terminal etc. however. When you're done, kill the test instance, by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal (the one where you just issued {{c|startx}}).
+When you're done, kill the test instance, by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal (the one where you just issued {{c|startx}}).
 
 == <span id="testing_gnome3">Testing GNOME 3 on Wayland (and Refining Settings)</span> ==
 
@@ -1024,7 +880,7 @@ and try logging in again.
 
 Second, if that was not the problem, and if you have multiple graphics cards (or a 'hybrid graphics' system) installed in your target PC, then note that the time of writing, {{c|wayland}} does not officially support this configuration (and so GNOME will fall back to X11 mode if it is detected). You can override this default, by appending <code>MUTTER_ALLOW_HYBRID_GPUS=1</code> to the file {{Path|/etc/environment}}. Do so now, then reboot, and try logging in again.<ref name="mutter_hybrid_gpus">Arch Linux Forum: [https://bbs.archlinux.org/viewtopic.php?pid=1709012#p1709012 "GNOME 3.24 Always Loads X11 instead of Wayland"]</ref> (Warning: this setting may cause system instability, so don't set it unless you know you have a problem.)
 
-If neither of those suggestions solved your {{c|wayland}} startup problem, then unfortunately it appears that (for some currently unknown reason) you cannot use GNOME with {{c|wayland}} on your machine. You can try posting a question in the [https://forums.gentoo.org Gentoo forums] for help (including in Dantrell's official [https://forums.gentoo.org/viewtopic-t-1022050.html support thread]). In the meantime, proceed with the rest of the tutorial [[#gnome_wayland_running_ok{{!}}immediately below]], using GNOME under X11 rather than {{c|wayland}} (your desktop will still be fully functional, just somewhat less secure).
+If neither of those suggestions solved your {{c|wayland}} startup problem, then unfortunately it appears that (for some currently unknown reason) you cannot use GNOME with {{c|wayland}} on your machine. You can try posting a question in the [https://forums.gentoo.org Gentoo forums] for help (including in Leio's official [https://forums.gentoo.org/viewtopic-t-1094796.html support thread]). In the meantime, proceed with the rest of the tutorial [[#gnome_wayland_running_ok{{!}}immediately below]], using GNOME under X11 rather than {{c|wayland}} (your desktop will still be fully functional, just somewhat less secure).
 
 <span id="gnome_wayland_running_ok">Now, and before our final reboot</span> (at which point, we will no longer require the helper PC, but will be using the target machine natively), there are three additional tasks we need to carry out:
 # ensuring that network settings are correct;
@@ -1046,7 +902,7 @@ Once you have the network set up, you should be able to browse the web etc. Try 
 |[[File:Gnome_with_browser.jpg|thumb|none|400px|...And Using the Default Browser]]
 |}
 
-{{Note|This browser (called {{c|epiphany}}) is quite basic; as of the time of writing it won't do a great job with more complex sites. For this, consider installing (and [[../Sandboxing_the_Firefox_Browser_with_Firejail{{!}}sandboxing]]) a full-scale browser such as {{Package|www-client/firefox}} once your system is fully configured and running (but please also have a look at [[../Using_Your_New_Gentoo_System_under_OpenRC#play_mp4_in_gnome{{!}}these later notes]], if your issue is only a lack of video in {{c|epiphany}}, when viewing sites like YouTube).}}
+{{Note|This browser (called {{c|epiphany}}) is quite basic; as of the time of writing it won't do a great job with more complex sites. For this, consider installing (and [[../Sandboxing_the_Firefox_Browser_with_Firejail{{!}}sandboxing]]) a full-scale browser such as {{Package|www-client/firefox}} once your system is fully configured and running (but please also have a look at [[../Using_Your_New_Gentoo_System_under_OpenRC#play_mp4_in_gnome{{!}}these later notes]], if your issue is only a lack of video in {{c|epiphany}}, when viewing sites like YouTube (unlikely to be an issue with modern systems).}}
 
 === <span id="gnome_keyboard_settings">GNOME Keyboard Settings</span> ===
 
@@ -1078,6 +934,14 @@ Once that completes, set the volume levels as you like them, then issue:
 The settings should now be preserved across a reboot.
 
 {{Note|You may also need to change your output settings in the GNOME 'Sound' control panel to hear anything: on the CF-AX3, you need to choose the 'Analog Output' option, which is not selected by default.}}
+
+=== <span id="tracker_fully_off">Turning tracker Fully Off</span> ===
+
+Next, if you wish to ensure that GNOME's {{c|tracker}} software is disabled completely for your current user (this step is optional), click on {{Key|Windows Key}}, then type "{{c|search}}" (and press {{Key|Enter}}; you may need to press twice). Then ensure the slider on the ''top bar'' of the shown dialog is turned '''off'''.
+
+{{Tip|Instead of turning {{c|tracker}} off entirely, you can fine-tune the and apps that it queries using this dialog (and, via the 'cogwheel' icon, which file locations it indexes).}}
+
+Close out the dialog window when done.
 
 === <span id="restart_to_gnome">Restarting into GNOME!</span> ===
 

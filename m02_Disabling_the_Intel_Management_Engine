@@ -102,7 +102,7 @@ The image starts up directly into an Xfce4 desktop, pre-logged in as the {{c|dem
 
 If you have not modified the default image settings, no password will be required for this step.
 
-Next, note that if you are using version >=1.2.0 of the {{c|gentoo-on-rpi3-64bit}} image, ''all'' the required software now comes pre-installed for convenience, so you can [[#Hardware_Configuration|skip directly to the "Hardware Configuration" section]] now. Otherwise, keep reading.
+Next, note that if you are using version >=1.2.0 of the {{c|gentoo-on-rpi3-64bit}} image, ''all'' the required software now comes pre-installed for convenience, so you can [[#setup_rpi3_hardware|skip directly to the "Hardware Configuration" section]] now. Otherwise, keep reading.
 
 Then, modify the {{Path|/boot/config.txt}} file so that the [[:Wikipedia:Serial_Peripheral_Interface_Bus|SPI interface]] (used to communicate with the flash chip) is available via the RPi3's GPIO pins. As root, issue:
 
@@ -158,7 +158,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 </pre>}}
 
 {{Note|If you are ''not'' using the [https://github.com/sakaki-/gentoo-on-rpi3-64bit specified 64-bit Gentoo image], follow the instructions given [https://github.com/corna/me_cleaner/wiki/How-to-apply-me_cleaner here] to clone and build the software directly.}}
-{{Note|For avoidance of doubt, we are ''not'' going to be overwriting your BIOS with [https://coreboot.org/ coreboot], we just need access to some of its bundled tools. As mentioned [[#prerequisities|earlier]], it is fine to use a target PC with an OEM BIOS (such as AMI, Dell etc.).<br>And, of course, if you ''are'' running coreboot, that's fine too ^-^}}
+{{Note|For avoidance of doubt, we are ''not'' going to be overwriting your BIOS with [https://coreboot.org/ coreboot], we just need access to some of its bundled tools. As mentioned [[#prerequisites|earlier]], it is fine to use a target PC with an OEM BIOS (such as AMI, Dell etc.).<br>And, of course, if you ''are'' running coreboot, that's fine too ^-^}}
 
 The next step is to install Nicola Corna's {{c|me_cleaner}} software itself. This also has an ebuild in the [https://github.com/sakaki-/sakaki-tools {{c|sakaki-tools}}] repo, so issue:
 

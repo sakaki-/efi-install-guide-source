@@ -15,6 +15,8 @@ The topics we'll briefly cover are:
 
 Let's go!
 
+{{Important|This chapter is only for those users who decided [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] to target {{c|systemd}} init, rather than {{c|OpenRC}}. It is part of the 'alternative track' set of chapters. If you are here by mistake, [[../Using_Your_New_Gentoo_System_under_OpenRC{{!}}click here]] to go to the default ({{c|OpenRC}}) version of this page.}}
+
 == <span id="dual_boot_procedure">Booting into Linux or Windows (Recap)</span> ==
 
 With the setup you have just carried out, you can easily boot your target PC into either Gentoo Linux or Windows, as desired. Here's a brief recap of how to go about it (with links back to the more detailed explanations in the body of the text, where relevant):
@@ -481,9 +483,11 @@ One of the saving graces of the GNOME 3 shell interface (the desktop GUI) is its
 
 The simplest way to get plugins is via the {{c|Gnome Tweak Tool}} application. From within your GNOME desktop, press {{Key|Windows Key}}, then type <code>tweak</code> and press {{Key|Enter}}. The tool that appears allows you to change many of the default GNOME behaviours that you may find annoying (such as attached modal dialogs!), add startup applications, etc., so it's well worth browsing through the options.
 
-To install extensions, however, click on the 'Extensions' tab on the left side of the app, and then navigate to the extension you want on the right (simply move the slider to "ON" for any you wish to enable). If you scroll to the bottom of this list, you'll see a link entitled <code>Get more extensions</code>. Click on this, and a web page will open with a list of downloadable plug-ins. You can search the list for topics of interest. Again, if you want to use a plug-in, simply click on it to open its detail page, move its slider to "ON", and it should download and start running automatically:
+To install extensions, however, click on the 'Extensions' tab on the left side of the app, and then navigate to the extension you want on the right (simply move the slider to "ON" for any you wish to enable).
 
-[[File:Gnome_tweak_extensions.jpg|thumb|none|400px|Adding GNOME Shell Extensions via the Tweak Tool]]
+To get other extensions, point your web browser to https://extensions.gnome.org.
+
+{{Note|Somewhat ironically, GNOME's default browser, {{c|ephiphany}}, no longer supports the browser plugin required to make extension installation seamless.<ref name="epiphany_gnome_shell">GNOME {{c|ephiphany}} issue #538 [https://gitlab.gnome.org/GNOME/epiphany/issues/538 "Epiphany 3.30: GNOME extensions site cannot detect a running copy of GNOME"]</ref> You ''can'' still download and install such extensions manually from the site, however.}}
 
 {{Important|Do take care with plug-ins, however, as they are third-party code. Shell extensions on the GNOME website have been reviewed for malware. If you want to write your own extensions, a good place to start is [https://wiki.gnome.org/Projects/GnomeShell/Extensions/StepByStepTutorial#knowingJavascript this tutorial]. See also [https://wiki.gnome.org/Projects/GnomeShell/Extensions this GNOME wiki page].}}
 

@@ -1,3 +1,5 @@
+<!-- Page: Extending_LUKS_to_Protect_an_Additional_Drive -->
+
 In this mini-guide, we'll show how to easily extend your LUKS protection to cover an additional drive (or drives) on your system. This is most useful with desktop machines, where you may have multiple hard drives installed.
 
 {{Note|If you simply wish to protect a removable drive (such as a USB key), it's easier to rely on the tools already in GNOME; you can use the {{c|Disks}} utility to format your drive with encryption (see [https://help.ubuntu.com/community/EncryptedFilesystemsOnRemovableStorage this guide], for example), and then have it unlocked automatically (assuming you are logged in) on insertion (to do so, just opt to allow GNOME to remember your passphrase for the drive, when first prompted).}}
@@ -31,7 +33,7 @@ Would you like to merge these packages? [Yes/No] <press y, then press Enter>
 
 == <span id="preparing_new_drive">Preparing your New Drive</span> ==
 
-In the below, I'm going to assume you want to use [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#Formatting_the_New_Partition_with_LUKS|same cryptography settings]] as those recommended for the main system, earlier in the tutorial (obviously, adapt as appropriate). I will refer to the drive as {{Path|/dev/sdN}}; substitute your actual device path as appropriate ({{Path|/dev/sdc}}, {{Path|/dev/sdd}} etc.). Also, if you wish to encrypt only one partition within the drive, use the relevant value instead (e.g., {{Path|/dev/sdc1}}, {{Path|/dev/sdd1}} etc.) You can use the <code>Disks</code> utility in GNOME, or the {{c|lsblk}} command line utility, to find your device's path.
+In the below, I'm going to assume you want to use [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#format_luks_partition|same cryptography settings]] as those recommended for the main system, earlier in the tutorial (obviously, adapt as appropriate). I will refer to the drive as {{Path|/dev/sdN}}; substitute your actual device path as appropriate ({{Path|/dev/sdc}}, {{Path|/dev/sdd}} etc.). Also, if you wish to encrypt only one partition within the drive, use the relevant value instead (e.g., {{Path|/dev/sdc1}}, {{Path|/dev/sdd1}} etc.) You can use the <code>Disks</code> utility in GNOME, or the {{c|lsblk}} command line utility, to find your device's path.
 
 First, we will create a keyfile, and place this in the {{c|root}} user's home directory, within the (already LUKS-protected) {{c|root}} partition. Issue:
 {{RootCmd

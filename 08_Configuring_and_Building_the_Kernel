@@ -26,11 +26,11 @@ However, there is one wrinkle to overcome. When our EFI kernel is started, it ne
 This is <span id="initramfs_intro">worked around</span> by using an initial RAM filing system, or [[Initramfs|initramfs]], which is a simple archive (like a [[:Wikipedia:Tar_(file_format)|{{c|tar}}]] archive, but using an older format, known as [[:Wikipedia:Cpio|{{c|cpio}}]]) of a minimal Linux root filesystem. This initramfs contains only those userland programs (and the libraries and other files on which they depend) which are needed to boot the system (including a special ''init'' program, which we'll get to shortly). Although the use of an initramfs is reasonably commonplace with Linux systems (to start up LVM for example), we elect to include the archive within the kernel file itself, so it will be protected by the secure boot signature (once we add it).
 
 So, the actual boot process we'll be aiming to utilize is as follows:
-# The UEFI BIOS starts up, and initializes the hardware. It looks for, and finds, an executable .efi program (our stub-loadable kernel) on the USB key, so it loads this and passes off control to it. (If secure boot is on, it will also check that the kernel image contains a valid cryptographic signature, but we'll get to that in a later section ([[../Configuring_Secure_Boot|{{c|systemd}} track]], [[../Configuring_Secure_Boot_under_OpenRC|{{c|OpenRC}} track]]).)
+# The UEFI BIOS starts up, and initializes the hardware. It looks for, and finds, an executable .efi program (our stub-loadable kernel) on the USB key, so it loads this and passes off control to it. (If secure boot is on, it will also check that the kernel image contains a valid cryptographic signature, but we'll get to that in a later section ([[../Configuring_Secure_Boot_under_OpenRC|{{c|OpenRC}} track]]), [[../Configuring_Secure_Boot|{{c|systemd}} track]].)
 # The kernel starts up and initializes. It unpacks its bundled initramfs into memory, and activates it, which provides a root directory containing a skeleton set of system files (a bit like the contents of our stage 3 archive, but much sparser).
 # The kernel then looks for a special 'init' program in the initramfs and starts it (as the first userspace process).
 # This initscript, which is actually provided by a Gentoo utility called {{c|genkernel}} (more of which shortly), prompts the user to enter a password, unlocks the .gpg keyfile (also on the USB key), and uses the resulting binary plaintext to unlock the LUKS partition. It next activates the LVM volume group on that partition ({{c|vg1}} in our case), and mounts any logical volumes (LVs) within it, as dictated by the file {{Path|/etc/fstab}}. This mounts the swap, root and home LVs.
-# At this point the 'real' filing system is in place, and the initramfs (apart from {{Path|/proc}}, {{Path|/dev}} and {{Path|/sys}}) is discarded, using [http://man7.org/linux/man-pages/man8/switch_root.8.html {{c|switch_root}}]. The init script ends by invoking the 'proper' init system on this newly mounted root - which, depending on your [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier decision]], will be either the {{c|systemd}} daemon, or the {{c|OpenRC}} init process. In either case, this 'real' init handles the boot from that point onwards.
+# At this point the 'real' filing system is in place, and the initramfs (apart from {{Path|/proc}}, {{Path|/dev}} and {{Path|/sys}}) is discarded, using [http://man7.org/linux/man-pages/man8/switch_root.8.html {{c|switch_root}}]. The init script ends by invoking the 'proper' init system on this newly mounted root - which, depending on your [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier decision]], will be either the {{c|OpenRC}} init process, or the {{c|systemd}} daemon. In either case, this 'real' init handles the boot from that point onwards.
 
 Getting all of this to work correctly out of the box is complex, so I've provided a simple script ({{c|buildkernel}}) which automates the process, and which should enable you to create a bootable EFI kernel with minimal fuss, which we'll install from the {{c|sakaki-tools}} overlay shortly.
 
@@ -53,8 +53,7 @@ Begin by creating the necessary superstructure:
 Then, assuming that you are ''not'' intending to deblob your kernel (please see following note; most users will ''not'' wish to deblob), add the overrides, by issuing:
 
 {{RootCmd
-|echo "sys-kernel/gentoo-sources linux-firmware" >> /etc/portage/package.license/gentoo-sources
-|echo "sys-kernel/linux-firmware freedist linux-firmware no-source-code" >> /etc/portage/package.license/linux-firmware
+|echo "sys-kernel/linux-firmware linux-fw-redistributable no-source-code" >> /etc/portage/package.license/linux-firmware
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
 
@@ -75,6 +74,7 @@ Then, assuming that you are ''not'' intending to deblob your kernel (please see 
 |echo "sys-kernel/ck-sources ~amd64" >> /etc/portage/package.accept_keywords/ck-sources
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>}}
 '''Be aware:''' if you choose to go the full [[:Wikipedia:Linux-libre{{!}}Linux-libre]] route like this, your system will probably still boot, and chances are its wired interfaces will still work, but unless you are lucky (or are using a system, like e.g. one of the Purism Librem laptops, which has been specifically designed not to require additional firmware blobs) your wireless devices will most likely not function (since many of these devices have only static RAM and require firmware uploads every time they are connected).<ref>Wikipedia: [https://en.wikipedia.org/wiki/Linux-libre#Effects_of_removing_proprietary_firmware "Linux-libre: Effects of removing proprietary firmware"]</ref><ref>Wikipedia: [https://en.wikipedia.org/wiki/Binary_blob#Device_firmware "Binary blob: Device firmware"]</ref> In this tutorial, therefore, I have taken the pragmatic view of leaving the firmware in. If that makes you a little nervous, I'd suggest to try first building the system ''with'' firmware (i.e., per this tutorial's vanilla flow), get it to the point where it works successfully, and ''then'' try switching out the firmware (using the methods just mentioned). That way, you'll be able to roll back to the previous kernel if things go wrong. And if you are paranoid, you can always rebuild everything again from scratch, once you reach a stable configuration.}}
+{{Note|Since modern kernels (>{{=}}4.14) no longer include (explicit) in-tree firmware,<ref name{{=}}"no_more_in_tree_firmware">Kroah-Hartman, Greg [http://lkml.iu.edu/hypermail/linux/kernel/1709.1/04650.html "[GIT PULL] Firmware files removal for 4.14-rc1"]</ref> there's no need to specify additional licenses for {{Package|sys-kernel/gentoo-sources}}, as was required in earlier versions of this guide.}}
 {{Note|Per the handbook, you don't ''have'' to use {{Package|sys-kernel/gentoo-sources}}; there are a number of other alternatives within the Portage tree, which provide different spins on the kernel (e.g., for security hardened server applications).<ref>Gentoo Wiki: [http://wiki.gentoo.org/wiki/Kernel/Overview#Supported_kernel_packages "Kernel/Overview: Supported kernel packages"]</ref> However, we'll stick with {{Package|sys-kernel/gentoo-sources}} here as it's the most commonly used variant.}}
 {{Note|The {{c|freedist}} license is no longer a kernel requirement, as of [https://github.com/gentoo/gentoo/commit/38bce48ced4a3541ca86151ec83c1d286471907b#diff-20cf66a190a9ab10362efc14219c1a80 commit 38bce48].}}
 
@@ -226,7 +226,7 @@ You can also verify that the {{c|staticgpg}} binary is statically linked:
 |file "$(which staticgpg)"
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 |output=<pre>
-/usr/local/bin/staticgpg: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, for GNU/Linux 2.6.32, stripped
+/usr/local/bin/staticgpg: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, for GNU/Linux 3.2.0, stripped
 </pre>
 }}
 {{Note|The GNU/Linux version shown by {{c|file}} may be different for your system; in any event, it is ''not'' the version of the kernel under which the binary was compiled (per {{c|uname -r}}); rather it is the version of the kernel ''headers'' that the C library the program uses was built against.<ref>Stack Overflow Forum: [http://stackoverflow.com/questions/12236159/linux-command-file-shows-for-gnu-linux-2-6-24#answer-12236411 "linux command "file" shows "for GNU/Linux 2.6.24""]</ref>}}
@@ -255,7 +255,7 @@ And then:
 * uncomment the line setting <var>EFIPARTUUID</var>, and make sure that it refers to the partition UUID of {{Path|/dev/sdY1}} (if {{c|buildkernel}}'s {{c|ebuild}} was able to identify only one such matching partition on a USB device, this will already have been set for you and uncommented, but you should check);
 * uncomment the line setting <var>CRYPTPARTUUID</var>, and make sure that it refers to the partition UUID of {{Path|/dev/sdZn}} (again, {{c|buildkernel}}'s {{c|ebuild}} may already have set and uncommented this for you, but you must check);
 * if not using the US keymap, uncomment the line setting <var>KEYMAP</var>, and make sure it refers to the correct keymap (in the case of the CF-AX3, for example, we'd set <code>KEYMAP="jp"</code>).
-* if you chose to use {{c|OpenRC}} (rather than {{c|systemd}}) init [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]], uncomment the line setting <var>INITSYSTEM</var> (and make sure it reads <code>INITSYSTEM="openrc"</code>). If you are on the default ({{c|systemd}}) install track, you should leave the variable commented out.
+* if you chose (as is now the default in this guide) to use {{c|OpenRC}} (rather than {{c|systemd}}) init [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]], uncomment the line setting <var>INITSYSTEM</var> (and make sure it reads <code>INITSYSTEM="openrc"</code>). If you are on the alternative ({{c|systemd}}) install track, you should leave the variable commented out (for historical reasons, {{c|buildkernel}} assumes the use of {{c|systemd}} in its configuration file).
 Save, and exit {{c|nano}} when done.
 {{Note|By {{Path|/dev/sdY1}} in the above we of course mean the USB boot key's first partition, and by {{Path|/dev/sdZn}} the LUKS partition we created.}}
 {{Important|<span id{{=}}"deal_with_different_vg_name">In the unlikely event</span> you decided ''not'' to call your LVM volume group {{c|vg1}} [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#vg_name_warning{{!}}earlier in the tutorial]], you'll also need to set the variables <var>CMDLINE_REAL_ROOT</var> and <var>CMDLINE_REAL_RESUME</var> (which are ultimately used to set the kernel command line variables [[#real_root_var{{!}}<var>real_root</var>]] and [[#real_resume_var{{!}}<var>real_resume</var>]]). For example, if you called your volume group {{c|mynewvg}}, you need to set:
@@ -448,11 +448,19 @@ The below shows a typical configuration run; obviously your values (UUIDs etc) w
  <span style{{=}}"color:green;">*</span> Please choose your desired init system setting (or GO BACK):
  1) systemd (select if unsure)  3) GO BACK
  2) OpenRC
- Your choice: <span style{{=}}"color:royalblue;">selected item is OK so press</span> {{Key|3}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}} 
- <span style{{=}}"color:red;">NB - users wanting to use OpenRC should press </span>{{Key|2}}<span style{{=}}"color:red;"> then</span> {{Key|Enter}}<span style{{=}}"color:red;"> here</span>
+ Your choice: <span style{{=}}"color:royalblue;">users on default OpenRC track should press</span> {{Key|2}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}} 
+ <span style{{=}}"color:red;">NB - users wanting to use systemd should instead press </span>{{Key|3}}<span style{{=}}"color:red;"> then</span> {{Key|Enter}}<span style{{=}}"color:red;"> here</span>
  <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
 
-... as before ...
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              bootx64.efi                         
+   Plymouth theme:             NONE (textual boot)                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC  
 
  <span style{{=}}"color:green;">*</span> Please choose an option:
  1) Set EFI system partition  6) Set boot-time keymap
@@ -590,13 +598,22 @@ Your configuration file should look something like the below, after running <cod
 EFIPARTUUID="2498f874-ad8f-484e-8aba-81ac1c9665b6"
 CRYPTPARTUUID="8111286a-d24e-4ba2-b6af-d0650fab4130"
 KEYMAP="jp"
+INITSYSTEM="openrc"
 # End of automatically added section
 }}
 Note how the changes made by <code>buildkernel --easy-setup</code> have been added in a block at the end of the file (if you found you did ''not'' have to change anything during the <code>--easy-setup</code> run though, this block will be absent). You can manually edit the file now if you like, but avoid making changes ''within'' the <code>Automatically added...</code> block, as definitions within it can be overwritten next time <code>buildkernel --easy-setup</code> is run.
-{{Important|Please ensure that you have specified the correct <var>KEYMAP</var> and <var>INITSYSTEM</var> settings. In particular:
+{{Important|Please '''ensure''' that you have specified the correct <var>KEYMAP</var> and <var>INITSYSTEM</var> settings. In particular:
 * users of PCs with non-US keyboards (such as the CF-AX3's Japanese keyboard, as here) should ensure they have chosen an appropriate keymap from the <code>buildkernel --easy-setup</code> menu, since without this it may be impossible to type the {{c|LUKS}} keyfile password successfully at boot time; and
-* users who have elected to use {{c|OpenRC}} init (''not'' the default) [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] should ensure that they have <var>INITSYSTEM</var> set thus: <code>INITSYSTEM{{=}}"openrc"</code> (the variable is not case sensitive). Users wanting to use {{c|systemd}} init (the default) should ensure that the <code>INITSYSTEM</code> variable is either commented out, or set thus: <code>INITSYSTEM{{=}}"systemd"</code>.}}
+* users who have elected to use {{c|OpenRC}} init (now the default for this guide) [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] should ensure that they have <var>INITSYSTEM</var> set thus: <code>INITSYSTEM{{=}}"openrc"</code> (the variable is not case sensitive). Users wanting to use {{c|systemd}} init (now the alternative track in this guide, but fully supported in Gentoo) should ensure that the <code>INITSYSTEM</code> variable is either commented out, or set thus: <code>INITSYSTEM{{=}}"systemd"</code>.}}
 {{Note|<code>buildkernel --easy-setup</code> does not cover all possible changes you might wish to make to the configuration file, only the main variables. Therefore if, for example, you wished for example to enable TRIM support (see [[#enable_trim{{!}}below]]) for your hard drive, you'd need to set <var>ADDITIONALKERNELCMDS</var> variable in the {{Path|/etc/buildkernel.conf}} configuration file directly - there's (currently) no menu-driven way to set that flag via <code>buildkernel --easy-setup</code>. (For avoidance of doubt, you ''can'' still later use the <code>buildkernel --easy-setup</code> tool on a {{Path|/etc/buildkernel.conf}} file that has been manually edited in this manner.)}}
+
+{{Tip|It can sometimes be difficult to see the relevant content in large configuration files like {{Path|/etc/buildkernel.conf}}. To view ''only'' uncommented lines, you can use e.g. {{c|grep}}, as follows:
+{{RootCmd
+|grep "^[^#]" /etc/buildkernel.conf
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+This will display only those lines which start (the first {{c|^}} with a character that is ''not'' (the second {{c|^}}) a {{c|#}} (the square brackets define a character set in {{c|grep}}).
+}}
 
 {{Note|As mentioned, the actual settings for at least <var>EFIPARTUUID</var>, <var>CRYPTPARTUUID</var> and possibly <var>KEYMAP</var> will be different for your system - the above is an example only.}}
 {{Note|More information about the variables and functions settable in {{Path|/etc/buildkernel.conf}} may be found in its manpage. To view this, issue:

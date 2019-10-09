@@ -13,8 +13,8 @@
 Instructions are also provided at [[#if_things_go_wrong|the end of this chapter]] to recover back to a {{c|chroot}} environment, should things not go as planned.
 
 Please note that at the conclusion of this chapter there is a parting of the ways, depending on [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|your previous choice]] of init system:
-* users targeting {{c|systemd}} should continue following the regular guide Chapters 10-14; however
-* users targeting {{c|OpenRC}} should instead follow the 'alternative track' Chapters 10-14.
+* users targeting {{c|OpenRC}} should continue following the regular guide Chapters 10-14; however
+* users targeting {{c|systemd}} should instead follow the 'alternative track' Chapters 10-14.
 The division point is [[#next_steps|clearly marked]].
 
 So let's get started!
@@ -104,6 +104,8 @@ If any of that bothers you, be sure to override with a subsequent option.
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
 
+{{Important|Please ensure you carry out the above step! Your system will not function correctly if you omit it.}}
+
 == <span id="concluding_prep">Some Concluding Preparations</span> ==
 
 It <span id="emerge_additionals">will</span> be useful to have the [[:Wikipedia:DHCPD|DHCP daemon]], [[:Wikipedia:Wpa_supplicant|{{c|wpa_supplicant}}]] and [[:Wikipedia:GNU_Screen|{{c|screen}}]] software available immediately upon reboot. They're not yet installed on the {{c|chroot}} operating system, only on the 'outer' host, so let's emerge them now. Issue:
@@ -157,7 +159,7 @@ We also need to make sure that the {{Package|app-editors/nano}} editor does not 
 
 === <span id="setup_networking_openrc">Configure Networking for Post-Reboot Use (OpenRC Users Only)</span> ===
 
-{{Note|If you selected {{c|systemd}} [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] as your target init system (the default), you should [[#exit_chroot_and_restart{{!}}click here]] to skip this section: the instructions contained herein are {{c|OpenRC}}-specific.}}
+{{Note|If you selected {{c|systemd}} [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] as your target init system (the default now being {{c|OpenRC}} in this guide), you should [[#exit_chroot_and_restart{{!}}click here]] to skip this section: the instructions contained herein are {{c|OpenRC}}-specific.}}
 
 To <span id="setup_dhcpcd_openrc">make sure you have your network interface available</span> after restart, be sure to add {{Package|net-misc/dhcpcd}} to the default runlevel. Issue:
 
@@ -507,8 +509,9 @@ Once you have made your changes and are ready to have another go at rebooting, s
 == <span id="next_steps">Next Steps (and Fork in the Road)</span> ==
 
 Now that you have successfully booted into Gentoo from UEFI, we can proceed to configure your system. At this point, you need to follow one of two tracks for the final set of chapters (10-14), depending on your [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier choice of init system]]:
-* users targeting '''{{c|systemd}}''' (the default) should [[../Configuring_systemd_and_Installing_Necessary_Tools|click here]] to go to the next chapter on the regular track, "Configuring {{c|systemd}} and Installing Necessary Tools"; whereas
-* users targeting '''{{c|OpenRC}}''' should instead [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools|click here]] to go to the next chapter on the alternative track, "Completing {{c|OpenRC}} Configuration and Installing Necessary Tools".
+* users targeting '''{{c|OpenRC}}''' (the default) should [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools|click here]] to go to the next chapter on the regular track, "Completing {{c|OpenRC}} Configuration and Installing Necessary Tools"; whereas
+* users targeting '''{{c|systemd}}''' should instead [[../Configuring_systemd_and_Installing_Necessary_Tools|click here]] to go to the next chapter on the alternative track, "Configuring {{c|systemd}} and Installing Necessary Tools".
+
 
 == <span id="notes">Notes</span> ==
 {{reflist}}
@@ -517,9 +520,9 @@ Now that you have successfully booted into Gentoo from UEFI, we can proceed to c
 |-
 | rowspan=2|[[../Configuring_and_Building_the_Kernel|< Previous]]
 | rowspan=2|[[../|Home]]
-| [[../Configuring_systemd_and_Installing_Necessary_Tools|Next ({{c|systemd}}) >]]
-|-
 | [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools|Next ({{c|OpenRC}}) >]]
+|-
+| [[../Configuring_systemd_and_Installing_Necessary_Tools|Next ({{c|systemd}}) >]]
 |}
 
 [[Category:Core system]]
