@@ -198,7 +198,7 @@ and the X11 server will be downloaded, compiled and installed. Note that we use 
 * You cannot simply set <code>VIDEO_CARDS{{=}}"vesa"</code> when using VirtualBox with EFI emulation turned on.<ref>Red Hat Bugzilla: [https://bugzilla.redhat.com/show_bug.cgi?id{{=}}742695 "EFI install in VirtualBox results in text install "]</ref> You need to use <code>VIDEO_CARDS{{=}}"fbdev virtualbox vmware"</code> instead. Then, for best results, enable {{c|CONFIG_DRM_VMWGFX}} and {{c|CONFIG_DRM_VMWGFX_FBCON}} in the kernel, and opt to use {{c|VMSVGA}} (or, as a fallback, {{c|VboxSVGA}}) as the VirtualBox graphics controller.
 * Under EFI boot, you may find it more reliable to use {{c|ALSA Audio Driver}} / {{c|Intel HD Audio}} on your virtual machine (selectable in the VirtualBox control panel, under "Audio").
 * It is generally useful to {{c|emerge}} the {{Package|app-emulation/virtualbox-guest-additions}} in your guest (and set it to start on boot, via <code>emerge -v virtualbox-guest-additions && rc-update add virtualbox-guest-additions default</code>), to enable enhanced services (this does not entail installing any binary blobs). Also, if you do use this package, also remember to add your user(s) to the {{c|vboxguest}} group (with <code>gpasswd -a <username> vboxguest</code>).
-* To get (standard) {{c|wayland}} support, {{c|CONFIG_DRM}} <u>must</u> be enabled in the kernel, along with {{c|CONFIG_DRM_TTM}}. The simplest way to do this (for a VirtualBox guest) is to enable support for one of the 'normal' graphics card drivers (e.g. {{c|CONFIG_DRM_VIRTIO_GPU}}), in the [[#install_drm_driver{{!}}later]] kernel configuration section (this is safe to do, even though enabled driver won't be directly used).
+* To get (standard) {{c|wayland}} support, {{c|CONFIG_DRM}} <u>must</u> be enabled in the kernel, along with {{c|CONFIG_DRM_TTM}}. The simplest way to do this (for a VirtualBox guest) is to enable support for one of the 'normal' graphics card drivers (e.g. {{c|CONFIG_DRM_VMWGFX}} or {{c|CONFIG_DRM_VIRTIO_GPU}}), in the [[#install_drm_driver{{!}}later]] kernel configuration section (this is safe to do, even if the enabled driver won't be directly used (as for e.g., {{c|CONFIG_DRM_VIRTIO_GPU}})).
 * To show the graphical {{c|plymouth}} LUKS password splash screen at boot, enable {{c|CONFIG_FB_SIMPLE}} in the kernel.
 * The VirtualBox video drivers are notoriously awkward to {{c|emerge}} with parallelism and it is possible they will break your {{Package|x11-base/xorg-server}} build. '''If''' this occurs, just retry as follows (note the explicit citation of {{Package|x11-base/xorg-drivers}}, to ensure that these are correctly built):
 {{RootCmd
@@ -488,7 +488,7 @@ CONFIG_DRM_BRIDGE=y
 
 Your output may well differ, depending on the configuration choices made [[#install_drm_driver|earlier]], but check that {{c|CONFIG_DRM}} and at least one specific driver (here {{c|CONFIG_DRM_I915}}, but yours might be {{c|CONFIG_DRM_NOUVEAU}}, etc.) are either built-in (shown as {{c|{{=}}y}}) or modularized (shown as {{c|{{=}}m}}).
 
-{{Note|Users installing onto a VirtualBox target (and this ''won't'' apply to most readers, who will instead be installing onto a 'real' PC) will be looking for {{c|CONFIG_DRM_VIRTIO_GPU}} here (which we [[#virtualbox_hints|included]] to select {{c|CONFIG_DRM_TTM}}, but which is not used directly).}}
+{{Note|Users installing onto a VirtualBox target (and this ''won't'' apply to most readers, who will instead be installing onto a 'real' PC) will be looking for {{c|CONFIG_DRM_VMWGFX}} or {{c|CONFIG_DRM_VIRTIO_GPU}} here (which we suggested including [[#virtualbox_hints|above]]).}}
 
 If that ''isn't'' the case, jump back to the [[#install_drm_driver|Enabling the Kernel DRM Driver for your Graphics Card]] section now, install an appropriate DRM driver, and try again.
 
@@ -570,6 +570,13 @@ If you get an error instead, remember that {{Highlight|the most likely problem p
 }}
 so that affected packages (such as e.g., {{Package|media-libs/mesa}}) are rebuilt to reflect this change, before trying to {{c|startx}} again. 
 }}
+
+{{Important|<span id{{=}}"may_need_suid_xorg">If you get a permissions error</span> trying to run {{c|startx}} as a regular user (following the instructions in the main body of the text above), try setting the SUID bit<ref name="suid_bit">Anne, Surendra. [https://www.linuxnix.com/suid-set-suid-linuxunix/ "What is SUID and how to set SUID in Linux/Unix?"]</ref> on {{Path|/usr/libexec/Xorg}},<ref name="xorg_suid_bit">Xorg Foundation Miscellaneous FAQ. [https://www.x.org/wiki/FAQMiscellaneous/#index2h2 "How do I set the correct permissions of my Xserver binary?"]</ref> by issuing:
+{{RootCmd
+|chmod u+s /usr/libexec/Xorg
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Then, log in as your regular user ''directly'' at the target machine's keyboard (not over {{c|ssh}}, and not using {{c|su}}), and try issuing the {{c|startx}} from there. For avoidance of doubt, at the time of writing doing this was ''not'' necessary under {{c|OpenRC}}, but was under {{c|systemd}}, so I note the point here for reference.}}
 
 {{Tip|This ''won't'' be necessary for most users but, if after having run through the [[#install_drm_driver{{!}}kernel configuration]]/rebuild/reboot and [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] settings loop a few times, you ''still'' can't get X11 to start up, have a look at the Gentoo wiki page on [[Xorg/Guide{{!}}X11 configuration]], which contains some useful pointers. You may also find the content of the {{Path|/var/log/Xorg.0.log}} log file helpful, when trying to determine in more detail what went wrong. ''Double check'' that you haven't introduced any obvious syntax errors in [[#setup_xinitrc{{!}}your {{Path|~/.xinitrc}} file]] as well.<br>To reiterate however: with a modern X setup, problems are almost always as a result of missing [[#install_drm_driver|kernel graphics drivers]] (or possibly incorrect [[../Installing_the_Gentoo_Stage_3_Files#video_cards_variable{{!}}<var>VIDEO_CARDS</var>]] or [[../Installing_the_Gentoo_Stage_3_Files#input_devices_variable{{!}}<var>INPUT_DEVICES</var>]] variables in {{Path|/etc/portage/make.conf}}), rather than an erroneous X configuration per se.}}
 
@@ -777,6 +784,13 @@ And hopefully you should be greeted with a (rather startlingly empty!) GNOME 3 d
 
 {{Note|Depending on your GNOME version, you ''might'' be prompted to enter the administrator password as part of the desktop start-up process (to e.g., allow creation of a colour profile). If so, simply enter the root password when prompted, and press {{Key|Enter}}. (The root password required here is the one you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password{{!}}earlier]] in the tutorial (and have used when {{c|ssh}}-ing in)).
 }}
+
+{{Important|As noted [[#may_need_suid_xorg{{!}}previously]], ''if'' you get a permissions error trying to run {{c|startx}} as a regular user (following the instructions in the main body of the text above), try setting (if you have not already) the SUID bit<ref name="suid_bit"/> on {{Path|/usr/libexec/Xorg}},<ref name="xorg_suid_bit"/> by issuing:
+{{RootCmd
+|chmod u+s /usr/libexec/Xorg
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Then, log in as your regular user ''directly'' at the target machine's keyboard (not over {{c|ssh}}, and not using {{c|su}}), and try issuing the {{c|startx}} from there. For avoidance of doubt, at the time of writing doing this was ''not'' necessary under {{c|OpenRC}}, but was under {{c|systemd}}, so I note the point here for reference.}}
 
 {{Note|The precise layout etc. that you see may of course differ, due to version changes in GNOME. Also, you may experience some issues the first time you try running GNOME in this manner (strange display glitches etc.); if so, simply try quitting (by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal) and then running {{c|startx}} again.}}
 

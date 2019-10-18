@@ -123,7 +123,7 @@ Available targets for the LANG variable:
 </pre>
 }}
 {{Note|Your list of targets will also most likely differ from the one shown above, depending on the choices your made when running {{c|locale-gen}} [[../Building_the_Gentoo_Base_System_Minus_Kernel#modify_locale_gen{{!}}earlier]]. (Also, your prompt will of course be different, and reflect your personal choice of hostname.)}}
-The current <var>LANG</var> target is shown with a {{c|*}}. Now choose a [[:Wikipedia:UTF-8|UTF-8]] variant from the list (per the [[Handbook:AMD64/Installation/Base#Configure_locales|Gentoo handbook]]). For my particular case, that's option 5 in the list, {{c|en_GB.utf8}}, but yours will most likely vary. Issue:
+The current <var>LANG</var> target is shown with a {{c|*}}. Now choose a [[:Wikipedia:UTF-8|UTF-8]] variant from the list (per the [[Handbook:AMD64/Installation/Base#Configure_locales|Gentoo handbook]]). For my particular case, that's option 6 in the list, {{c|en_GB.utf8}}, but yours will most likely vary. Issue:
 
 {{RootCmd
 |eselect locale set 6
@@ -514,7 +514,7 @@ You can read more about {{c|genup}} via its manpage. However, in summary, when i
 
 {{Note|If you should have any issues when running {{c|genup}}, particularly the deep {{c|emerge}} stage, then you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build|these earlier notes]]. (As of version 1.0.4, {{c|genup}} will ''automatically'' retry failed {{c|emerge}} runs with make parallelism inhibited.)}}
 
-{{Note|With [[../Building_the_Gentoo_Base_System_Minus_Kernel#switch_back_to_rsync|`rsync`-based updates]] over a slow network connection, you will sometimes encounter the situation when the update of the `gentoo` repository fails validation (as a change is committed to it mid-download, making the overall `gemato` signature incorrect). If this happens to you, simply run `genup` again. And if you have the problem repeatedly, switch to using `webrsync`, as described [[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|stick_with_webrsync]].}}
+{{Important|With [[../Building_the_Gentoo_Base_System_Minus_Kernel#switch_back_to_rsync|{{c|rsync}}-based updates]] over a slow network connection, you will sometimes encounter the situation when the update of the {{c|gentoo}} repository fails validation (as a change is committed to it mid-download, making the overall {{c|gemato}} signature incorrect). If this happens to you, simply run {{c|genup}} again. And if you have the problem repeatedly, switch to using {{c|webrsync}}, as described [[../Building_the_Gentoo_Base_System_Minus_Kernel#stick_with_webrsync|here]].}}
 
 {{Note|For avoidance of doubt, {{c|genup}} ''will'' signature-verify the Gentoo repo before using it, since we set things up that way earlier ([[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|here]] and [[../Building_the_Gentoo_Base_System_Minus_Kernel#switch_back_to_rsync|here]]). As before, warnings that the <code>key is not certified with a trusted signature</code> are to be expected<ref>Information Security Stack Exchange: [http://security.stackexchange.com/questions/6841/ways-to-sign-gpg-public-key-so-it-is-trusted "Ways to sign gpg public key so it is trusted?"]</ref> and do not impact the signature check validity.}}
 
@@ -538,12 +538,13 @@ then (as instructed) you need to run {{c|dispatch-conf}} (this is an inherently 
 and follow the prompts to accept, zap (ignore) or merge each proposed change.
 {{Note|The [[Handbook:AMD64/Portage/Tools#dispatch-conf|{{c|dispatch-conf}}]] tool is discussed in more detail in the bootstrapping section [[../Building_the_Gentoo_Base_System_Minus_Kernel#using_dispatch_conf|earlier]].}}
 
+{{Important|If {{Package|net-misc/openssh}} has just been updated, you may be prompted a change to {{Path|/etc/ssh/sshd_config}}, undoing the ability to log in with a password. As we still require this for now, any such proposed change to this file should be {{Key|z}}apped (rejected).}}
+
 {{Note|If you prefer, you can add the <code>--ask</code> flag to {{c|genup}}, in which case it ''will'' run {{c|dispatch-conf}} for you at the appropriate point in the update. Alternatively, you can also force {{c|genup}} to invoke {{c|dispatch-conf}} even in non-interactive (batch) mode, by appending the <code>--dispatch-conf</code> option.}}
 
 {{Note|If you should have any issues when running {{c|genup}}, particularly the deep {{c|emerge}} stage, then you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build{{!}}these earlier notes]].}}
 
 {{Note|For avoidance of doubt, the [[World set (Portage)|@world]] set ''includes'' the [[System set (Portage)|@system]] set.}}
-
 
 == <span id="efivarfs_rw">Ensuring {{c|efivarfs}} is Writable</span> ==
 

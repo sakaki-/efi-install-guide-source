@@ -612,7 +612,7 @@ Note how the changes made by <code>buildkernel --easy-setup</code> have been add
 |grep "^[^#]" /etc/buildkernel.conf
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
 }}
-This will display only those lines which start (the first {{c|^}} with a character that is ''not'' (the second {{c|^}}) a {{c|#}} (the square brackets define a character set in {{c|grep}}).
+This will display only those lines which start (the first {{c|^}}) with a character that is ''not'' (the second {{c|^}}) a {{c|#}} (the square brackets define a character set in {{c|grep}}).
 }}
 
 {{Note|As mentioned, the actual settings for at least <var>EFIPARTUUID</var>, <var>CRYPTPARTUUID</var> and possibly <var>KEYMAP</var> will be different for your system - the above is an example only.}}

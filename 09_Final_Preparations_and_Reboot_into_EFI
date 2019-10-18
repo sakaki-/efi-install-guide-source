@@ -253,6 +253,8 @@ Now we're ready to restart. Ensure your boot USB key is still inserted into the 
 |prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
+{{Note|If you have been using your system in ''legacy'' (non-UEFI) boot mode up to this point &mdash; and, for avoidance of doubt, this '''won't''' apply to the majority of users, who should therfore simply ignore this note &mdash; then you will need to ''remove'' the boot USB key after rebooting; then, as your system starts to come back up, enter into your system's BIOS, enable UEFI mode (''without'' secure boot enabled) and restart once more.}}
+
 Your {{c|ssh}} session will exit. If all is well, shortly after this your target machine will restart, and, because {{c|buildkernel}} [[../Configuring_and_Building_the_Kernel#add_to_boot_list|automatically placed]]
 your new, EFI-stub kernel at the top of the boot list, it should then proceed &mdash; without any further intervention required &mdash; to boot this kernel off of the boot USB key.
 
@@ -264,7 +266,7 @@ Shortly after this, assuming that your passphrase is correct, you'll be presente
 
 {{Note|On certain versions of {{c|systemd}}, you may be notified that the {{c|plymouth-start.service}} unit failed during boot. As we have not yet enabled {{c|plymouth}} using {{c|buildkernel}}, this is to be expected, and the error may be ignored at this point.<br>For avoidance of doubt, this (minor) issue does not impact {{c|OpenRC}} users.}}
 
-With luck, you should now be logged in! If this is the case, congratulations, you have a encrypted system which boots from UEFI and uses (depending on your choice [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]]) {{c|systemd}} or {{c|OpenRC}}. You should now '''remove the minimal install USB key''', so that only the boot USB key (the smaller capacity one) remains inserted, then [[#next_steps|click here]] to complete the configuration of your init system (and other) settings.
+With luck, you should now be logged in! If this is the case, congratulations, you have a encrypted system which boots from UEFI and uses (depending on your choice [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]]) {{c|OpenRC}} or {{c|systemd}}. You should now '''remove the minimal install USB key''', so that only the boot USB key (the smaller capacity one) remains inserted, then [[#next_steps|click here]] to complete the configuration of your init system (and other) settings.
 
 {{Note|If you ''were'' able to successfully boot, then please note that the minimal install image USB key is no longer required for the remaining steps in this tutorial &mdash; as such, you may, at your option, either keep it around for 'fallback recovery' purposes (in case anything should go wrong later &mdash; the process for command-line recovery is detailed [[#if_things_go_wrong|below]]), or, reformat it for other use.}}
 

@@ -128,17 +128,6 @@ We need to set two additional <var>USE</var> flags for {{Package|media-libs/mesa
 
 {{RootCmd
 |echo -e "# required by standard X-server installation\nmedia-libs/mesa xa" >> /etc/portage/package.use/mesa
-|echo -e "# required by GNOME\nmedia-libs/libsdl2 gles" >> /etc/portage/package.use/libsdl2
-|echo -e "# required by GNOME\nmedia-libs/gegl jpeg2k raw" >> /etc/portage/package.use/gegl
-|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
-}}
-Followed by:
-{{RootCmd
-|echo -e "# required by GNOME\nnet-fs/samba client" >> /etc/portage/package.use/samba
-|echo -e "# required by GNOME\nsys-libs/tevent python" >> /etc/portage/package.use/tevent
-|echo -e "# required by GNOME\nsys-libs/tdb python" >> /etc/portage/package.use/tdb
-|echo -e "# required by GNOME\nmedia-plugins/grilo-plugins upnp-av" >> /etc/portage/package.use/grilo-plugins
-|echo -e "# required by GNOME 3.16+\n>{{=}}gnome-base/gnome-control-center-3.16 networkmanager" >> /etc/portage/package.use/gnome-control-center
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
 
@@ -150,22 +139,6 @@ Here's what those flags do:
 ! Package !! Use flag !! Description
 |-
 | {{Package|media-libs/mesa}} || {{c|xa}} || This enables the XA (X Acceleration) API for [[:Wikipedia:Gallium3D{{!}}Gallium3D]] (a device driver framework for 3D graphics chipsets) (you may also find this [http://www.linuxfromscratch.org/blfs/view/svn/x/mesa.html ''Linux from Scratch'' page] useful).
-|-
-| {{Package|media-libs/libsdl2}} || {{c|gles}} || This enables [[:Wikipedia:OpenGL_ES|OpenGL for Embedded Systems support]] (required by {{c|wayland}}).
-|-
-| rowspan=2|{{Package|media-libs/gegl}} || {{c|jpeg2k}} || Enables support for [[:Wikipedia:JPEG_2000|JPEG 2000]] wavelet-based image compression.
-|-
-| {{c|raw}} || Enables support for [[:Wikipedia:Raw_image_format|raw image formats]].
-|-
-| {{Package|net-fs/samba}} || {{c|client}} || Enables [[:Wikipedia:Samba_(software)|Samba]] [[:Wikipedia:Server_Message_Block|SMB]] client code.
-|-
-| {{Package|sys-libs/tevent}} || {{c|python}} || Enables optional support / bindings for the [[:Wikipedia:Python_(programming_language)|Python]] language.
-|-
-| {{Package|sys-libs/tdb}} || {{c|python}} || Ditto.
-|-
-| {{Package|media-plugins/grilo-plugins}} || {{c|upnp-av}} || Enables [[:Wikipedia:Universal_Plug_and_Play|UPnP]] audio/video streaming support.
-|-
-| {{Package|gnome-base/gnome-control-center}} || {{c|networkmanager}} || Enables support for [[NetworkManager]].
 |}
 
 As [[../Building_the_Gentoo_Base_System_Minus_Kernel#second_virtual_console|before]], since some of the next steps will involve lengthy emerges, we'll use {{c|screen}}, and <span id="another_second_console">setup a second virtual console</span>, which will be let us monitor progress using {{c|showem}}. Issue:
@@ -213,7 +186,7 @@ and the X11 server will be downloaded, compiled and installed. Note that we use 
 * You cannot simply set <code>VIDEO_CARDS{{=}}"vesa"</code> when using VirtualBox with EFI emulation turned on.<ref>Red Hat Bugzilla: [https://bugzilla.redhat.com/show_bug.cgi?id{{=}}742695 "EFI install in VirtualBox results in text install "]</ref> You need to use <code>VIDEO_CARDS{{=}}"fbdev virtualbox vmware"</code> instead. Then, for best results, enable {{c|CONFIG_DRM_VMWGFX}} and {{c|CONFIG_DRM_VMWGFX_FBCON}} in the kernel, and opt to use {{c|VMSVGA}} (or, as a fallback, {{c|VboxSVGA}}) as the VirtualBox graphics controller.
 * Under EFI boot, you may find it more reliable to use {{c|ALSA Audio Driver}} / {{c|Intel HD Audio}} on your virtual machine (selectable in the VirtualBox control panel, under "Audio").
 * It is generally useful to {{c|emerge}} the {{Package|app-emulation/virtualbox-guest-additions}} in your guest (and set it to start on boot, via <code>emerge -v virtualbox-guest-additions && systemctl enable virtualbox-guest-additions</code>), to enable enhanced services (this does not entail installing any binary blobs). Also, if you do use this package, also remember to add your user(s) to the {{c|vboxguest}} group (with <code>gpasswd -a <username> vboxguest</code>).
-* To get (standard) {{c|wayland}} support, {{c|CONFIG_DRM}} <u>must</u> be enabled in the kernel, along with {{c|CONFIG_DRM_TTM}}. The simplest way to do this (for a VirtualBox guest) is to enable support for one of the 'normal' graphics card drivers (e.g. {{c|CONFIG_DRM_VIRTIO_GPU}}), in the [[#install_drm_driver{{!}}later]] kernel configuration section (this is safe to do, even though enabled driver won't be directly used).
+* To get (standard) {{c|wayland}} support, {{c|CONFIG_DRM}} <u>must</u> be enabled in the kernel, along with {{c|CONFIG_DRM_TTM}}. The simplest way to do this (for a VirtualBox guest) is to enable support for one of the 'normal' graphics card drivers (e.g. {{c|CONFIG_DRM_VMWGFX}} or {{c|CONFIG_DRM_VIRTIO_GPU}}), in the [[#install_drm_driver{{!}}later]] kernel configuration section (this is safe to do, even if the enabled driver won't be directly used (as for e.g., {{c|CONFIG_DRM_VIRTIO_GPU}})).
 * To show the graphical {{c|plymouth}} LUKS password splash screen at boot, enable {{c|CONFIG_FB_SIMPLE}} in the kernel.
 * The VirtualBox video drivers are notoriously awkward to {{c|emerge}} with parallelism and it is possible they will break your {{Package|x11-base/xorg-server}} build. '''If''' this occurs, just retry as follows (note the explicit citation of {{Package|x11-base/xorg-drivers}}, to ensure that these are correctly built):
 {{RootCmd
@@ -503,7 +476,7 @@ CONFIG_DRM_BRIDGE=y
 
 Your output may well differ, depending on the configuration choices made [[#install_drm_driver|earlier]], but check that {{c|CONFIG_DRM}} and at least one specific driver (here {{c|CONFIG_DRM_I915}}, but yours might be {{c|CONFIG_DRM_NOUVEAU}}, etc.) are either built-in (shown as {{c|{{=}}y}}) or modularized (shown as {{c|{{=}}m}}).
 
-{{Note|Users installing onto a VirtualBox target (and this ''won't'' apply to most readers, who will instead be installing onto a 'real' PC) will be looking for {{c|CONFIG_DRM_VIRTIO_GPU}} here (which we [[#virtualbox_hints|included]] to select {{c|CONFIG_DRM_TTM}}, but which is not used directly).}}
+{{Note|Users installing onto a VirtualBox target (and this ''won't'' apply to most readers, who will instead be installing onto a 'real' PC) will be looking for {{c|CONFIG_DRM_VMWGFX}} or {{c|CONFIG_DRM_VIRTIO_GPU}} here (which we suggested including [[#virtualbox_hints|above]]).}}
 
 If that ''isn't'' the case, jump back to the [[#install_drm_driver|Enabling the Kernel DRM Driver for your Graphics Card]] section now, install an appropriate DRM driver, and try again.
 
@@ -511,21 +484,26 @@ However, if (as is likely) everything checked out fine, then keep reading!
 
 == <span id="testing_x11">Testing X11</span> ==
 
-Before we can try out X11, we need to instruct it which window manager to use, and what apps to launch, when starting up. The {{c|~/.xinitrc}} file is used for this purpose. As it's generally not a great idea to run an X server as root, we'll create this in the home directory of the regular user [[#add_regular_user|we've just created]] (and then invoke X as that user). Still via {{c|ssh}}/{{c|screen}} console, issue:
+Before we can try out X11, we need to instruct it which window manager to use, and what apps to launch, when starting up. The {{c|~/.xinitrc}} file is used for this purpose. As it's generally not a great idea to run an X server directly as root, we'll create this in the home directory of the regular user [[#add_regular_user|we've just created]] (and then invoke X as that user). However, under {{c|systemd}}, being able to do so requires a permissions modification<ref name="xorg_suid_bit">Xorg Foundation Miscellaneous FAQ. [https://www.x.org/wiki/FAQMiscellaneous/#index2h2 "How do I set the correct permissions of my Xserver binary?"]</ref> (which we'll make temporarily).
+
+<span id="temporary_xorg_suid">Still via {{c|ssh}}/{{c|screen}} console, issue</span>:
 {{RootCmd
-|su --login sakaki
+|chmod u+s /usr/libexec/Xorg
 |prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
 }}
-{{Note|Substitute the user name of the regular user you created in the [[#add_regular_user{{!}}earlier step]] for {{c|sakaki}} in the above command.}}
 
-{{Note|The {{c|su}} command, when invoked with <code>--login</code> (as here) provides a console environment similar to that which the specified user would have if s/he had logged in directly. When issued by the superuser ({{c|root}}), as here, no password is required.}}
+{{Note|The above sets the SUID bit on the file {{Path|/usr/libexec/Xorg}}.<ref name{{=}}"suid_bit">Anne, Surendra. [https://www.linuxnix.com/suid-set-suid-linuxunix/ "What is SUID and how to set SUID in Linux/Unix?"]</ref> Normally in Linux, when a program runs, it inherits access permissions from the logged in user. When the SUID bit is set however, users will get the file ''owner’s'' permissions as well as owner's UID and GID when executing it.}}
 
-<span id="setup_xinitrc">Next, edit the {{c|.xinitrc}} file</span> in the regular user's home directory. Issue:
+Next, log in directly at the target machine's keyboard, as the ''regular'' user you created [[#add_regular_user|previously]]. Enter your user name at the console prompt (in our case, 'sakaki', without quotes) then press {{Key|Enter}}, then, when prompted, type the password you set up for this user, and press {{Key|Enter}} again.
+
+{{Note|Substitute the user name of the regular user you created in the [[#add_regular_user{{!}}earlier step]] for {{c|sakaki}} in the above instructions. You need to be logged in directly at the machine's console (and not via {{c|ssh}}, or using {{c|su}}) for the following {{c|startx}} to work inside {{c|systemd}}.}}
+
+<span id="setup_xinitrc">Then, (continuing to working directly at the machine's keyboard) edit the {{c|.xinitrc}} file</span> in the regular user's home directory. Issue:
 {{Cmd
 |nano -w ~/.xinitrc
 |prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
 }}
-{{Note|Obviously, the name that you see in the prompt will reflect that of the regular user you added (and which you just {{c|su}}-d to).}}
+{{Note|Obviously, the name that you see in the prompt will reflect that of the regular user you added (and which you just logged into).}}
 Put the following text in the {{c|.xinitrc}} (replacing the current contents, if any):
 {{FileBox|filename=~/.xinitrc|title=A basic setup to start TWM and some simple applications|lang=bash|1=
 #!/bin/sh
@@ -556,7 +534,7 @@ The above shell script simply instructs X to:
 to reflect this (in e.g. {{Package|media-libs/mesa}}) before trying to {{c|startx}}.
 }}
 
-Still on the {{c|ssh}}/{{c|screen}} console, issue:
+Still working directly at the machine's keyboard, issue:
 
 {{Cmd
 |startx
@@ -594,9 +572,15 @@ Assuming you ''can'' see the simple desktop displayed, next check that you can m
 |prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
 }}
 On the {{c|ssh}}/{{c|screen}} console (at your helper PC), you should now see that the {{c|startx}} program has exited (and a lot of status output will have been written to the console too).
-{{Note|If you have problems, the X server can always be closed from the {{c|ssh}} window, by typing {{Key|Ctrl}}{{Key|c}}.}}
+{{Note|If you have problems, the X server can always be closed from the {{c|ssh}} window, by issuing {{c|pkill Xorg}}.}}
 
 If everything has checked out so far, then congratulations, GNOME 3 should be able to work fine over both X11 and Wayland on your system.
+
+Conclude these tests by logging out of your regular user. Directly at the target machine's keyboard, issue:
+{{Cmd
+|exit
+|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
+}}
 
 == <span id="install_gnome3">Installing GNOME 3</span> ==
 
@@ -604,12 +588,7 @@ The validation of prerequisites behind us, we will next perform some clean up, t
 
 Let's begin by removing the temporary X window manager and applications (which we installed, for testing purposes only, [[#install_x_test_apps|earlier]]).
 
-Issue (from the helper PC {{c|ssh}}/{{c|screen}} terminal):
-{{Cmd
-|exit
-|prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
-}}
-to get back to the {{c|root}} user, then:
+Continuing to work within the {{c|ssh}}/{{c|screen}} console, issue:
 {{RootCmd
 |emerge --ask --verbose --depclean x11-wm/twm x11-terms/xterm x11-apps/xclock x11-apps/xsetroot
 |output=<pre>
@@ -751,19 +730,16 @@ If you wish your regular user to be able to play the GNOME games (assuming you h
 }}
 {{Note|Again, substitute the user name of the regular user you created in the [[#add_regular_user{{!}}earlier step]] for {{c|sakaki}} in the above command.}}
 
-Next, we need to log back in as our regular user, and try out our new desktop! Issue:
-{{RootCmd
-|su --login sakaki
-|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
-}}
-{{Note|Substitute the user name of the regular user you created in the [[#add_regular_user{{!}}earlier step]] for {{c|sakaki}} in the above command.}}
+Next, we need to log back in as our regular user, and try out our new desktop! '''Directly at the target machine's keyboard''', enter your user name at the console {{c|login:}} prompt (in our case, 'sakaki', without quotes) then press {{Key|Enter}}; then, when prompted, type the password you set up for this user, and press {{Key|Enter}} again.
 
-Next, edit the {{c|.xinitrc}} file in the regular user's home directory. Issue:
+{{Note|Substitute the user name of the regular user you created in the [[#add_regular_user{{!}}earlier step]] for {{c|sakaki}} in the earlier instructions. You need to be logged in directly at the machine's console (and not via {{c|ssh}}, or using {{c|su}}) for the following {{c|startx}} to work inside {{c|systemd}}.}}
+
+Next, (still working directly at the machine's keyboard) edit the {{c|.xinitrc}} file in the regular user's home directory. Issue:
 {{Cmd
 |nano -w ~/.xinitrc
 |prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
 }}
-{{Note|Obviously, as before, the name that you see in the prompt will reflect that of the regular user you added (and which you just {{c|su}}-d to).}}
+{{Note|Obviously, as before, the name that you see in the prompt will reflect that of the regular user you added (and which you just logged into).}}
 
 '''Delete''' the current contents of {{c|.xinitrc}} (you can use {{Key|Ctrl}}{{Key|k}} inside {{c|nano}} to delete a line at a time), and '''replace''' with the following text:
 {{FileBox|filename=~/.xinitrc|title=Replace existing text with the below to start GNOME|lang=bash|1=
@@ -782,24 +758,30 @@ OK, time to try it out! To begin with, we'll start GNOME running under X11, with
 And hopefully you should be greeted with a (rather startlingly empty!) GNOME 3 desktop, somewhat similar to the below, on the target machine:
 [[File:Gnome_first_run.jpg|thumb|none|400px|GNOME Shell Basic Desktop (via startx)]]
 
-{{Note|The precise layout etc. that you see may of course differ, due to version changes in GNOME. Also, you may experience some issues the first time you try running GNOME in this manner (strange display glitches etc.); if so, simply try quitting (by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal) and then running {{c|startx}} again.}}
+{{Note|The precise layout etc. that you see may of course differ, due to version changes in GNOME. Also, you may experience some issues the first time you try running GNOME in this manner (strange display glitches etc.); if so, simply try quitting (by pressing {{Key|Windows Key}} and then typing <code>logout</code> followed by {{Key|Enter}}, selecting the {{Key|Log Out}} button on the presented dialog, waiting for the console prompt to return, and then running {{c|startx}} (directly at the target machine's keyboard) again.}}
 
 You can try playing around with it briefly if you like (some simple instructions may be found [https://wiki.gnome.org/Projects/GnomeShell/CheatSheet here] - or just get started by moving your mouse pointer up to the top left corner of the screen (and optionally, clicking on 'Activities'), or by pressing {{Key|Windows Key}}), using the target machine keyboard and mouse / touchpad directly. Note, however, that this isn't a properly logged-in instance, so certain of the standard features will not function as you expect. You should be able to start a terminal etc. however.
 
 {{Tip|<span id{{=}}"set_gnome_display">If your screen appears</span> ''rotated'' when logged in under GNOME under {{c|wayland}}, you don't use {{c|xrandr}} to fix it (as described [[#xrandr_fix|earlier]]), instead press the {{Key|Windows Key}}, then type <code>displays</code> and press {{Key|Enter}}. You should then be able to choose an orientation for your primary display.}}
 
-When you're done, kill the test instance, by issuing {{Key|Ctrl}}{{Key|c}} at the helper PC {{c|ssh}}/{{c|screen}} terminal (the one where you just issued {{c|startx}}).
-
-== <span id="testing_gnome3">Testing GNOME 3 on Wayland (and Refining Settings)</span> ==
-
-Congratulations, GNOME 3 is now basically functional; we only need a few more steps to get it fully operational on your machine! So, let's continue. Come back out to be {{c|root}} again:
+When you're done, return back to the console prompt, by pressing {{Key|Windows Key}} and then typing <code>logout</code> followed by {{Key|Enter}}, then selecting the {{Key|Log Out}} button on the presented dialog. Then (still working directly at the machine's keyboard) log out of the console session for your regular user too; issue:
 
 {{Cmd
 |exit
 |prompt=sakaki@koneko <span style{{=}}"color:royalblue;">~ $</span>
 }}
 
-Next, we must enable the [[:Wikipedia:NetworkManager|{{c|NetworkManager}}]] service (which will handle all network interaction under GNOME), and disable the {{c|dhcpcd}} service, which we started [[../Configuring_systemd_and_Installing_Necessary_Tools#start_dhcpcd|earlier]] (and whose functionality {{c|NetworkManager}} supplants). First, issue:
+Finally, working back at the {{c|ssh}}/{{c|screen}} console again, undo the temporary permissions change made [[#temporary_xorg_suid|earlier]]. Issue:
+{{RootCmd
+|chmod u-s /usr/libexec/Xorg
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+== <span id="testing_gnome3">Testing GNOME 3 on Wayland (and Refining Settings)</span> ==
+
+Congratulations, GNOME 3 is now basically functional; we only need a few more steps to get it fully operational on your machine! So, let's continue.
+
+First, we must enable the [[:Wikipedia:NetworkManager|{{c|NetworkManager}}]] service (which will handle all network interaction under GNOME), and disable the {{c|dhcpcd}} service, which we started [[../Configuring_systemd_and_Installing_Necessary_Tools#start_dhcpcd|earlier]] (and whose functionality {{c|NetworkManager}} supplants). First, issue:
 {{RootCmd
 |systemctl stop dhcpcd
 |systemctl disable dhcpcd
@@ -838,7 +820,7 @@ Assuming that worked, <span id="login_to_gnome">you should now</span> be able to
 
 {{Tip|If you modified your display settings when logged into GNOME [[#set_gnome_display|earlier]], for example to rotate the display orientation, then you can force these settings to be used by {{c|gdm}} also. To do so, simply copy the file {{Path|/home/<username>/.config/monitors.xml}} into the directory {{Path|/var/lib/gdm/.config/}}, and restart {{c|gdm}} (obviously, substitute <code><username></code> for your regular user here &mdash; it would be <code>sakaki</code> for our example system).<br>For avoidance of doubt, most users will ''not'' need to resort to this, as their {{c|gdm}} setup will be correct 'out of the box'.}}
 
-Next, directly at the target machine, click on the (regular) user name tile, then click on the 'cogwheel' icon, and select {{Key|GNOME on Wayland}} from the drop-down menu, as shown:
+Next, directly at the target machine, click on the (regular) user name tile, then click on the 'cogwheel' icon, and select {{Key|GNOME}} from the drop-down menu, as shown:
 [[File:Gnome_login_wayland.jpg|thumb|none|400px|Using a Wayland Session with GNOME]]
 
 {{Tip|<span id{{=}}"x11_gnome_session">If you wish to use GNOME on X11</span> for a particular session (perhaps because you need to use an application that doesn't yet work properly under {{c|wayland}} (even with [[:Wikipedia:Wayland_(display_server_protocol)#Compatibility_with_X{{!}}XWayland]] compatibility)), then simply choose {{Key|GNOME on Xorg}} from the drop-down menu here (NB: this '''isn't''' something you should do at this stage in the install, it is just presented here for future reference).<br>For avoidance of doubt, the {{Key|XSession}} menu item is ''not'' the correct entry to choose to run GNOME under X11 (as, ''inter alia'', it requires a separate program, {{Package|x11-apps/xsm}}, which we do not have installed).}}

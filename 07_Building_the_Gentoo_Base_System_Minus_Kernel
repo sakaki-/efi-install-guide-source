@@ -1179,7 +1179,7 @@ Whether or not {{c|emerge}} warns you that you have configuration files that nee
 Then follow the prompts to review each proposed change, if any.
 
 {{Note|Assuming no configuration files have been modified (in a manner that cannot be mechanically reconciled) by the update (the most likely scenario), then {{c|dispatch-conf}} will simply exit immediately, printing nothing. However, there's no harm in running it. (OpenRC users ''may'' find they are notified that the file {{Path|/etc/conf.d/keymaps}} needs modifying: in such a case, as before simply press {{Key|z}}, to 'zap' (discard) the changes, and keep your original, edited version which you created [[#set_post_boot_keymap|earlier]].)
-<br>For proposed modifications to files ''other'' than {{Path|/etc/locale.gen}} or {{Path|/etc/conf.d/keymaps}} &mdash; should you be presented with any by {{c|dispatch-conf}} &mdash; it is generally safe, at this stage in the install, to press {{Key|u}} to '''u'''se the newer version of the file.
+<br>For proposed modifications to files ''other'' than {{Path|/etc/locale.gen}} or {{Path|/etc/conf.d/keymaps}} &mdash; should you be presented with any by {{c|dispatch-conf}} &mdash; it is generally safe, at this stage in the install, to press {{Key|u}} to '''u'''se the newer version of the file (for example, {{c|systemd}} users may be presented with a proposed change to {{Path|/etc/udev/udev.conf}}, and if so should follow the {{Key|u}} route for this file).
 <br>The [[Handbook:AMD64/Portage/Tools#dispatch-conf|{{c|dispatch-conf}}]] tool is discussed in more detail in the bootstrapping section [[#using_dispatch_conf{{!}}above]].}}
 
 == <span id="next_steps">Next Steps</span> ==

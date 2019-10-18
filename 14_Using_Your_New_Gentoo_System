@@ -491,7 +491,7 @@ To get other extensions, point your web browser to https://extensions.gnome.org.
 
 {{Important|Do take care with plug-ins, however, as they are third-party code. Shell extensions on the GNOME website have been reviewed for malware. If you want to write your own extensions, a good place to start is [https://wiki.gnome.org/Projects/GnomeShell/Extensions/StepByStepTutorial#knowingJavascript this tutorial]. See also [https://wiki.gnome.org/Projects/GnomeShell/Extensions this GNOME wiki page].}}
 
-{{Note|It may be worth emerging {{Package|sys-apps/gnome-disk-utility}} if you want to mount the boot USB key (or internal hard drive EFI system partition) from within GNOME, without resorting to the command line. For clarity, GNOME ''will'' by default automount the partitions of removable drives when you insert them, but it will ''not'' automount EFI system partitions. The GNOME disk utility provides you with a nice graphical way to do this.}}
+{{Note|It may be worth emerging {{Package|sys-apps/gnome-disk-utility}} if you want to mount the boot USB key (or internal hard drive EFI system partition) from within GNOME, without resorting to the command line (more modern versions of GNOME have this package installed by default). For clarity, GNOME ''will'' by default automount the partitions of removable drives when you insert them, but it will ''not'' automount EFI system partitions. The GNOME disk utility provides you with a nice graphical way to do this.}}
 
 === <span id="misc_gnome">Miscellaneous GNOME Points</span> ===
 
@@ -536,11 +536,11 @@ You can also close out the {{c|root}} terminal if you have no further need for i
 ==== <span id="use_vpn_in_gnome">Using a VPN in GNOME</span> ====
 
 To be able to use a Virtual Private Network ([[:Wikipedia:Virtual_private_network|VPN]]) with {{c|NetworkManager}} in GNOME, you have to install the 
-{{Package|net-misc/networkmanager-openvpn}} package.
+{{Package|net-vpn/networkmanager-openvpn}} package.
 
 To do this, open a {{c|root}} terminal (per the instructions [[#use_printer_in_gnome|above]]), and then issue:
 {{RootCmd
-|emerge --ask --verbose net-misc/networkmanager-openvpn
+|emerge --ask --verbose net-vpn/networkmanager-openvpn
 |prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
 |output=<pre>
 ... additional output suppressed ... assuming no errors you will see ...
