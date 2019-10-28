@@ -664,7 +664,7 @@ The exact versions (and packages) shown in your output may differ.
 {{Note|You can ignore any additional information/warnings about slot conflicts, packages forcing rebuilds etc. at this stage. The bootstrap is an extremely 'low level' build and will almost always go through successfully.}}
 {{Note|The most direct way to make sense of the reported set of packages (and build order) output by the <code>./bootstrap.sh --pretend</code> command, is to look at a minimal, ground-up Linux installation like ''Linux from Scratch'' - this has an excellent handbook, which runs though the process you'd be going through by hand, if Portage didn't exist!<ref>Beekmans, Gerard. [http://www.linuxfromscratch.org/lfs/view/stable/ ''Linux from Scratch'']. Burgess, Matthew et. al. eds. 2017</ref>}}
 
-The Gentoo [[FAQ#How_do_I_Install_Gentoo_Using_a_Stage1_or_Stage2_Tarball?|FAQ]] suggests you may wish to edit the {{Path|/var/db/repos/gentoo/scripts/bootstrap.sh}} script after reviewing it - and indeed, we will do so, because there are two 'gotchas' lurking in the above proposed {{c|emerge}} list. The first problem is that the [[:Wikipedia:C_standard_library|C standard library]] that the bootstrap intends to rebuild is a [https://devmanual.gentoo.org/general-concepts/virtuals/ ''virtual''] ({{Package|virtual/libc}}); however, in Portage, emerging a virtual package does ''not'', by default, cause any already-installed package that satisfies that virtual (in our case, {{Package|sys-libs/glibc}}) to be rebuilt - which we want.
+The Gentoo [[FAQ#How_do_I_Install_Gentoo_Using_a_Stage1_or_Stage2_Tarball?|FAQ]] suggests you may wish to edit the {{Path|/var/db/repos/gentoo/scripts/bootstrap.sh}} script after reviewing it - and indeed, we will do so, because there are three 'gotchas' lurking in the above proposed {{c|emerge}} list. The first problem is that the [[:Wikipedia:C_standard_library|C standard library]] that the bootstrap intends to rebuild is a [https://devmanual.gentoo.org/general-concepts/virtuals/ ''virtual''] ({{Package|virtual/libc}}); however, in Portage, emerging a virtual package does ''not'', by default, cause any already-installed package that satisfies that virtual (in our case, {{Package|sys-libs/glibc}}) to be rebuilt - which we want.
 
 We'll edit {{Path|bootstrap.sh}} so that it builds the underlying C library instead. Issue:
 {{RootCmd
@@ -685,7 +685,15 @@ Once {{c|nano}} opens, issue {{Key|Ctrl}}{{Key|w}} to start a search, and then t
 [[ -z ${myZLIB}       ]] && myZLIB="zlib"
 [[ -z ${myNCURSES}    ]] && myNCURSES="ncurses"
 }}
-You only need modify the one line, replacing "<code>&&</code>" with "<code>;</code>" as shown above (this makes the following statement execute unconditionally). Leave the rest of the file as-is. When done, save and exit {{c|nano}}.
+You only need modify the one line, replacing "<code>&&</code>" with "<code>;</code>" as shown above (this makes the following statement execute unconditionally). Leave the rest of the file as-is (and keep the file open in {{c|nano}}, for now).
+
+The second problem is that, for modern versions of {{c|gcc}}, we need to allow the {{c|openmp}} USE flag. With the {{Path|/var/db/repos/gentoo/scripts/bootstrap.sh}} file still open, issue {{Key|Ctrl}}{{Key|w}} to start a second search, and then type <kbd>export USE="-</kbd> and press {{Key|Enter}}. Modify the line selected by adding {{c|openmp}} at the end, so it now reads:
+{{FileBox|filename=/var/db/repos/gentoo/scripts/bootstrap.sh|title=Allowing openmp USE flag during bootstrap|lang=bash|1=
+export USE="-* bootstrap ${ALLOWED_USE} ${BOOTSTRAP_USE} openmp"
+}}
+Again, you need only modify that one line. Leave the rest of the file as is.
+
+When done, save and exit {{c|nano}}.
 
 {{Note|As this file exists as part of the main Gentoo ebuild repository, your changes will be overwritten next time you sync. As we only want to bootstrap our system now, that's not a problem (but you can of course make a copy of the modified {{Path|bootstrap.sh}} file at this point, should you wish).}}
 
@@ -717,7 +725,7 @@ Ensure that will do what we intended:
 (The exact versions in your output may differ.)
 
 <span id="cache_modified_config">Well, we have addressed</span> the first problem (the output is now showing {{c|sys-libs/glibc:2.2
-}} will be built for {{c|libc}}, not the virtual) - but a second remains. Specifically, the line <code>!!! CONFIG_PROTECT is empty</code> is telling you that the bootstrap process will ''not'' preserve any configuration files you may have modified, if any of the packages to be installed try to overwrite them. We have modified (as opposed to created from scratch) two such configuration files so far ([[#modify_locale_gen|here]] and [[#set_post_boot_keymap|here]]), so lets use the (supplied) [[Q_applets#How_to_find_a_package_to_which_a_file_belongs_.28qfile.29|{{c|qfile}}]] utility to check if either is affected (this shows us which package 'owns' a given file):
+}} will be built for {{c|libc}}, not the virtual) (and we know we have allowed {{c|openmp}}) - but a third remains. Specifically, the line <code>!!! CONFIG_PROTECT is empty</code> is telling you that the bootstrap process will ''not'' preserve any configuration files you may have modified, if any of the packages to be installed try to overwrite them. We have modified (as opposed to created from scratch) two such configuration files so far ([[#modify_locale_gen|here]] and [[#set_post_boot_keymap|here]]), so lets use the (supplied) [[Q_applets#How_to_find_a_package_to_which_a_file_belongs_.28qfile.29|{{c|qfile}}]] utility to check if either is affected (this shows us which package 'owns' a given file):
 {{RootCmd
 |qfile /etc/locale.gen /etc/conf.d/keymaps
 |prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/var/db/repos/gentoo/scripts #</span>
