@@ -514,7 +514,7 @@ Before we can try out X11, we need to instruct it which window manager to use, a
 Put the following text in the {{c|.xinitrc}} (replacing the current contents, if any):
 {{FileBox|filename=~/.xinitrc|title=A basic setup to start TWM and some simple applications|lang=bash|1=
 #!/bin/sh
-twm &
+LANG=C twm &
 xsetroot -solid CornflowerBlue &
 xclock -geometry 100x100-1+1 &
 xterm -geometry 80x50+494+51 &
