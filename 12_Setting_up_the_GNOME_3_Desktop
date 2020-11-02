@@ -3,16 +3,18 @@
 <head>
 <meta charset="UTF-8"/>
 <title>Permission error - Gentoo Wiki</title>
-<script>document.documentElement.className = document.documentElement.className.replace( /(^|\s)client-nojs(\s|$)/, "$1client-js$2" );</script>
-<script>(window.RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Sakaki's_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop","wgTitle":"Sakaki's EFI Install Guide/Setting up the GNOME 3 Desktop","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":false,"wgIsRedirect":false,"wgAction":"edit","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Sakaki's_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop","wgRelevantArticleId":0,"wgRequestId":"5cee9652e0542a8ccee3caec","wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionCreate":[],"wgWikiEditorEnabledModules":[],"wgULSCurrentAutonym":"English","wgPageFormsAutocompleteValues":[],"wgPageFormsAutocompleteOnAllChars":false,"wgPageFormsFieldProperties":[],"wgPageFormsCargoFields":[],"wgPageFormsDependentFields":[],"wgPageFormsCalendarValues":[],"wgPageFormsCalendarParams":[],"wgPageFormsCalendarHTML":null,"wgPageFormsGridValues":[],"wgPageFormsGridParams":[],"wgPageFormsContLangYes":null,"wgPageFormsContLangNo":null,"wgPageFormsContLangMonths":[],"wgPageFormsHeightForMinimizingInstances":800,"wgPageFormsShowOnSelect":[],"wgPageFormsScriptPath":"/extensions/PageForms","edgValues":null,"wgPageFormsEDSettings":null,"wgAmericanDates":false});mw.loader.state({"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","site":"ready","user.options":"ready","user.tokens":"loading","ext.uls.pt":"ready","ext.smw.style":"ready","ext.smw.tooltip.styles":"ready","mediawiki.legacy.shared":"ready","mediawiki.legacy.commonPrint":"ready","mediawiki.sectionAnchor":"ready","mediawiki.skinning.interface":"ready","mediawiki.skinning.content.externallinks":"ready","skins.tyrian.styles":"ready","skins.tyrian.icons":"ready"});mw.loader.implement("user.tokens@1rg58df",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
-});mw.loader.load(["ext.gentooPackages","mediawiki.page.startup","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest","ext.uls.init","ext.smw.style"]);});</script>
-<link rel="stylesheet" href="/load.php?debug=false&lang=en&modules=ext.smw.style%7Cext.smw.tooltip.styles&only=styles&skin=tyrian"/>
-<link rel="stylesheet" href="/load.php?debug=false&lang=en&modules=ext.uls.pt%7Cmediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.sectionAnchor%7Cmediawiki.skinning.content.externallinks%7Cmediawiki.skinning.interface%7Cskins.tyrian.icons%2Cstyles&only=styles&skin=tyrian"/>
-<script async="" src="/load.php?debug=false&lang=en&modules=startup&only=scripts&skin=tyrian"></script>
+<script>document.documentElement.className="client-js";RLCONF={"wgBreakFrames":!1,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"fbfe788159a6b3f78791f255","wgCSPNonce":!1,"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":!1,"wgNamespaceNumber":0,"wgPageName":"Sakaki's_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop","wgTitle":"Sakaki's EFI Install Guide/Setting up the GNOME 3 Desktop","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":!1,"wgIsRedirect":!1,"wgAction":"edit","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgRelevantPageName":"Sakaki's_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop","wgRelevantArticleId":0,"wgIsProbablyEditable":!1,"wgRelevantPageIsProbablyEditable":!1,
+"wgRestrictionCreate":[],"wgULSCurrentAutonym":"English","wgPageFormsTargetName":null,"wgPageFormsAutocompleteValues":[],"wgPageFormsAutocompleteOnAllChars":!1,"wgPageFormsFieldProperties":[],"wgPageFormsCargoFields":[],"wgPageFormsDependentFields":[],"wgPageFormsCalendarValues":[],"wgPageFormsCalendarParams":[],"wgPageFormsCalendarHTML":null,"wgPageFormsGridValues":[],"wgPageFormsGridParams":[],"wgPageFormsContLangYes":null,"wgPageFormsContLangNo":null,"wgPageFormsContLangMonths":[],"wgPageFormsHeightForMinimizingInstances":800,"wgPageFormsShowOnSelect":[],"wgPageFormsScriptPath":"/extensions/PageForms","edgValues":null,"wgPageFormsEDSettings":null,"wgAmericanDates":!1,"wgVisualEditor":{"pageLanguageCode":"en","pageLanguageDir":"ltr","pageVariantFallbacks":"en"},"wgULSPosition":"personal","wgEditSubmitButtonLabelPublish":!1};RLSTATE={"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","user.options":"loading","ext.uls.pt":"ready",
+"ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.smw.style":"ready","ext.smw.tooltip.styles":"ready","mediawiki.skinning.interface":"ready","mediawiki.skinning.content.externallinks":"ready","skins.tyrian.styles":"ready","skins.tyrian.icons":"ready"};RLPAGEMODULES=["ext.gentooPackages","site","mediawiki.page.startup","mediawiki.page.ready","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader"];</script>
+<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.implement("user.options@1hzgi",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
+});});</script>
+<link rel="stylesheet" href="/load.php?lang=en&modules=ext.smw.style%7Cext.smw.tooltip.styles&only=styles&skin=tyrian"/>
+<link rel="stylesheet" href="/load.php?lang=en&modules=ext.uls.pt%7Cext.visualEditor.desktopArticleTarget.noscript%7Cmediawiki.skinning.content.externallinks%7Cmediawiki.skinning.interface%7Cskins.tyrian.icons%2Cstyles&only=styles&skin=tyrian"/>
+<script async="" src="/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=tyrian"></script>
 <link rel="stylesheet" href="https://assets.gentoo.org/tyrian/bootstrap.min.css"/><link rel="stylesheet" href="https://assets.gentoo.org/tyrian/tyrian.min.css"/>
 <meta name="ResourceLoaderDynamicStyles" content=""/>
-<link rel="stylesheet" href="/load.php?debug=false&lang=en&modules=site.styles&only=styles&skin=tyrian"/>
-<meta name="generator" content="MediaWiki 1.31.10-gentoo"/>
+<link rel="stylesheet" href="/load.php?lang=en&modules=site.styles&only=styles&skin=tyrian"/>
+<meta name="generator" content="MediaWiki 1.35.0"/>
 <meta name="robots" content="noindex,nofollow"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="theme-color" content="#54487a"/>
@@ -21,7 +23,7 @@
 <link rel="search" type="application/opensearchdescription+xml" href="/opensearch_desc.php" title="Gentoo Wiki (en)"/>
 <link rel="EditURI" type="application/rsd+xml" href="//wiki.gentoo.org/api.php?action=rsd"/>
 <link rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/"/>
-<!--[if lt IE 9]><script src="/load.php?debug=false&lang=en&modules=html5shiv&only=scripts&skin=tyrian&sync=1"></script><![endif]-->
+<!--[if lt IE 9]><script src="/resources/lib/html5shiv/html5shiv.js"></script><![endif]-->
 </head>
 <body class="mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-Sakaki_s_EFI_Install_Guide_Setting_up_the_GNOME_3_Desktop rootpage-Sakaki_s_EFI_Install_Guide skin-tyrian action-edit">	<div class="mw-jump sr-only">
 		Jump to:		<a href="#top">content</a>
@@ -159,8 +161,7 @@
 <li>The action you have requested is limited to users in the group: <a href="/index.php?title=Project:Users&action=edit&redlink=1" class="new" title="Project:Users (page does not exist)">Users</a>.</li>
 <li>You must confirm your email address before editing pages.
 Please set and validate your email address through your <a href="/wiki/Special:Preferences" title="Special:Preferences">user preferences</a>.</li>
-</ul>
-</div><div class="printfooter">
+</ul></div><div class="printfooter">
 Retrieved from "<a dir="ltr" href="https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop">https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Setting_up_the_GNOME_3_Desktop</a>"</div>
 <div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div>						</div>
 					</div>
@@ -200,11 +201,16 @@ Retrieved from "<a dir="ltr" href="https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_I
 			</div>
 		</div>
 	</footer>
-	<script>function defer(method) {
+	
+<script>
+function defer(method) {
     if (window.jQuery) {
         method();
     } else {
         setTimeout(function() { defer(method) }, 50);
     }
 }
-defer(function() { mw.loader.load( 'https://assets.gentoo.org/tyrian/bootstrap.min.js'); });</script><script>(window.RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":48});});</script></body></html>
+defer(function() { mw.loader.load( 'https://assets.gentoo.org/tyrian/bootstrap.min.js'); });
+</script>
+
+<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":99});});</script></body></html>
