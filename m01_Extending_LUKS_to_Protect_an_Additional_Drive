@@ -1,216 +1,146 @@
+<!-- Page: Extending_LUKS_to_Protect_an_Additional_Drive -->
 
-<html class="client-nojs" lang="en" dir="ltr">
-<head>
-<meta charset="UTF-8"/>
-<title>Permission error - Gentoo Wiki</title>
-<script>document.documentElement.className="client-js";RLCONF={"wgBreakFrames":!1,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"1e0ba0ac40db05774a2c8467","wgCSPNonce":!1,"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":!1,"wgNamespaceNumber":0,"wgPageName":"Sakaki's_EFI_Install_Guide/Extending_LUKS_to_Protect_an_Additional_Drive","wgTitle":"Sakaki's EFI Install Guide/Extending LUKS to Protect an Additional Drive","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":!1,"wgIsRedirect":!1,"wgAction":"edit","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgRelevantPageName":"Sakaki's_EFI_Install_Guide/Extending_LUKS_to_Protect_an_Additional_Drive","wgRelevantArticleId":0,"wgIsProbablyEditable":!1,
-"wgRelevantPageIsProbablyEditable":!1,"wgRestrictionCreate":[],"wgULSCurrentAutonym":"English","wgPageFormsTargetName":null,"wgPageFormsAutocompleteValues":[],"wgPageFormsAutocompleteOnAllChars":!1,"wgPageFormsFieldProperties":[],"wgPageFormsCargoFields":[],"wgPageFormsDependentFields":[],"wgPageFormsCalendarValues":[],"wgPageFormsCalendarParams":[],"wgPageFormsCalendarHTML":null,"wgPageFormsGridValues":[],"wgPageFormsGridParams":[],"wgPageFormsContLangYes":null,"wgPageFormsContLangNo":null,"wgPageFormsContLangMonths":[],"wgPageFormsHeightForMinimizingInstances":800,"wgPageFormsShowOnSelect":[],"wgPageFormsScriptPath":"/extensions/PageForms","edgValues":null,"wgPageFormsEDSettings":null,"wgAmericanDates":!1,"wgVisualEditor":{"pageLanguageCode":"en","pageLanguageDir":"ltr","pageVariantFallbacks":"en"},"wgULSPosition":"personal","wgEditSubmitButtonLabelPublish":!1};RLSTATE={"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","user.options":"loading",
-"ext.uls.pt":"ready","ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.smw.style":"ready","ext.smw.tooltip.styles":"ready","mediawiki.skinning.interface":"ready","mediawiki.skinning.content.externallinks":"ready","skins.tyrian.styles":"ready","skins.tyrian.icons":"ready"};RLPAGEMODULES=["ext.gentooPackages","site","mediawiki.page.startup","mediawiki.page.ready","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader"];</script>
-<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.implement("user.options@1hzgi",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
-});});</script>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.smw.style%7Cext.smw.tooltip.styles&only=styles&skin=tyrian"/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.uls.pt%7Cext.visualEditor.desktopArticleTarget.noscript%7Cmediawiki.skinning.content.externallinks%7Cmediawiki.skinning.interface%7Cskins.tyrian.icons%2Cstyles&only=styles&skin=tyrian"/>
-<script async="" src="/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=tyrian"></script>
-<link rel="stylesheet" href="https://assets.gentoo.org/tyrian/bootstrap.min.css"/><link rel="stylesheet" href="https://assets.gentoo.org/tyrian/tyrian.min.css"/>
-<meta name="ResourceLoaderDynamicStyles" content=""/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=site.styles&only=styles&skin=tyrian"/>
-<meta name="generator" content="MediaWiki 1.35.0"/>
-<meta name="robots" content="noindex,nofollow"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="theme-color" content="#54487a"/>
-<link rel="alternate" type="application/rdf+xml" title="Sakaki&#039;s EFI Install Guide/Extending LUKS to Protect an Additional Drive" href="/index.php?title=Special:ExportRDF/Sakaki%27s_EFI_Install_Guide/Extending_LUKS_to_Protect_an_Additional_Drive&xmlmime=rdf"/>
-<link rel="shortcut icon" href="https://www.gentoo.org/favicon.ico"/>
-<link rel="search" type="application/opensearchdescription+xml" href="/opensearch_desc.php" title="Gentoo Wiki (en)"/>
-<link rel="EditURI" type="application/rsd+xml" href="//wiki.gentoo.org/api.php?action=rsd"/>
-<link rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/"/>
-<!--[if lt IE 9]><script src="/resources/lib/html5shiv/html5shiv.js"></script><![endif]-->
-</head>
-<body class="mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-Sakaki_s_EFI_Install_Guide_Extending_LUKS_to_Protect_an_Additional_Drive rootpage-Sakaki_s_EFI_Install_Guide skin-tyrian action-edit">	<div class="mw-jump sr-only">
-		Jump to:		<a href="#top">content</a>
-	</div>
-	<header>
-		<div class="site-title">
-			<div class="container">
-				<div class="row">
-					<div class="site-title-buttons">
-						<div class="btn-group btn-group-sm">
-							<a href="https://get.gentoo.org/" role="button" class="btn get-gentoo"><span class="fa fa-fw fa-download"></span> <strong>Get Gentoo!</strong></a>
-							<div class="btn-group btn-group-sm">
-								<a class="btn gentoo-org-sites dropdown-toggle" data-toggle="dropdown" data-target="#" href="#">
-									<span class="fa fa-fw fa-map-o"></span> <span class="hidden-xs">gentoo.org sites</span> <span class="caret"></span>
-								</a>
-								<ul class="dropdown-menu dropdown-menu-right">
-									<li><a href="https://www.gentoo.org/" title="Main Gentoo website"><span class="fa fa-home fa-fw"></span> gentoo.org</a></li>
-									<li><a href="https://wiki.gentoo.org/" title="Find and contribute documentation"><span class="fa fa-file-text-o fa-fw"></span> Wiki</a></li>
-									<li><a href="https://bugs.gentoo.org/" title="Report issues and find common issues"><span class="fa fa-bug fa-fw"></span> Bugs</a></li>
-									<li><a href="https://forums.gentoo.org/" title="Discuss with the community"><span class="fa fa-comments-o fa-fw"></span> Forums</a></li>
-									<li><a href="https://packages.gentoo.org/" title="Find software for your Gentoo"><span class="fa fa-hdd-o fa-fw"></span> Packages</a></li>
-									<li class="divider"></li>
-									<li><a href="https://planet.gentoo.org/" title="Find out what's going on in the developer community"><span class="fa fa-rss fa-fw"></span> Planet</a></li>
-									<li><a href="https://archives.gentoo.org/" title="Read up on past discussions"><span class="fa fa-archive fa-fw"></span> Archives</a></li>
-									<li><a href="https://gitweb.gentoo.org/" title="Browse our source code in Gitweb"><span class="fa fa-code fa-fw"></span> Gitweb</a></li>
-									<li><a href="https://sources.gentoo.org/" title="Browse our source code in CVS"><span class="fa fa-code fa-fw"></span> CVS sources</a></li>
-									<li class="divider"></li>
-									<li><a href="https://infra-status.gentoo.org/" title="Get updates on the services provided by Gentoo"><span class="fa fa-server fa-fw"></span> Infra Status</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="logo">
-						<a href="/" title="Back to the homepage" class="site-logo"><object data="https://assets.gentoo.org/tyrian/site-logo.svg" type="image/svg+xml">
-							<img src="https://assets.gentoo.org/tyrian/site-logo.png" alt="Gentoo Linux Logo">
-						</object></a>
-						<span class="site-label">Wiki</span>
-					</div>
-				</div>
-			</div>
-		</div>
-		<nav class="tyrian-navbar" role="navigation">
-			<div class="container">
-				<div class="row">
-					<div class="navbar-header">
-						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-main-collapse">
-							<span class="sr-only">Toggle navigation</span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-						</button>
-					</div>
-					<div class="collapse navbar-collapse navbar-main-collapse">
-						<ul class="nav navbar-nav">
-							<li id="n-mainpage-description"><a href="/wiki/Main_Page" title="Visit the main page [z]" accesskey="z">Main page</a></li><li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li><li id="n-help"><a href="/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Gentoo" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Gentoo <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Projects"><a href="/wiki/Project:Gentoo">Gentoo Projects</a></li>				</ul>
-			</li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Documentation" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Documentation <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Handbook"><a href="/wiki/Handbook:Main_Page">Gentoo Handbook</a></li><li id="n-Gentoo-FAQ"><a href="/wiki/FAQ">Gentoo FAQ</a></li><li id="n-Featured-Documents"><a href="/wiki/Project:Documentation/Overview">Featured Documents</a></li><li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Topics</li><li id="n-Core-system"><a href="/wiki/Category:Core_system">Core system</a></li><li id="n-Hardware"><a href="/wiki/Category:Hardware">Hardware</a></li><li id="n-Software"><a href="/wiki/Category:Software">Software</a></li><li id="n-Desktop"><a href="/wiki/Category:Desktop">Desktop</a></li><li id="n-Server-.26-Security"><a href="/wiki/Category:Server_and_Security">Server & Security</a></li><li id="n-Project-.26-Community"><a href="/wiki/Category:Project_and_Community">Project & Community</a></li>				</ul>
-			</li>						</ul>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-									<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-cog"></i> Tools <span class="caret"></span></a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>			</ul>
-		</li>
-			<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-				<span class="fa fa-user" aria-label="Personal tools"></span>
-				User				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="pt-createaccount"><a href="/index.php?title=Special:CreateAccount&returnto=Sakaki%27s+EFI+Install+Guide%2FExtending+LUKS+to+Protect+an+Additional+Drive&returntoquery=action%3Dedit" title="You are encouraged to create an account and log in; however, it is not mandatory">Create account</a></li><li id="pt-login"><a href="/index.php?title=Special:UserLogin&returnto=Sakaki%27s+EFI+Install+Guide%2FExtending+LUKS+to+Protect+an+Additional+Drive&returntoquery=action%3Dedit" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>			</ul>
-		</li>
-								</ul>
-					</div>
-				</div>
-			</div>
-		</nav>
-		
-		<nav class="navbar navbar-grey navbar-stick" id="wiki-actions" role="navigation">
-			<div class="container"><div class="row">
-				<div class="navbar-header">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#gw-toolbar">
-						<span class="sr-only">Toggle navigation</span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-					</button>
-				</div>
-				<div class="collapse navbar-collapse" id="gw-toolbar">
-					<ul class="nav navbar-nav">
-					<li id="ca-nstab-main" class="selected new active"><a href="/index.php?title=Sakaki%27s_EFI_Install_Guide/Extending_LUKS_to_Protect_an_Additional_Drive&action=edit&redlink=1" title="View the content page (page does not exist) [c]" accesskey="c">Page</a></li><li id="ca-talk" class="new"><a href="/index.php?title=Talk:Sakaki%27s_EFI_Install_Guide/Extending_LUKS_to_Protect_an_Additional_Drive&action=edit&redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) [t]" accesskey="t">Discussion</a></li>					</ul>
-							<form action="/index.php" id="searchform" class="navbar-form navbar-right" role="search">
-			<input type='hidden' name="title" value="Special:Search"/>
+In this mini-guide, we'll show how to easily extend your LUKS protection to cover an additional drive (or drives) on your system. This is most useful with desktop machines, where you may have multiple hard drives installed.
 
-				<div class="input-group">
-					<input type="search" name="search" placeholder="Search" title="Search Gentoo Wiki [f]" accesskey="f" id="searchInput" class="form-control"/>					<div class="input-group-btn"><input type="submit" name="go" value="Go" title="Go to a page with this exact name if it exists" id="searchGoButton" class="searchButton btn btn-default"/><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton btn btn-default"/></div>
-				</div>
-		</form>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">more <span class="caret"></span></a>
-						<ul class="dropdown-menu" role="menu">
-												</ul>
-						</li>
-					</ul>
-				</div>
-			</div></div>
-		</nav>
-		</header>
-	
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<div id="content" class="mw-body" role="main">
-						<a id="top"></a>
-						
-						<h1 id="firstHeading" class="first-header" lang="en">
-							<span dir="auto">Permission error</span>
-						</h1>
+{{Note|If you simply wish to protect a removable drive (such as a USB key), it's easier to rely on the tools already in GNOME; you can use the {{c|Disks}} utility to format your drive with encryption (see [https://help.ubuntu.com/community/EncryptedFilesystemsOnRemovableStorage this guide], for example), and then have it unlocked automatically (assuming you are logged in) on insertion (to do so, just opt to allow GNOME to remember your passphrase for the drive, when first prompted).}}
 
-						<div id="bodyContent" class="mw-body-content">
-							<div id="siteSub">From Gentoo Wiki</div>
-							<div id="contentSub">
-															</div>
-														<div id="jump-to-nav" class="mw-jump">
-								Jump to:								<a href="#column-one">navigation</a>, 								<a href="#searchInput">search</a>
-							</div>
+== <span id="prerequisites">Prerequisites</span> ==
 
-							<div id="mw-content-text"><p>You do not have permission to create this page, for the following reasons:
-</p>
-<ul class="permissions-errors">
-<li>The action you have requested is limited to users in the group: <a href="/index.php?title=Project:Users&action=edit&redlink=1" class="new" title="Project:Users (page does not exist)">Users</a>.</li>
-<li>You must confirm your email address before editing pages.
-Please set and validate your email address through your <a href="/wiki/Special:Preferences" title="Special:Preferences">user preferences</a>.</li>
-</ul></div><div class="printfooter">
-Retrieved from "<a dir="ltr" href="https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Extending_LUKS_to_Protect_an_Additional_Drive">https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Extending_LUKS_to_Protect_an_Additional_Drive</a>"</div>
-<div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div>						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+To carry this out, you will need:
+* to have an operational {{c|systemd}}/{{c|EFI}} {{c|Gentoo}} system, which you have set up per the text of the main guide (you don't need to have installed GNOME, however); and
+* a secondary drive (or partition) that you would like to protect with LUKS, and have automatically mounted on boot.
 
-			<footer>
-		<div class="container">
-			<div class="row">
-				<div class="col-xs-12 col-md-offset-2 col-md-7">
-											<div class="spacer"></div>
-						<ul id="f-list">
-							<li id="privacy>"><a href="/wiki/Gentoo_Wiki:Privacy_policy" class="mw-redirect" title="Gentoo Wiki:Privacy policy">Privacy policy</a></li><li id="about>"><a href="/wiki/Gentoo_Wiki:About" title="Gentoo Wiki:About">About Gentoo Wiki</a></li><li id="disclaimer>"><a href="/wiki/Gentoo_Wiki:General_disclaimer" title="Gentoo Wiki:General disclaimer">Disclaimers</a></li>						</ul>
-									</div>
-				<div class="col-xs-12 col-md-3">
-					<!-- No questions or comments, the Wiki has enough information on how to contact us. -->
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-xs-3 col-md-2">
-					<ul class="footerlinks three-icons">
-						<li><a href="https://twitter.com/gentoo" title="@Gentoo on Twitter"><span class="fa fa-twitter fa-fw"></span></a></li>
-						<li><a href="https://www.facebook.com/gentoo.org" title="Gentoo on Facebook"><span class="fa fa-facebook fa-fw"></span></a></li>
-						<li></li>
-					</ul>
-				</div>
-				<div class="col-xs-9 col-md-9">
-					<strong>&copy; 2001&ndash;2020 Gentoo Foundation, Inc.</strong><br />
-					<small>
-						Gentoo is a trademark of the Gentoo Foundation, Inc.
-						The contents of this document, unless otherwise expressly stated, are licensed under the
-						<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license">CC-BY-SA-3.0</a> license.
-						The <a href="https://www.gentoo.org/inside-gentoo/foundation/name-logo-guidelines.html">Gentoo Name and Logo Usage Guidelines</a> apply.
-					</small>
-				</div>
-			</div>
-		</div>
-	</footer>
-	
-<script>
-function defer(method) {
-    if (window.jQuery) {
-        method();
-    } else {
-        setTimeout(function() { defer(method) }, 50);
-    }
-}
-defer(function() { mw.loader.load( 'https://assets.gentoo.org/tyrian/bootstrap.min.js'); });
-</script>
+== <span id="preparing_systemd">Preparing systemd</span> ==
 
-<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":93});});</script></body></html>
+First, we'll need to ensure that {{c|systemd}} has the {{c|cryptsetup}} USE flag enabled (which it does not, by default); this turns on the unit generator for {{Path|/etc/crypttab}}, which we'll need. Open a terminal, get {{c|root}}, then issue:
+
+{{RootCmd
+|nano -w /etc/portage/package.use
+}}
+and append the following line:
+{{FileBox|filename=/etc/portage/package.use|title=Append this line to enable the crypttab unit generator|lang=bash|1=
+sys-apps/systemd  cryptsetup
+}}
+Save and exit {{c|nano}}; then, rebuild {{c|systemd}}:
+{{RootCmd
+|emerge --ask --verbose --oneshot sys-apps/systemd
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+== <span id="preparing_new_drive">Preparing your New Drive</span> ==
+
+In the below, I'm going to assume you want to use [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#format_luks_partition|same cryptography settings]] as those recommended for the main system, earlier in the tutorial (obviously, adapt as appropriate). I will refer to the drive as {{Path|/dev/sdN}}; substitute your actual device path as appropriate ({{Path|/dev/sdc}}, {{Path|/dev/sdd}} etc.). Also, if you wish to encrypt only one partition within the drive, use the relevant value instead (e.g., {{Path|/dev/sdc1}}, {{Path|/dev/sdd1}} etc.) You can use the <code>Disks</code> utility in GNOME, or the {{c|lsblk}} command line utility, to find your device's path.
+
+First, we will create a keyfile, and place this in the {{c|root}} user's home directory, within the (already LUKS-protected) {{c|root}} partition. Issue:
+{{RootCmd
+|touch /root/crypt1.key
+|chmod 400 /root/crypt1.key
+|dd if{{=}}/dev/urandom of{{=}}/root/crypt1.key bs{{=}}512 count{{=}}1
+}}
+to create the key, and make it (read) accessible by the {{c|root}} user only.
+
+{{Note|We do '''not''' {{c|gpg}}-encrypt this keyfile, as we need it to be unlocked automatically. The key 'lives' in a LUKS-protected location already, so this is safe to do.}}
+
+Now, LUKS-format your new drive:
+{{Warning|This will '''destroy''' any existing data on the drive! Make sure you have the device path correct before proceeding.}}
+{{RootCmd
+|cryptsetup --cipher serpent-xts-plain64 --key-size 512 --hash whirlpool --key-file /root/crypt1.key luksFormat /dev/sdN
+|output=<pre>
+
+WARNING!
+========
+This will overwrite data on /dev/sdN irrevocably.
+
+Are you sure? (Type uppercase yes): <double-check this is OK, then type YES and press Enter>
+</pre>
+}}
+{{Note|Replace {{Path|/dev/sdN}} in the above command (and where used subsequently) with that of your new drive, or, if appropriate, the partition within it (e.g., {{Path|/dev/sdc}}, {{Path|/dev/sdd}} etc. for a drive; {{Path|/dev/sdc1}}, {{Path|/dev/sdd1}} etc. for a partition).}}
+
+Next, open the encrypted device, using the keyfile:
+{{RootCmd
+|cryptsetup luksOpen --key-file /root/crypt1.key /dev/sdN crypt1
+}}
+
+If that succeeded, the new device will be visible under {{Path|/dev/mapper}} (as {{Path|/dev/mapper/crypt1}}).
+
+Next, create a filesystem on your unlocked drive.
+
+{{Note|You can simply create an {{c|ext4}} or similar filesystem if you like; however, to illustrate the most complex (normal) case, in this example we're going to create an {{c|LVM}} setup, with (arbitrarily) two logical volumes {{c|foo}} and {{c|bar}} on top of {{Path|/dev/mapper/crypt1}}, each of 10GiB (and each of which will later be formatted {{c|ext4}}). Obviously, adapt the number of logical volumes, their sizes, and their names to your own requirements.}}
+
+Issue:
+{{RootCmd
+|pvcreate /dev/mapper/crypt1
+|vgcreate cr1 /dev/mapper/crypt1
+|lvcreate --size 10G --name foo cr1
+|lvcreate --size 10G --name bar cr1
+|vgchange --activate y cr1
+}}
+to create the physical volume (PV), volume group {{c|cr1}} (VG) and the {{c|foo}} and {{c|bar}} logical volumes (LVs).
+
+The LVs will be visible (in this case) as {{Path|/dev/mapper/cr1-foo}} and {{Path|/dev/mapper/cr1-bar}}. They may be treated as any other device - so let's do that now, and format them (adapt to your own requirements):
+{{RootCmd
+|mkfs.ext4 -m 0 -L "test" /dev/mapper/cr1-foo
+|mkfs.ext4 -m 0 -L "test" /dev/mapper/cr1-bar
+}}
+
+Close the drive again:
+{{RootCmd
+|cryptsetup luksClose crypt1
+}}
+
+Finally, find the UUID of the new LUKS disk (or partition); issue:
+{{RootCmd
+|blkid /dev/sdN
+|output=<pre>
+/dev/sdN: UUID="45f1f1af-025b-4395-8a33-7ef0a4709329" TYPE="crypto_LUKS"
+</pre>
+}}
+Your output will differ from the above. Note down the UUID.
+{{Note|If you have your new LUKS set up on a partition, rather than a whole drive, ''ignore'' the PARTUUID, and note the UUID only.}}
+
+== <span id="configuring_crypttab_fstab">Configuring /etc/crypttab and /etc/fstab</span> ==
+
+Next, we need to set up the file {{Path|/etc/crypttab}}. This file is processed by {{c|systemd}} ''before'' {{Path|/etc/fstab}} is read, and tells the system which cryptographically protected volumes it should unlock at boot.
+{{Note|For more information about the format of {{Path|/etc/crypttab}}, see <kbd>man crypttab</kbd>.}}
+
+Issue:
+{{RootCmd
+|nano -w /etc/crypttab
+}}
+
+and add the following text to the file (subsituting the UUID you just noted down for the one I have used, obviously):
+{{FileBox|filename=/etc/crypttab|title=Specifying a LUKS volume to automatically unlock at boot|1=
+crypt1  UUID=45f1f1af-025b-4395-8a33-7ef0a4709329  /root/crypt1.key  luks
+}}
+Save and exit {{c|nano}}.
+
+That's it for the encryption side of things; with this in place, {{c|systemd}} will automatically unlock the LUKS container, call it {{Path|/dev/mapper/crypt1}}, and then activate any logical volumes within it, and make these available via the device mapper too. This will be done ''before'' {{Path|/etc/fstab}} is processed, so you are now free to cite these LVs within your {{Path|/etc/fstab}}.
+
+For example, let's suppose we wanted to mount the {{c|foo}} LV at {{Path|/mnt/foo}}, and {{c|bar}} at {{Path|/home/bar}} (these are just examples, obviously, adapt to your own requirements).
+
+We need to create mountpoints, as they don't exist yet, so issue:
+{{RootCmd
+|mkdir -pv /mnt/foo /home/bar
+}}
+
+Then add the entries to {{Path|/etc/fstab}} to have them mounted. Issue:
+{{RootCmd
+|nano -w /etc/fstab
+}}
+
+and then ''append'' (for our example, adapt to your own requirements):
+{{FileBox|filename=/etc/fstab|title=Append, to specify mountpoints for our newly created LVs|1=
+/dev/mapper/cr1-foo    /mnt/foo    ext4    defaults    0 2
+/dev/mapper/cr1-bar    /home/bar   ext4    defaults    0 2
+}}
+Save and exit {{c|nano}}.
+{{Note|For more information about the format of {{Path|/etc/fstab}}, see <kbd>man fstab</kbd>.}}
+
+That's it! Next time you reboot, you should have access to your new protected LVs!
+
+To rejoin the main guide, click [[../Using_Your_New_Gentoo_System#additional_mini_guides|here ({{c|systemd}})]] or [[../Using_Your_New_Gentoo_System_under_OpenRC#additional_mini_guides|here ({{c|OpenRC}})]].
+

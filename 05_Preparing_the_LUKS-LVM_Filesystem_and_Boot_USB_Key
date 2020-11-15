@@ -1,216 +1,502 @@
+<!-- Page: Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key -->
 
-<html class="client-nojs" lang="en" dir="ltr">
-<head>
-<meta charset="UTF-8"/>
-<title>Permission error - Gentoo Wiki</title>
-<script>document.documentElement.className="client-js";RLCONF={"wgBreakFrames":!1,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"082ebf993df328c38e0aa666","wgCSPNonce":!1,"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":!1,"wgNamespaceNumber":0,"wgPageName":"Sakaki's_EFI_Install_Guide/Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key","wgTitle":"Sakaki's EFI Install Guide/Preparing the LUKS-LVM Filesystem and Boot USB Key","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":!1,"wgIsRedirect":!1,"wgAction":"edit","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgRelevantPageName":"Sakaki's_EFI_Install_Guide/Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key","wgRelevantArticleId":0,
-"wgIsProbablyEditable":!1,"wgRelevantPageIsProbablyEditable":!1,"wgRestrictionCreate":[],"wgULSCurrentAutonym":"English","wgPageFormsTargetName":null,"wgPageFormsAutocompleteValues":[],"wgPageFormsAutocompleteOnAllChars":!1,"wgPageFormsFieldProperties":[],"wgPageFormsCargoFields":[],"wgPageFormsDependentFields":[],"wgPageFormsCalendarValues":[],"wgPageFormsCalendarParams":[],"wgPageFormsCalendarHTML":null,"wgPageFormsGridValues":[],"wgPageFormsGridParams":[],"wgPageFormsContLangYes":null,"wgPageFormsContLangNo":null,"wgPageFormsContLangMonths":[],"wgPageFormsHeightForMinimizingInstances":800,"wgPageFormsShowOnSelect":[],"wgPageFormsScriptPath":"/extensions/PageForms","edgValues":null,"wgPageFormsEDSettings":null,"wgAmericanDates":!1,"wgVisualEditor":{"pageLanguageCode":"en","pageLanguageDir":"ltr","pageVariantFallbacks":"en"},"wgULSPosition":"personal","wgEditSubmitButtonLabelPublish":!1};RLSTATE={"site.styles":"ready","noscript":"ready","user.styles":"ready","user":
-"ready","user.options":"loading","ext.uls.pt":"ready","ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.smw.style":"ready","ext.smw.tooltip.styles":"ready","mediawiki.skinning.interface":"ready","mediawiki.skinning.content.externallinks":"ready","skins.tyrian.styles":"ready","skins.tyrian.icons":"ready"};RLPAGEMODULES=["ext.gentooPackages","site","mediawiki.page.startup","mediawiki.page.ready","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader"];</script>
-<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.implement("user.options@1hzgi",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
-});});</script>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.smw.style%7Cext.smw.tooltip.styles&only=styles&skin=tyrian"/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.uls.pt%7Cext.visualEditor.desktopArticleTarget.noscript%7Cmediawiki.skinning.content.externallinks%7Cmediawiki.skinning.interface%7Cskins.tyrian.icons%2Cstyles&only=styles&skin=tyrian"/>
-<script async="" src="/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=tyrian"></script>
-<link rel="stylesheet" href="https://assets.gentoo.org/tyrian/bootstrap.min.css"/><link rel="stylesheet" href="https://assets.gentoo.org/tyrian/tyrian.min.css"/>
-<meta name="ResourceLoaderDynamicStyles" content=""/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=site.styles&only=styles&skin=tyrian"/>
-<meta name="generator" content="MediaWiki 1.35.0"/>
-<meta name="robots" content="noindex,nofollow"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="theme-color" content="#54487a"/>
-<link rel="alternate" type="application/rdf+xml" title="Sakaki&#039;s EFI Install Guide/Preparing the LUKS-LVM Filesystem and Boot USB Key" href="/index.php?title=Special:ExportRDF/Sakaki%27s_EFI_Install_Guide/Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key&xmlmime=rdf"/>
-<link rel="shortcut icon" href="https://www.gentoo.org/favicon.ico"/>
-<link rel="search" type="application/opensearchdescription+xml" href="/opensearch_desc.php" title="Gentoo Wiki (en)"/>
-<link rel="EditURI" type="application/rsd+xml" href="//wiki.gentoo.org/api.php?action=rsd"/>
-<link rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/"/>
-<!--[if lt IE 9]><script src="/resources/lib/html5shiv/html5shiv.js"></script><![endif]-->
-</head>
-<body class="mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-Sakaki_s_EFI_Install_Guide_Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key rootpage-Sakaki_s_EFI_Install_Guide skin-tyrian action-edit">	<div class="mw-jump sr-only">
-		Jump to:		<a href="#top">content</a>
-	</div>
-	<header>
-		<div class="site-title">
-			<div class="container">
-				<div class="row">
-					<div class="site-title-buttons">
-						<div class="btn-group btn-group-sm">
-							<a href="https://get.gentoo.org/" role="button" class="btn get-gentoo"><span class="fa fa-fw fa-download"></span> <strong>Get Gentoo!</strong></a>
-							<div class="btn-group btn-group-sm">
-								<a class="btn gentoo-org-sites dropdown-toggle" data-toggle="dropdown" data-target="#" href="#">
-									<span class="fa fa-fw fa-map-o"></span> <span class="hidden-xs">gentoo.org sites</span> <span class="caret"></span>
-								</a>
-								<ul class="dropdown-menu dropdown-menu-right">
-									<li><a href="https://www.gentoo.org/" title="Main Gentoo website"><span class="fa fa-home fa-fw"></span> gentoo.org</a></li>
-									<li><a href="https://wiki.gentoo.org/" title="Find and contribute documentation"><span class="fa fa-file-text-o fa-fw"></span> Wiki</a></li>
-									<li><a href="https://bugs.gentoo.org/" title="Report issues and find common issues"><span class="fa fa-bug fa-fw"></span> Bugs</a></li>
-									<li><a href="https://forums.gentoo.org/" title="Discuss with the community"><span class="fa fa-comments-o fa-fw"></span> Forums</a></li>
-									<li><a href="https://packages.gentoo.org/" title="Find software for your Gentoo"><span class="fa fa-hdd-o fa-fw"></span> Packages</a></li>
-									<li class="divider"></li>
-									<li><a href="https://planet.gentoo.org/" title="Find out what's going on in the developer community"><span class="fa fa-rss fa-fw"></span> Planet</a></li>
-									<li><a href="https://archives.gentoo.org/" title="Read up on past discussions"><span class="fa fa-archive fa-fw"></span> Archives</a></li>
-									<li><a href="https://gitweb.gentoo.org/" title="Browse our source code in Gitweb"><span class="fa fa-code fa-fw"></span> Gitweb</a></li>
-									<li><a href="https://sources.gentoo.org/" title="Browse our source code in CVS"><span class="fa fa-code fa-fw"></span> CVS sources</a></li>
-									<li class="divider"></li>
-									<li><a href="https://infra-status.gentoo.org/" title="Get updates on the services provided by Gentoo"><span class="fa fa-server fa-fw"></span> Infra Status</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="logo">
-						<a href="/" title="Back to the homepage" class="site-logo"><object data="https://assets.gentoo.org/tyrian/site-logo.svg" type="image/svg+xml">
-							<img src="https://assets.gentoo.org/tyrian/site-logo.png" alt="Gentoo Linux Logo">
-						</object></a>
-						<span class="site-label">Wiki</span>
-					</div>
-				</div>
-			</div>
-		</div>
-		<nav class="tyrian-navbar" role="navigation">
-			<div class="container">
-				<div class="row">
-					<div class="navbar-header">
-						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-main-collapse">
-							<span class="sr-only">Toggle navigation</span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-						</button>
-					</div>
-					<div class="collapse navbar-collapse navbar-main-collapse">
-						<ul class="nav navbar-nav">
-							<li id="n-mainpage-description"><a href="/wiki/Main_Page" title="Visit the main page [z]" accesskey="z">Main page</a></li><li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li><li id="n-help"><a href="/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Gentoo" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Gentoo <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Projects"><a href="/wiki/Project:Gentoo">Gentoo Projects</a></li>				</ul>
-			</li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Documentation" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Documentation <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Handbook"><a href="/wiki/Handbook:Main_Page">Gentoo Handbook</a></li><li id="n-Gentoo-FAQ"><a href="/wiki/FAQ">Gentoo FAQ</a></li><li id="n-Featured-Documents"><a href="/wiki/Project:Documentation/Overview">Featured Documents</a></li><li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Topics</li><li id="n-Core-system"><a href="/wiki/Category:Core_system">Core system</a></li><li id="n-Hardware"><a href="/wiki/Category:Hardware">Hardware</a></li><li id="n-Software"><a href="/wiki/Category:Software">Software</a></li><li id="n-Desktop"><a href="/wiki/Category:Desktop">Desktop</a></li><li id="n-Server-.26-Security"><a href="/wiki/Category:Server_and_Security">Server & Security</a></li><li id="n-Project-.26-Community"><a href="/wiki/Category:Project_and_Community">Project & Community</a></li>				</ul>
-			</li>						</ul>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-									<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-cog"></i> Tools <span class="caret"></span></a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>			</ul>
-		</li>
-			<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-				<span class="fa fa-user" aria-label="Personal tools"></span>
-				User				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="pt-createaccount"><a href="/index.php?title=Special:CreateAccount&returnto=Sakaki%27s+EFI+Install+Guide%2FPreparing+the+LUKS-LVM+Filesystem+and+Boot+USB+Key&returntoquery=action%3Dedit" title="You are encouraged to create an account and log in; however, it is not mandatory">Create account</a></li><li id="pt-login"><a href="/index.php?title=Special:UserLogin&returnto=Sakaki%27s+EFI+Install+Guide%2FPreparing+the+LUKS-LVM+Filesystem+and+Boot+USB+Key&returntoquery=action%3Dedit" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>			</ul>
-		</li>
-								</ul>
-					</div>
-				</div>
-			</div>
-		</nav>
-		
-		<nav class="navbar navbar-grey navbar-stick" id="wiki-actions" role="navigation">
-			<div class="container"><div class="row">
-				<div class="navbar-header">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#gw-toolbar">
-						<span class="sr-only">Toggle navigation</span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-					</button>
-				</div>
-				<div class="collapse navbar-collapse" id="gw-toolbar">
-					<ul class="nav navbar-nav">
-					<li id="ca-nstab-main" class="selected new active"><a href="/index.php?title=Sakaki%27s_EFI_Install_Guide/Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key&action=edit&redlink=1" title="View the content page (page does not exist) [c]" accesskey="c">Page</a></li><li id="ca-talk" class="new"><a href="/index.php?title=Talk:Sakaki%27s_EFI_Install_Guide/Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key&action=edit&redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) [t]" accesskey="t">Discussion</a></li>					</ul>
-							<form action="/index.php" id="searchform" class="navbar-form navbar-right" role="search">
-			<input type='hidden' name="title" value="Special:Search"/>
+<span id="prep_luks_lvm">In this section</span>, we'll be shadowing [[Handbook:AMD64/Installation/Disks|Chapter 4]] of the Gentoo handbook (and, although we're going to start to diverge considerably, you may want to read that chapter before proceeding, as it has some useful background information).
 
-				<div class="input-group">
-					<input type="search" name="search" placeholder="Search" title="Search Gentoo Wiki [f]" accesskey="f" id="searchInput" class="form-control"/>					<div class="input-group-btn"><input type="submit" name="go" value="Go" title="Go to a page with this exact name if it exists" id="searchGoButton" class="searchButton btn btn-default"/><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton btn btn-default"/></div>
-				</div>
-		</form>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">more <span class="caret"></span></a>
-						<ul class="dropdown-menu" role="menu">
-												</ul>
-						</li>
-					</ul>
-				</div>
-			</div></div>
-		</nav>
-		</header>
-	
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<div id="content" class="mw-body" role="main">
-						<a id="top"></a>
-						
-						<h1 id="firstHeading" class="first-header" lang="en">
-							<span dir="auto">Permission error</span>
-						</h1>
+The <span id="setup_luks_lvm_process">process we'll be following here is:</span>
+# First, we'll format the smaller USB key ([[../Installation_Prerequisites#two_usb_keys|discussed earlier]]) so that it can support booting under UEFI (although there'll be no bootable kernel on it, yet). We'll then mount it.
+# Next, we'll create a pseudo-random binary blob of key data that will be used to secure the main computer drive, encrypt this with a passphrase using GPG, and store the result on the USB key.
+# Then, we will create a new [[:Wikipedia:GUID_Partition_Table|GPT]] (GUID partition table) partition on the target machine's main drive, using the space we [[../Preparing_Windows_for_Dual-Booting#shrink_windows_partition|freed up from Windows]] earlier in the tutorial.
+# We'll then (optionally) overwrite that partition with pseudo-random data.
+# Next, we'll format the partition using LUKS (secured with the key data created in step 2).
+# We'll then (optionally) add a fallback passphrase to the LUKS container.
+# Then, we'll create an LVM physical volume (PV) on the LUKS partition, create an LVM volume group (VG) with just that one physical volume in it, and then create three logical volumes (LVs) (for the Gentoo root, swap and home partitions) utilizing that physical volume.
+# Finally, we'll format the logical volumes appropriately, and mount them so that they can be used in the rest of the installation. 
 
-						<div id="bodyContent" class="mw-body-content">
-							<div id="siteSub">From Gentoo Wiki</div>
-							<div id="contentSub">
-															</div>
-														<div id="jump-to-nav" class="mw-jump">
-								Jump to:								<a href="#column-one">navigation</a>, 								<a href="#searchInput">search</a>
-							</div>
+Let's go!
 
-							<div id="mw-content-text"><p>You do not have permission to create this page, for the following reasons:
-</p>
-<ul class="permissions-errors">
-<li>The action you have requested is limited to users in the group: <a href="/index.php?title=Project:Users&action=edit&redlink=1" class="new" title="Project:Users (page does not exist)">Users</a>.</li>
-<li>You must confirm your email address before editing pages.
-Please set and validate your email address through your <a href="/wiki/Special:Preferences" title="Special:Preferences">user preferences</a>.</li>
-</ul></div><div class="printfooter">
-Retrieved from "<a dir="ltr" href="https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key">https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key</a>"</div>
-<div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div>						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+== <span id="making_boot_usb_key">Formatting and Mounting the UEFI-Bootable USB Key</span> ==
 
-			<footer>
-		<div class="container">
-			<div class="row">
-				<div class="col-xs-12 col-md-offset-2 col-md-7">
-											<div class="spacer"></div>
-						<ul id="f-list">
-							<li id="privacy>"><a href="/wiki/Gentoo_Wiki:Privacy_policy" class="mw-redirect" title="Gentoo Wiki:Privacy policy">Privacy policy</a></li><li id="about>"><a href="/wiki/Gentoo_Wiki:About" title="Gentoo Wiki:About">About Gentoo Wiki</a></li><li id="disclaimer>"><a href="/wiki/Gentoo_Wiki:General_disclaimer" title="Gentoo Wiki:General disclaimer">Disclaimers</a></li>						</ul>
-									</div>
-				<div class="col-xs-12 col-md-3">
-					<!-- No questions or comments, the Wiki has enough information on how to contact us. -->
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-xs-3 col-md-2">
-					<ul class="footerlinks three-icons">
-						<li><a href="https://twitter.com/gentoo" title="@Gentoo on Twitter"><span class="fa fa-twitter fa-fw"></span></a></li>
-						<li><a href="https://www.facebook.com/gentoo.org" title="Gentoo on Facebook"><span class="fa fa-facebook fa-fw"></span></a></li>
-						<li></li>
-					</ul>
-				</div>
-				<div class="col-xs-9 col-md-9">
-					<strong>&copy; 2001&ndash;2020 Gentoo Foundation, Inc.</strong><br />
-					<small>
-						Gentoo is a trademark of the Gentoo Foundation, Inc.
-						The contents of this document, unless otherwise expressly stated, are licensed under the
-						<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license">CC-BY-SA-3.0</a> license.
-						The <a href="https://www.gentoo.org/inside-gentoo/foundation/name-logo-guidelines.html">Gentoo Name and Logo Usage Guidelines</a> apply.
-					</small>
-				</div>
-			</div>
-		</div>
-	</footer>
-	
-<script>
-function defer(method) {
-    if (window.jQuery) {
-        method();
-    } else {
-        setTimeout(function() { defer(method) }, 50);
-    }
-}
-defer(function() { mw.loader.load( 'https://assets.gentoo.org/tyrian/bootstrap.min.js'); });
-</script>
+We are going to use our smaller (>= 250 MB) USB key as the boot device for Gentoo Linux. Since we want it to work under UEFI, we must format it using [[:Wikipedia:GUID_Partition_Table|GPT]] with a single {{c|fat32}} EFI system partition.
 
-<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":93});});</script></body></html>
+{{Warning|This process will wipe everything on the USB key, so be sure to back it up if necessary.}}
+
+Issue (using of course the {{c|ssh}} / {{c|screen}} terminal we have just established):
+{{RootCmd
+|lsblk
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+And note the output. Then, insert the smaller capacity USB key into one of the remaining free USB slots on the target machine, and determine its device path. We will refer to its <span id="determine_efi_dev">path</span> in these instructions as {{Path|/dev/sdY}}, but in reality on your system it will be something like {{Path|/dev/sdc}}, {{Path|/dev/sdd}} etc. You can find what it is, by issuing {{c|lsblk}} again, and noting what has changed:
+{{RootCmd
+|lsblk
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+(note that the initial {{Path|/dev/}} prefix is not shown in the {{c|lsblk}} output)
+
+The minimal-install image shouldn't auto-mount the USB key, even if it has any existing partitions, but double-check to make sure (no mountpoints for the device should be shown in the output of the above command).
+
+Now, using {{Highlight|parted}}, we will <span id="setup_system_partition">create</span> a single primary partition, sized so as to fill the USB key completely (you can of course use a more modest extent if your drive is much larger than the minimum required size), and set its [http://forums.fedoraforum.org/archive/index.php/t-271111.html somewhat confusingly named] 'boot' flag (i.e., mark the partition as a GPT system partition). Issue:
+
+{{RootCmd
+|parted -a optimal /dev/sdY
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+GNU Parted 3.2
+... additional output suppressed ...
+(parted) mklabel gpt
+Warning: The existing disk label on /dev/sdY will be destroyed and all data on
+this disk will be lost. Do you want to continue?
+Yes/No? yes
+(parted) mkpart primary fat32 0% 100%
+(parted) set 1 BOOT on
+(parted) quit
+</pre>
+}} 
+{{Note|Replace {{Path|/dev/sdY}} in the above command with the path of the USB key you found above, such as {{Path|/dev/sdc}} or {{Path|/dev/sdd}} etc.}}
+
+Next, we need to format the partition fat32:
+
+{{RootCmd
+|mkfs.vfat -F32 /dev/sdY1
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Replace {{Path|/dev/sdY1}} in the above command with the path of first partition on the USB key, such as {{Path|/dev/sdc1}} or {{Path|/dev/sdd1}} etc.}}
+{{Tip|On some machines, a ''new'' drive letter will be assigned to the USB key after it has been edited by {{c|parted}} in this fashion. For example, if the drive was {{Path|/dev/sdc}} prior to editing, it may become {{Path|/dev/sdd}} afterwards. For avoidance of doubt, this issue will '''not''' affect most users; but, it is simple to check, by using {{c|lsblk}}.}}
+
+Now we create a <span id="temp_mount_efi">temporary mountpoint and mount</span> the partition:
+{{RootCmd
+|mkdir -v /tmp/efiboot
+|mount -v -t vfat /dev/sdY1 /tmp/efiboot
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|As before, remember to subsitute for {{Path|/dev/sdY1}} in the above.}}
+
+== <span id="create_gpg_luks_keyfile">Creating a Password-Protected Keyfile for LUKS</span> ==
+
+We will next create a (pseudo) random keyfile (for use with LUKS). This keyfile will be encrypted with [[:Wikipedia:Gnu_Privacy_Guard|GPG]] (using a typed-in passphrase) and then stored on the USB key.
+
+The point of this is to establish dual-factor security - both the (encrypted) keyfile, ''and'' your passphrase (to decrypt it) will be required to access the LUKS data stored on the target machine's hard drive. This means that even if a keylogger is present, should the machine be stolen - powered down but without the USB key - the LUKS data will still be safe (as the thief will not have your encrypted keyfile). Similarly, (assuming no keylogger!) if your machine were to be stolen powered down but with the USB key still in it, it will also not be possible to access your LUKS data (as in this case the thief will not know your passphrase).
+
+Note that we are going to create a (one byte short of) 8192[[:Wikipedia:Kibibyte|KiB]] underlying (i.e., binary plaintext) keyfile, even though, for the symmetric LUKS cipher we'll be using ([[:Wikipedia:Serpent_(cipher)|Serpent]]), the maximum supported key size is 256 bits (32 bytes) (or two 256 bit keys = 512 bits = 64 bytes in XTS mode, as explained later). This works because LUKS / {{c|cryptsetup}} uses the [[:Wikipedia:PBKDF2|PBKDF2]] key derivation function to map the keyfile into the actual (user) key material internally (which in turn is used to unlock the master key actually used for sector encryption / decryption), so we are free, within limits, to choose whatever size keyfile we want. As such, we elect to use the largest legal size, so as to make it (very slightly) harder for any data capture malware (in low-level drivers, for example) to intercept the file and squirrel it away, or transmit it over the network surreptitiously. In theory, the {{c|cryptsetup}} system can support keyfiles up to and including 8192KiB (execute <code>cryptsetup --help</code> to verify this); in practice, due to a off-by-one bug, it supports only keyfiles strictly less than 8[[:Wikipedia:Mebibyte|MiB]]. We therefore create a keyfile of length (1024 * 8192) - 1 = 8388607 bytes.
+
+Note that we'll use the [[:Wikipedia:/dev/random|/dev/urandom]] source to create the underlying (binary plaintext) pseudo-random keyfile, and then pipe it to gpg to encrypt (using a passphrase of your choosing). The resulting binary ciphertext is saved to the USB key. This avoids ever having the binary plaintext keyfile stored on disk anywhere (and indeed not even you need ever see the unencrypted contents). Enter:
+{{RootCmd
+|export GPG_TTY{{=}}$(tty)
+|dd if{{=}}/dev/urandom bs{{=}}8388607 count{{=}}1 {{!}} gpg --symmetric --cipher-algo AES256 --output /tmp/efiboot/luks-key.gpg
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+Enter passphrase
+Passphrase <your new passphrase>
+Please re-enter this passhprase
+Passphrase <your new passphrase again>
+... further output suppressed ...
+</pre>
+}}
+{{Note|We <span id{{=}}"lc_ctype_problem">need</span> to set the <var>GPG_TTY</var> variable here, otherwise gpg's pinentry password system may misbehave. If you are connecting over {{c|ssh}}, and your helper system has locale settings not available within the minimal install environment, you may get complaints about <code>no LC_CTYPE known</code> printed by {{c|pinentry}}; these can generally be ignored, and result from {{c|sshd}} on the target machine attempting to use the helper machine's environment.<ref name{{=}}"set_locale_failed">ServerFault Q&A Site: [http://serverfault.com/questions/304469/setting-locale-failed-force-certain-locale-when-connecting-through-ssh "Setting locale failed: force certain locale when connecting through ssh"]</ref>}}
+{{Note|We are using the symmetric [[:Wikipedia:Advanced_Encryption_Standard|AES]] cipher here with a 256 bit key (derived from your passphrase) to protect the ''keyfile''. We'll use a different cipher ([[:Wikipedia:Serpent_(cipher)|Serpent]]) in LUKS to protect the hard drive partition. Note also that the {{Path|/tmp/efiboot/luks_key.gpg}} file will be larger than 8388607 bytes, due to the GPG 'wrapper'.}}
+{{Warning|If you lose the (encrypted) keyfile, or forget the passphrase, it's game over for your LUKS data. Therefore, be sure to backup both keyfile and passphrase (to separate, secure locations).}}
+
+What <span id="correct_horse_battery_staple">passphrase</span> you choose to protect your LUKS keyfile is, of course, entirely up to you, but do consider the approach of using a longer list of everyday words, rather than the more traditional cryptic {{Highlight|str1ng5 @f}} characters. Advantages include:<ref>Information Security Stack Exchange: [http://security.stackexchange.com/questions/6095/xkcd-936-short-complex-password-or-long-dictionary-passphrase "XKCD #936: Short complex password, or long dictionary passphrase?"]</ref>
+* it's easier to hit a reasonable level of entropy;
+* you are less likely to forget the resulting passphrase; and
+* your passphrase will be more robust in the face of keymapping snafus at boot time.
+
+== <span id="create_partition_for_luks">Creating a New GPT Partition on the PC's Main Drive</span> ==
+
+Our next task is to create a new GPT partition on the target PC's hard drive (which we [[../Preparing_Windows_for_Dual-Booting#shrink_windows_partition|freed up space for earlier]]).
+
+We will use the {{c|parted}} tool, instruct it to use sectors for units, and then display the free space on the current drive. We'll then create a new primary partition on that drive using all the available space indicated.
+
+{{Warning|Please take particular care with this step. {{c|parted}} can cause '''catastrophic data loss''' if misused and, unlike {{c|fdisk}}, writes changes immediately.}}
+
+We must first find the device path of the main hard drive on the target machine. We will refer to this as {{Path|/dev/sdZ}} in the following text, but it will be something like {{Path|/dev/sda}}, {{Path|/dev/sdb}} etc. on your machine. Check the actual path with:
+
+{{RootCmd
+|lsblk
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+If you are dual booting with Windows, you'll probably see that the desired drive has between four and six existing partitions, depending on your version of Windows  (note that the initial {{Path|/dev/}} prefix is not shown in the {{c|lsblk}} output). None of these should be mounted (all should have blank mountpoints in the output of {{c|lsblk}}).
+
+Now we will create the partition:
+{{RootCmd
+|parted -a optimal /dev/sdZ
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+GNU Parted 3.1
+... additional output suppressed ...
+(parted) unit s
+(parted) print free
+... additional output suppressed ...
+Number  Start      End         Size        File system  Name                          Flags
+... additional output suppressed ...
+        AAAs       BBBs        CCCs        Free Space
+
+(parted) mkpart primary AAAs BBBs
+(parted) quit
+</pre>
+}} 
+{{Note|Replace {{Path|/dev/sdZ}} in the above command with the path of the target machine's main drive (the one on which Windows is installed), such as {{Path|/dev/sda}}. Note also that we need to target the device itself, and not a partition within it, so for {{Path|/dev/sdZ}} in the above command, use e.g. {{Path|/dev/sda}} and ''not'' {{Path|/dev/sda1}}; {{Path|/dev/sdb}} and ''not'' {{Path|/dev/sdb1}}, etc.}}
+{{Note|You should of course also substitute for <code>AAA</code> and <code>BBB</code>, whatever output is displayed for the boundaries of the free space when you issue the {{c|print free}}. For example, if you got back <pre>        89362432s  500118158s  410755727s  Free Space</pre> you would issue <pre>(parted) mkpart primary 89362432s 500118158s</pre>
+You can make the partition smaller, if you do not wish to use all of the remaining space for the Gentoo install. It can be useful to reserve some space (<{{=}}1[[:Wikipedia:Gibibyte{{!}}GiB]], say) for e.g. an emergency recovery partition, but whether to do so is entirely up to you.}}
+{{Note|You may see multiple blocks of free space listed (particularly with modern versions of Windows 10; in this case, just use the largest one.}}
+{{Note|The suffix 's' in the dimensions passed above tells parted that you are using 'sector' units. Do not omit it!}}
+{{Note|If {{c|parted}} complains that your new partition is '''not properly aligned for best performance''', you may wish to cancel the {{c|mkpart}}, then try again with modified values: rounding the start address ''up'' to the nearest 2048, and the end address ''down'' to the nearest 2048 sectors. For example, if the largest free block prior to creation of the new partition was reported as <pre>224107278s  469868543s  245761266s  Free Space</pre>you could do the following on your helper PC to calculate optimal values:{{Cmd
+|echo "$((((224107278 + 2047) / 2048) * 2048))s $((469868543 - (469868543 % 2048)))s"
+|output=<pre>
+224108544s 469866496s
+</pre>
+|prompt=user@pc2 $}}
+so you would issue: <pre>(parted) mkpart primary 224108544s 469866496s</pre> Obviously, adapt using the sector start and end addresses for the free space block on your drive! Incidentally, the 'magic number' 2048 is a safe choice for most drives; but you can easily calculate the actual optimal value for your own device, if desired.<ref name="optimal_partitions">Rainbow Chard Blog: [http://rainbow.chard.org/2013/01/30/how-to-align-partitions-for-best-performance-using-parted/ ''How to align partitions for best performance using parted'']</ref>}}
+{{Note|If the drive you are using has ''not'' yet been partitioned, the {{c|print free}} command will not output data as above. In such a case, you will need to issue a <code>mklabel gpt</code> command within {{c|parted}} first. However, do '''not''' do this (i.e., issue <code>mklabel gpt</code>) on an already-partitioned drive; you will lose all the data on there if you do!<br>Users who are targeting a fresh disk in this way may also find it easier to create the partition itself with the {{c|parted}} command <code>mkpart primary 0% 100%</code>, as this will deal with all sector alignment issues etc. (Users with existing data on their drives should '''not''' do this however, but instead follow the commands given in the main text.)}}
+{{Note|Additionally, users who are ''not'' co-installing with Windows may find it useful to create two partitions on {{Path|/dev/sdZ}}: the main one as specified above, and a second EFI system partition. This will allow e.g. subsequent migration of the kernel from the boot USB key to the main drive later if desired. Users who ''do'' intend to dual-boot with Windows should ignore this point: your hard drive already contains an EFI system partition.}}
+
+Now check that the partition has been created correctly. We'll <span id="find_luks_partition">issue</span> an {{c|lsblk}} command again:
+{{RootCmd
+|lsblk
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Take note of the new sector device path  (note that the initial {{Path|/dev/}} prefix is not shown in the {{c|lsblk}} output). We will refer to this as {{Path|/dev/sdZn}} in the below, but it will actually be something like {{Path|/dev/sda7}}, {{Path|/dev/sdb7}} etc. If you have a non-standard Windows setup, the number of the new partition may also be something other than 7 (for example, on older Windows 10 and most Windows 8 systems it is more likely to be 5), so do please double check.
+
+== <span id="fuzz_luks_partition">Overwriting the New Partition with Pseudo-Random Data (Optional Step)</span> ==
+
+You can [[#format_luks_partition|skip this step]] if you like. The main reasons to perform an overwrite are:
+* to purge any old, unencrypted data that may still be present in the partition (from prior use); and
+* to make it somewhat harder for an attacker to determine how much data is on your drive if the machine is compromised.
+
+However, it may make things slower on a solid-state drive, by forcing any new writes to first delete a sector (once any overcapacity has been exceeded), rather than simply writing to a fresh, unused one (and furthermore, it cannot completely be guaranteed that old data ''has'' been wiped, when using such devices).
+
+This command may take a number of hours to complete.
+
+{{Warning|The step below will '''destroy''' existing data on the partition; please double check to ensure you have the correct device path (e.g., {{Path|/dev/sda7}} etc.) before continuing.}}
+{{RootCmd
+|dd if{{=}}/dev/urandom of{{=}}/dev/sdZn bs{{=}}1M status{{=}}progress && sync
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Replace {{Path|/dev/sdZn}} in the above command with the device path for the partition we just created, e.g., {{Path|/dev/sda7}}.}}
+
+You will be able to see {{c|dd}} slowly progressing. Wait for it to complete before proceeding to the next step.
+
+== <span id="format_luks_partition">Formatting the New Partition with LUKS</span> ==
+
+The next step is to format the partition using [[:Wikipedia:Linux_Unified_Key_Setup|LUKS]]. LUKS, which stands for Linux Unified Key Setup, is as the name suggests primarily a way to manage the encryption keys for whole-partition (or drive) encryption. It does this by first generating a high-entropy, secret, ''master key'', which is then encrypted using between one and eight ''user keys'' (themselves first pre-processed by [[:Wikipedia:PBKDF2|PBKDF2]]). 
+
+The target partition itself begins with a LUKS metadata header, followed by the encrypted master key material corresponding to each of the 8 possible user 'slots', and finally the bulk, encrypted (payload) data itself (the encrypted sector data for the partition).
+
+The LUKS master key itself is ''never'' stored in unencrypted form on the partition, nor (unless you explicitly request it) even made visible to you, the user.
+
+LUKS uses a cryptographic splitting and chaining technique to artificially inflate the size of the key material for each slot into a number of interdependent 'stripes'. This is done to increase the likelihood that, when a slot is modified (a user key is revoked, or changed, for example), that the old key material is, indeed, irrecoverable (necessary, since under LUKS the partition master key is ''never'' changed once created). Be warned though, that with solid-state drives no guarantees can be given, if you change a user key, that the old key material is not retained on the drive somewhere (due to wear-levelling etc.).<ref>cryptsetup: [https://gitlab.com/cryptsetup/cryptsetup/wikis/FrequentlyAskedQuestions "Frequently Asked Questions"]; section 5.19/</ref>
+
+LUKS functions are accessed via the {{Highlight|cryptsetup}} program, and use [[Dm-crypt|dm-crypt]] for the back-end processing. Note that LUKS is agnostic as to the actual symmetric encryption method used, provided it is supported by dm-crypt. You can get a list of the (currently loaded) encryption and hash algorithms by issuing:
+{{RootCmd
+|cat /proc/crypto
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+(You may have others available as kernel modules, which will be loaded when required).
+
+What we need to do is tell {{c|cryptsetup}}:
+* the underlying block cipher we want to use (block ciphers work on fixed-size units, or blocks, of data to encrypt or decrypt at a time), 
+* the key length to use with this cipher,
+* the way we'll ''tweak'' it to en/decrypt amounts of data larger than one cipher block (many ciphers use a 16-byte block, and sectors, the indexing unit, are larger than this), 
+* what processing, if any, should be applied to the sector index number during [[:Wikipedia:Initialization_vector|IV]] computation, and
+* the hash algorithm used for key derivation (under the [[:Wikipedia:PBKDF2|PBKDF2]] algorithm within LUKS)
+
+This isn't a cryptography primer ([[:Wikipedia:Disk_encryption_theory|see this article]] for further reading), but here's a thumbnail justification for the choices made:
+* we will use [[:Wikipedia:Serpent_(cipher)|Serpent]] as the block cipher; this came second in the AES competition [http://www.100tb.com/blog/2013/05/security-performance-serpent-cipher-rijndael/ mainly for reasons of speed], but has a more conservative design (32 rounds as opposed to 14) and scored a higher safety factor when compared to the [[:Wikipedia:Rijndael|Rijndael]] algorithm that won the competition (and which, accordingly, is now commonly referred to as 'AES');
+* for security, we'll use the longest supported key length for Serpent, which is 256 bits (see the following point, however);
+* we will use [[:Wikipedia:XEX-TCB-CTS#XEX-based_tweaked-codebook_mode_with_ciphertext_stealing_.28XTS.29|XTS]] mode to both extend the cipher over multiple blocks within a sector, and perform the by-sector-index 'tweaking'; this approach overcomes the security weakness in the more conventional [[:Wikipedia:Cipher_block_chaining#Cipher-block_chaining_.28CBC.29|CBC]] / [[:Wikipedia:ESSIV|ESSIV]] methodology, whereby an attacker, although unable to read the encrypted material, can yet, if they know the cleartext for that sector (possible for some system files), arbitrarily modify alternating blocks to inject shellcode<ref>Lell, Jakob. [http://www.jakoblell.com/blog/2013/12/22/practical-malleability-attack-against-cbc-encrypted-luks-partitions/ "Practical malleability attack against CBC-encrypted LUKS partitions"]</ref>; this is a non-trivial concern for a dual-boot machine where the Windows side of things is untrusted (and has access to the encrypted contents of the LUKS partition when running). Note that since XTS mode actually requires ''two'' keys, we must pass an effective key length of 512 (= 2 x 256) bits to {{c|cryptsetup}};
+* as XTS is a (modified) ''counter'' mode, we will simply pass the untransformed ("plain") 64-bit sector index to it (using a 64-bit index will allow for disks > 2TiB);<ref>dm-crypt Mailing List: [http://www.saout.de/pipermail/dm-crypt/2010-July/001039.html "Using plain64/plain IV (initialisation vector) in dm-crypt"]</ref>
+* we will use [[:Wikipedia:Whirlpool_(cryptography)|Whirlpool]] as the user key hashing function for LUKS' PBKDF2 processing; it is a 512 bit hash that has been recommended by the [[:Wikipedia:NESSIE|NESSIE]] project. Note that Whirlpool hash will appear in the output from {{Path|/proc/crypto}} as {{c|wp512}} (if loaded).
+
+We decrypt our keyfile from the USB key (using {{c|gpg}}) and pipe it to {{c|cryptsetup}}, to avoid the unencrypted keyfile having to be saved to disk. The <code>--cipher</code> and <code>--hash</code> strings instruct {{c|cryptsetup}} to use the settings just discussed.
+
+{{Warning|The step below will '''destroy''' existing data on the partition; please double check to ensure you have the correct device path (e.g., {{Path|/dev/sda7}} etc.) before continuing. When you pipe the keyfile in this way, {{c|cryptsetup}} will ''not'' ask you if you are sure prior to formatting.}}
+{{RootCmd
+|gpg --decrypt /tmp/efiboot/luks-key.gpg {{!}} cryptsetup --cipher serpent-xts-plain64 --key-size 512 --hash whirlpool --key-file - luksFormat /dev/sdZn
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+<when prompted, type the passphrase for the gpg keyfile you setup earlier>
+... additional output suppressed ...
+</pre>
+}}
+{{Note|Replace {{Path|/dev/sdZn}} in the above command with the device path for the partition we just created, e.g., {{Path|/dev/sda7}}. <br>Also, you ''may'' see some errors of the form <code>device-mapper: remove ioctl on XXX failed: Device or resource busy</code>; these can generally be ignored, provided the {{c|luksDump}} command (described below) works.}}
+{{Note|Depending on how soon after first creating the {{c|gpg}} keyfile you issue the above command, you may find that you are not prompted for a passphrase at all. That's because your passphrase has been (temporarily) cached behind the scenes, for convenience, by {{c|gpg-agent}}. If you ''want'' to force the passphrase prompt (for example to double-check you have the passphrase written down correctly!), you can do so by issuing the following prior to the {{c|luksFormat}} command above:
+{{RootCmd
+|echo RELOADAGENT {{!}} gpg-connect-agent
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+}}
+{{Note|By default, {{c|cryptsetup}} uses {{Path|/dev/random}} as its random number generator (RNG); this ''may'' run out of entropy when formatting the partition and print a warning; if this happens, just run your finger over the touchpad of the target machine (or move its mouse, if attached) until the process completes.}}
+{{Note|If you use the Whirlpool hash (as we have done), be aware that you will not be able to open the LUKS container using {{Package|dev-libs/libgcrypt}} < v1.6.0, because of a bug in those earlier versions when writing data to the Whirlpool hash function in chunks.<ref>dm-crypt Mailing List: [http://www.saout.de/pipermail/dm-crypt/2014-January/003813.html "Whirlpool in gcrypt <= 1.5.3 broken (if writes in chunks)?"]</ref>}}
+{{Note|If you'd rather use a vanilla approach, omit the <code>--cipher</code> and <code>--hash</code> arguments; {{c|cryptsetup}} will then revert to its compiled-in defaults (which you can see using)
+{{RootCmd
+|cryptsetup --help
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+At the time of writing, this implies <code>aes-xts-plain64</code>, so [[:Wikipedia:Rijndael|Rijndael]] (AES) rather than [[:Wikipedia:Serpent_(cipher)|Serpent]], with a 256bit key (which really means 2 x 128bit keys, given XTS mode, so less secure than our 512bit ({{=}} 2 x 256bit) variant), and SHA1 for the LUKS password hashing, which again is arguably less good than Whirlpool. Ultimately, the choice is yours of course.}}
+{{Note|Although you ''can'' specify an additional hash postfix in the <code>--cipher</code> string (e.g. <code>serpent-xts-plain64:whirlpool</code> rather than simply <code>serpent-xts-plain64</code>), it will be ''ignored'' by the kernel in plain64 mode.<ref>dm-crypt Mailing List: [http://www.spinics.net/lists/dm-crypt/msg05521.html "Re: Non-standard cipher mode"]</ref> As such, you should omit it (as we have done). Remember, this postfix is ''only'' used to specify the hash function for [[:Wikipedia:Initialization_vector|IV]] processing (if any), and so is relevant in [[:Wikipedia:ESSIV|ESSIV]] mode, for example. It has ''nothing'' to do with the hash used in the LUKS header, which is specified by the <code>--hash</code> argument, as above.}}
+
+Check that the formatting worked, with:
+{{RootCmd
+|cryptsetup luksDump /dev/sdZn
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Replace {{Path|/dev/sdZn}} in the above command with the device path for the LUKS partition, e.g., {{Path|/dev/sda7}}.}}
+
+This should print out information about the LUKS setup on the sector, and show that one of the 8 keyslots (slot 0) is now in use (incidentally, pointing out that LUKS does not provide any plausible deniability about the use of encryption! You ''can'' [https://www.kernel.org/pub/linux/utils/cryptsetup/v1.4/v1.4.0-ReleaseNotes detach the header] and store it on a separate device, but we won't do that here as it isn't supported in the standard {{c|genkernel}} init scripts that we'll rely on later.).
+{{Important|<span id{{=}}"luks_header_backup">If</span> the LUKS header gets damaged, your encrypted data will be lost forever, even if you have a backup of the GPG key and passphrase. Therefore, you may wish to consider backing up this header to a separate device, and storing it securely. See the [https://gitlab.com/cryptsetup/cryptsetup/wikis/FrequentlyAskedQuestions#6-backup-and-data-recovery LUKS FAQ] for more details on how to do this.<br>For example, to save a copy of the current LUKS header to your boot USB key (doing so is optional), you could now issue, per the FAQ:
+{{RootCmd
+|cryptsetup luksHeaderBackup /dev/sdZn --header-backup-file /tmp/efiboot/luks-header.img
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Replace {{Path|/dev/sdZn}} in the above command with the device path for the LUKS partition, e.g., {{Path|/dev/sda7}}.<br>'''Be aware''' that if you do keep a LUKS header backup in this fashion, and subsequently revoke any of the keyslots, that the old keys will ''still'' be usable to unlock the LUKS partition, to those with access to that header backup file.
+}}
+
+== <span id="add_fallback_luks_passphrase">Adding a Fallback Passphrase (Optional Step)</span> ==
+
+Since LUKS supports up to 8 user key 'slots', you can, if you wish, add an additional (traditional) passphrase to your LUKS container now. This is not intended for use day-to-day, but simply as a last-resort fallback, should you lose the USB key with the GPG keyfile on it, for example.
+
+{{Warning|If you are concerned that your machine might already contain a keylogger, '''do not''' perform this step; [[#create_lvm_structure{{!}}click here]] to jump to the next task instead.}}
+{{Important|If, at the conclusion of the tutorial, you wish to be able to switch to booting ''without'' using the GPG keyfile, then you ''should'' setup a fallback passphrase now.}}
+
+Unfortunately, the necessary {{c|cryptsetup}} command requires that we provide an existing valid user key in addition to the new one we want to add. If we pipe this in directly from {{c|gpg}} (as we did earlier), then cryptsetup will not prompt correctly for a new passphrase. To get around this issue, without writing the existing GPG key out in binary plaintext form to a disk file, we'll use a [http://www.linuxjournal.com/article/2156 named pipe].
+
+Assuming you're using {{c|screen}}, hit {{Key|Ctrl}}{{Key|a}} followed by {{Key|c}} to start a new virtual console. Then type:
+{{RootCmd
+|mkfifo /tmp/gpgpipe
+|echo RELOADAGENT {{!}} gpg-connect-agent
+|gpg --decrypt /tmp/efiboot/luks-key.gpg {{!}} cat - >/tmp/gpgpipe
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+<when prompted, type the passphrase for the gpg keyfile you setup earlier>
+... additional output suppressed ...
+</pre>
+}}
+(The slightly odd approach of piping via {{c|cat}} is intentional.) This will block once you type in your passphrase, as nothing is connected to the other end our the named pipe (yet). Now switch back to the original virtual console with {{Key|Ctrl}}{{Key|a}} followed by {{Key|p}}, and enter:
+
+{{RootCmd
+|cryptsetup --key-file /tmp/gpgpipe luksAddKey /dev/sdZn
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+Enter new passphrase for key slot: <type your new fallback passphrase>
+Verify passphrase: <type your fallback passphrase again>
+</pre>
+}}
+{{Note|Replace {{Path|/dev/sdZn}} in the above command with the device path for the LUKS partition, e.g., {{Path|/dev/sda7}}.}}
+
+Verify that this worked by issuing:
+{{RootCmd
+|cryptsetup luksDump /dev/sdZn
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Replace {{Path|/dev/sdZn}} in the above command with the device path for the LUKS partition, e.g., {{Path|/dev/sda7}}.}}
+
+You should now see slot 1 is enabled, as well as slot 0. Now, remove the named pipe, since we no longer need it:
+{{RootCmd
+|rm -vf /tmp/gpgpipe
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Lastly, switch back to the second virtual console with {{Key|Ctrl}}{{Key|a}} followed by {{Key|n}}, and then hit {{Key|Ctrl}}{{Key|d}} to close it out and return to the original console again.
+
+== <span id="create_lvm_structure">Creating the LVM Structure (PV->VG<-LVs) on Top of LUKS</span> ==
+
+Our next step is to set up an LVM structure within the LUKS container we just created. LVM stands for Logical Volume Manager: a useful overview may be found [https://wiki.archlinux.org/index.php/LVM here], and a handy command cheatsheet [http://www.datadisk.co.uk/html_docs/redhat/rh_lvm.htm here]. It is a highly flexible virtual partition system. Some important LVM terminology is as follows:
+* A {{Highlight|physical volume (PV)}} is an underlying storage device (for example,  an actual disk partition or loopback file), which is managed by LVM. PVs have a special header, and are divided into physical extents.
+* A {{Highlight|physical extent (PE)}} is the smallest allocatable unit of a PV. We will use the default PE size of 4MiB in this tutorial.
+* A {{Highlight|logical volume (LV)}} is LVM's equivalent of a partition. It contains ''logical extents'', which are mapped one-to-one onto the PEs of contributing physical volumes. Note - unlike a conventional partition, because of this architecture an LV can span multiple underlying physical volumes, and a physical volume can host multiple logical volumes, if desired. The LV appears as a standard block device, and so can be formatted with any normal Linux filesystem (e.g. [[ext4]]). We will create LVs for the root directory, the user home directory and swap in this tutorial.
+* A {{Highlight|volume group (VG)}} is an administrative unit gathering together a collection of LVs and PVs. We will create a single VG containing a single PV, and (as just mentioned) three LVs.
+
+The main reason we're using LVM here is to provide a simple way to get three 'logical' partitions on top of a single underlying LUKS container (partition). LVM also provides a number of additional advantages when resizing, backing up, or moving partitions, in exchange for a little initial configuration overhead.<ref>Arch Linux Wiki: [https://wiki.archlinux.org/index.php/LVM#Advantages "LVM: Advantages"]</ref>
+
+To proceed with LVM, the first thing we need to do is ''open'' the LUKS volume we just created, as it will host our single PV. Issue:
+
+{{RootCmd
+|gpg --decrypt /tmp/efiboot/luks-key.gpg {{!}} cryptsetup --key-file - luksOpen /dev/sdZn gentoo
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+Enter passphrase
+<type the passphrase for the gpg keyfile you setup earlier>
+... additional output suppressed ...
+</pre>
+}}
+{{Note|Replace {{Path|/dev/sdZn}} in the above command with the device path for the LUKS partition, e.g., {{Path|/dev/sda7}}.}}
+{{Note|Depending on how soon after last decrypting the {{c|gpg}} keyfile you issue the above command, you may find that you are not prompted for a passphrase at all. That's because your passphrase has been (temporarily) cached behind the scenes, for convenience, by {{c|gpg-agent}}. If you ''want'' to force the passphrase prompt (for example to double-check you have the passphrase written down correctly!), you can do so by issuing the following prior to the {{c|luksOpen}} command above:
+{{RootCmd
+|echo RELOADAGENT {{!}} gpg-connect-agent
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+}}
+
+Check that this worked:
+{{RootCmd
+|ls /dev/mapper
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+control  gentoo
+</pre>
+}}
+You should see the device 'gentoo' in the device mapper list, as above. This is our unlocked LUKS partition.
+
+Next, we'll create an LVM physical volume (PV) on this partition:
+
+{{RootCmd
+|pvcreate /dev/mapper/gentoo
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|If you see a warning such as:{{GenericCmd|<pre>
+  /run/lvm/lvmetad.socket: connect failed: No such file or directory
+  WARNING: Failed to connect to lvmetad. Falling back to internal scanning.
+</pre>}} when running this or subsequent LVM commands, it may generally safely be ignored.}}
+
+Then, we create a volume group (VG) hosting this PV. We'll call the new VG "vg1". Note that since we're using lvm2 format here, there's no need to set a larger physical extent size - the default of 4MiB per PE will be fine <ref>Fedora Forum: [http://forums.fedoraforum.org/showthread.php?t=281745 "LVM PE size - is it important?"]</ref>:
+{{RootCmd
+|vgcreate vg1 /dev/mapper/gentoo
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Important|<span id{{=}}"vg_name_warning">Please use the suggested VG name</span> ({{c|vg1}}), since this is assumed by the {{c|buildkernel}} utility later. If you do need to change it, you'll need to override <var>CMDLINE_REAL_ROOT</var> and <var>CMDLINE_REAL_RESUME</var> variables appropriately in {{Path|/etc/buildkernel.conf}} [[../Configuring_and_Building_the_Kernel#deal_with_different_vg_name{{!}}later in the tutorial]].}} 
+
+Now, we'll create three logical volumes (LVs) in this volume group. The first is for swap. To allow the use of {{Highlight|suspend to disk}} (which we'll setup [[../Final_Configuration_Steps#suspend_hibernate|later]]) we'll want a swap slightly larger than the size of our RAM. So first, find the size of RAM on your system with:
+
+{{RootCmd
+|grep MemTotal /proc/meminfo
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+In the case of the CF-AX3, this shows just under 8[[:Wikipedia:Gibibyte|GiB]], hence we'll allocate 10GiB. Adjust this for your system and preferences. If you don't want to use suspend to disk, a much smaller swap would work just as well.
+
+{{RootCmd
+|lvcreate --size 10G --name swap vg1
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|LVM uses base-2 units, so this is 10GiB. Adjust the size to suit your system, as described above.}}
+{{Note|If {{c|lvcreate}} complains about not being able to wipe the start of the LV, try adding the <code>-Z n</code> parameter to the previous command. Supposedly it is dangerous to mount an LV whose first few kilobytes haven't been wiped, but then again, you'll be formatting your LV with a filesystem.}}
+
+Next, we'll create a relatively large LV to hold our root partition. This will eventually hold everything apart from the user home directories, and, since this is Gentoo, we'll need a fair amount of room for {{c|portage}} files and so on. We'll allow 50GiB here - if you wish you can make this smaller or larger of course:
+
+{{RootCmd
+|lvcreate --size 50G --name root vg1
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|LVM uses base-2 units, so this is 50GiB. Adjust the size to suit your needs, as described above.}}
+
+Finally, let's create a third LV to hold the user home directories. We'll instruct LVM to use almost all the remaining space on the LUKS container for this, leaving 5% of the (so far unused space) free (this additional room will come in useful if you want to take a snapshot<ref>Arch Linux Wiki: [https://wiki.archlinux.org/index.php/Create_root_filesystem_snapshots_with_LVM "Create root filesystem snapshots with LVM"]</ref> later, for example).
+
+{{RootCmd
+|lvcreate --extents 95%FREE --name home vg1
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+You should now be able to look at the status of the physical volume (PV), volume group (VG) and logical volumes (LVs), as follows:
+
+{{RootCmd
+|pvdisplay
+|vgdisplay
+|lvdisplay
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+The final task in this step is to <span id="activate_lvm">'activate'</span> the new volume group (vg1) so that it's logical volumes become available as block devices via the device mapper. Issue:
+
+{{RootCmd
+|vgchange --available y
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+This should inform you that three LVs in the vg1 volume group have been activated. Check that they are visible via the device mapper:
+
+{{RootCmd
+|ls /dev/mapper
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+control  gentoo  vg1-home  vg1-root  vg1-swap
+</pre>
+}}
+
+If your output looks similar to the above, then all is well. The new logical volumes ({{Path|/dev/mapper/vg1-home}}, {{Path|/dev/mapper/vg1-root}} and {{Path|/dev/mapper/vg1-swap}}) can be treated exactly like physical disk partitions (i.e., just like {{Path|/dev/sda1}} etc.).
+
+== <span id="create_lvm_lvs">Formatting and Mounting the LVM Logical Volumes (LVs)</span> ==
+
+Now we have our virtual partitions, we need to <span id="create_lvs">set up their filesystems</span> and then mount them.
+
+First, create the swap:
+{{RootCmd
+|mkswap -L "swap" /dev/mapper/vg1-swap
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Next, the root filesystem. We'll create this as [[ext4]] (you can of course modify this if you wish):
+
+{{RootCmd
+|mkfs.ext4 -L "root" /dev/mapper/vg1-root
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Finally, the user home filesystem, also ext4. Note that we use the {{c|-m 0}} option here, since ext4 will, by default, reserve 5% of the filesystem for the superuser, and we don't need that in this location, only on the root partition:
+{{RootCmd
+|mkfs.ext4 -m 0 -L "home" /dev/mapper/vg1-home
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Now, we activate the swap:
+{{RootCmd
+|swapon -v /dev/mapper/vg1-swap
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+And, per the handbook, mount the root directory at the pre-existing {{Path|/mnt/gentoo}} mountpoint:
+{{RootCmd
+|mount -v -t ext4 /dev/mapper/vg1-root /mnt/gentoo
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Next, we create the {{Path|/mnt/gentoo/home}} mountpoint, a {{Path|/mnt/gentoo/boot}} directory, and a {{Path|/mnt/gentoo/boot/efi}} mountpoint. The purpose of these is as follows:
+* {{Path|/mnt/gentoo/home}} will be the mountpoint for our home directory LV.
+* {{Path|/mnt/gentoo/boot}} will be the equivalent of the /boot directory in the Gentoo handbook. We will build our [[kernel]] and [[initramfs]] targeting this directory as usual, although, since we are booting from an UEFI USB key, this directory will ''not'' be used when booting the system itself. Instead, the {{c|buildkernel}} utility, supplied as part of this tutorial, will be used to copy the final, signed and bootable kernel image onto the USB key (at {{Path|/mnt/gentoo/efiboot}}) as part of the kernel build process. For that reason, we've converted {{Path|/mnt/gentoo/boot}} from a mountpoint to a regular directory in this tutorial.
+* {{Path|/mnt/gentoo/boot/efi}} will be the mountpoint for our USB boot key when inserted in the machine (when installing a new kernel, etc.). We currently have the key mounted at {{Path|/tmp/efiboot}} and will need to unmount it.
+
+Create the directories:
+{{RootCmd
+|mkdir -v /mnt/gentoo/{home,boot,boot/efi}
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Now mount the "home" LVM logical volume from the "vg1" volume group on the {{Path|/mnt/gentoo/home}} mountpoint:
+{{RootCmd
+|mount -v -t ext4 /dev/mapper/vg1-home /mnt/gentoo/home
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Next, we need to <span id="unmount_efi">unmount</span> the USB boot key's EFI partition from its current temporary mountpoint (we'll remount it later, when we build the kernel):
+{{RootCmd
+|umount -v /tmp/efiboot
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Finally, <span id="finding_blkids">issue</span>:
+
+{{RootCmd
+|blkid /dev/sdY1 /dev/sdZn
+|prompt=livecd <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Replace {{Path|/dev/sdY1}} in the above with the actual path of your USB boot key's first partition, which we found [[#making_boot_usb_key{{!}}earlier]] (e.g., {{Path|/dev/sdc1}} etc.), and {{Path|/dev/sdZn}} with the actual device path for the LUKS partition (e.g., {{Path|/dev/sda7}} etc.). }}
+
+Take note of the PARTUUIDs (unique partition identifiers) for these two partitions; we'll make use of them later (in the {{c|fstab}} and the kernel build script's configuration file), rather than relying on the {{Path|/dev/sd??}} paths (which can change depending on which devices are plugged in, and the order in which they are recognized).
+
+== <span id="next_steps">Next Steps</span> ==
+
+We're now ready to fetch the additional installation files and setup the build options. [[../Installing_the_Gentoo_Stage_3_Files|Click here]] to go to the next chapter, "Installing the Gentoo Stage 3 Files".
+
+== <span id="notes">Notes</span> ==
+{{reflist}}
+
+{| class="wikitable" style="margin: 1em auto 1em auto;"
+|-
+| [[../Setting_Up_Networking_and_Connecting_via_ssh|< Previous]]
+| [[../|Home]]
+| [[../Installing_the_Gentoo_Stage_3_Files|Next >]]
+|}
+
+[[Category:Core system]]
+[[Category:Security]]
+

@@ -1,216 +1,959 @@
+<!-- Page: Completing_OpenRC_Configuration_and_Installing_Necessary_Tools -->
 
-<html class="client-nojs" lang="en" dir="ltr">
-<head>
-<meta charset="UTF-8"/>
-<title>Permission error - Gentoo Wiki</title>
-<script>document.documentElement.className="client-js";RLCONF={"wgBreakFrames":!1,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"59d6da4aaca0cf1a2bcd0bc1","wgCSPNonce":!1,"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":!1,"wgNamespaceNumber":0,"wgPageName":"Sakaki's_EFI_Install_Guide/Completing_OpenRC_Configuration_and_Installing_Necessary_Tools","wgTitle":"Sakaki's EFI Install Guide/Completing OpenRC Configuration and Installing Necessary Tools","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":!1,"wgIsRedirect":!1,"wgAction":"edit","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgRelevantPageName":"Sakaki's_EFI_Install_Guide/Completing_OpenRC_Configuration_and_Installing_Necessary_Tools",
-"wgRelevantArticleId":0,"wgIsProbablyEditable":!1,"wgRelevantPageIsProbablyEditable":!1,"wgRestrictionCreate":[],"wgULSCurrentAutonym":"English","wgPageFormsTargetName":null,"wgPageFormsAutocompleteValues":[],"wgPageFormsAutocompleteOnAllChars":!1,"wgPageFormsFieldProperties":[],"wgPageFormsCargoFields":[],"wgPageFormsDependentFields":[],"wgPageFormsCalendarValues":[],"wgPageFormsCalendarParams":[],"wgPageFormsCalendarHTML":null,"wgPageFormsGridValues":[],"wgPageFormsGridParams":[],"wgPageFormsContLangYes":null,"wgPageFormsContLangNo":null,"wgPageFormsContLangMonths":[],"wgPageFormsHeightForMinimizingInstances":800,"wgPageFormsShowOnSelect":[],"wgPageFormsScriptPath":"/extensions/PageForms","edgValues":null,"wgPageFormsEDSettings":null,"wgAmericanDates":!1,"wgVisualEditor":{"pageLanguageCode":"en","pageLanguageDir":"ltr","pageVariantFallbacks":"en"},"wgULSPosition":"personal","wgEditSubmitButtonLabelPublish":!1};RLSTATE={"site.styles":"ready","noscript":"ready",
-"user.styles":"ready","user":"ready","user.options":"loading","ext.uls.pt":"ready","ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.smw.style":"ready","ext.smw.tooltip.styles":"ready","mediawiki.skinning.interface":"ready","mediawiki.skinning.content.externallinks":"ready","skins.tyrian.styles":"ready","skins.tyrian.icons":"ready"};RLPAGEMODULES=["ext.gentooPackages","site","mediawiki.page.startup","mediawiki.page.ready","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader"];</script>
-<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.implement("user.options@1hzgi",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
-});});</script>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.smw.style%7Cext.smw.tooltip.styles&only=styles&skin=tyrian"/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.uls.pt%7Cext.visualEditor.desktopArticleTarget.noscript%7Cmediawiki.skinning.content.externallinks%7Cmediawiki.skinning.interface%7Cskins.tyrian.icons%2Cstyles&only=styles&skin=tyrian"/>
-<script async="" src="/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=tyrian"></script>
-<link rel="stylesheet" href="https://assets.gentoo.org/tyrian/bootstrap.min.css"/><link rel="stylesheet" href="https://assets.gentoo.org/tyrian/tyrian.min.css"/>
-<meta name="ResourceLoaderDynamicStyles" content=""/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=site.styles&only=styles&skin=tyrian"/>
-<meta name="generator" content="MediaWiki 1.35.0"/>
-<meta name="robots" content="noindex,nofollow"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="theme-color" content="#54487a"/>
-<link rel="alternate" type="application/rdf+xml" title="Sakaki&#039;s EFI Install Guide/Completing OpenRC Configuration and Installing Necessary Tools" href="/index.php?title=Special:ExportRDF/Sakaki%27s_EFI_Install_Guide/Completing_OpenRC_Configuration_and_Installing_Necessary_Tools&xmlmime=rdf"/>
-<link rel="shortcut icon" href="https://www.gentoo.org/favicon.ico"/>
-<link rel="search" type="application/opensearchdescription+xml" href="/opensearch_desc.php" title="Gentoo Wiki (en)"/>
-<link rel="EditURI" type="application/rsd+xml" href="//wiki.gentoo.org/api.php?action=rsd"/>
-<link rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/"/>
-<!--[if lt IE 9]><script src="/resources/lib/html5shiv/html5shiv.js"></script><![endif]-->
-</head>
-<body class="mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-Sakaki_s_EFI_Install_Guide_Completing_OpenRC_Configuration_and_Installing_Necessary_Tools rootpage-Sakaki_s_EFI_Install_Guide skin-tyrian action-edit">	<div class="mw-jump sr-only">
-		Jump to:		<a href="#top">content</a>
-	</div>
-	<header>
-		<div class="site-title">
-			<div class="container">
-				<div class="row">
-					<div class="site-title-buttons">
-						<div class="btn-group btn-group-sm">
-							<a href="https://get.gentoo.org/" role="button" class="btn get-gentoo"><span class="fa fa-fw fa-download"></span> <strong>Get Gentoo!</strong></a>
-							<div class="btn-group btn-group-sm">
-								<a class="btn gentoo-org-sites dropdown-toggle" data-toggle="dropdown" data-target="#" href="#">
-									<span class="fa fa-fw fa-map-o"></span> <span class="hidden-xs">gentoo.org sites</span> <span class="caret"></span>
-								</a>
-								<ul class="dropdown-menu dropdown-menu-right">
-									<li><a href="https://www.gentoo.org/" title="Main Gentoo website"><span class="fa fa-home fa-fw"></span> gentoo.org</a></li>
-									<li><a href="https://wiki.gentoo.org/" title="Find and contribute documentation"><span class="fa fa-file-text-o fa-fw"></span> Wiki</a></li>
-									<li><a href="https://bugs.gentoo.org/" title="Report issues and find common issues"><span class="fa fa-bug fa-fw"></span> Bugs</a></li>
-									<li><a href="https://forums.gentoo.org/" title="Discuss with the community"><span class="fa fa-comments-o fa-fw"></span> Forums</a></li>
-									<li><a href="https://packages.gentoo.org/" title="Find software for your Gentoo"><span class="fa fa-hdd-o fa-fw"></span> Packages</a></li>
-									<li class="divider"></li>
-									<li><a href="https://planet.gentoo.org/" title="Find out what's going on in the developer community"><span class="fa fa-rss fa-fw"></span> Planet</a></li>
-									<li><a href="https://archives.gentoo.org/" title="Read up on past discussions"><span class="fa fa-archive fa-fw"></span> Archives</a></li>
-									<li><a href="https://gitweb.gentoo.org/" title="Browse our source code in Gitweb"><span class="fa fa-code fa-fw"></span> Gitweb</a></li>
-									<li><a href="https://sources.gentoo.org/" title="Browse our source code in CVS"><span class="fa fa-code fa-fw"></span> CVS sources</a></li>
-									<li class="divider"></li>
-									<li><a href="https://infra-status.gentoo.org/" title="Get updates on the services provided by Gentoo"><span class="fa fa-server fa-fw"></span> Infra Status</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="logo">
-						<a href="/" title="Back to the homepage" class="site-logo"><object data="https://assets.gentoo.org/tyrian/site-logo.svg" type="image/svg+xml">
-							<img src="https://assets.gentoo.org/tyrian/site-logo.png" alt="Gentoo Linux Logo">
-						</object></a>
-						<span class="site-label">Wiki</span>
-					</div>
-				</div>
-			</div>
-		</div>
-		<nav class="tyrian-navbar" role="navigation">
-			<div class="container">
-				<div class="row">
-					<div class="navbar-header">
-						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-main-collapse">
-							<span class="sr-only">Toggle navigation</span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-						</button>
-					</div>
-					<div class="collapse navbar-collapse navbar-main-collapse">
-						<ul class="nav navbar-nav">
-							<li id="n-mainpage-description"><a href="/wiki/Main_Page" title="Visit the main page [z]" accesskey="z">Main page</a></li><li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li><li id="n-help"><a href="/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Gentoo" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Gentoo <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Projects"><a href="/wiki/Project:Gentoo">Gentoo Projects</a></li>				</ul>
-			</li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Documentation" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Documentation <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Handbook"><a href="/wiki/Handbook:Main_Page">Gentoo Handbook</a></li><li id="n-Gentoo-FAQ"><a href="/wiki/FAQ">Gentoo FAQ</a></li><li id="n-Featured-Documents"><a href="/wiki/Project:Documentation/Overview">Featured Documents</a></li><li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Topics</li><li id="n-Core-system"><a href="/wiki/Category:Core_system">Core system</a></li><li id="n-Hardware"><a href="/wiki/Category:Hardware">Hardware</a></li><li id="n-Software"><a href="/wiki/Category:Software">Software</a></li><li id="n-Desktop"><a href="/wiki/Category:Desktop">Desktop</a></li><li id="n-Server-.26-Security"><a href="/wiki/Category:Server_and_Security">Server & Security</a></li><li id="n-Project-.26-Community"><a href="/wiki/Category:Project_and_Community">Project & Community</a></li>				</ul>
-			</li>						</ul>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-									<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-cog"></i> Tools <span class="caret"></span></a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>			</ul>
-		</li>
-			<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-				<span class="fa fa-user" aria-label="Personal tools"></span>
-				User				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="pt-createaccount"><a href="/index.php?title=Special:CreateAccount&returnto=Sakaki%27s+EFI+Install+Guide%2FCompleting+OpenRC+Configuration+and+Installing+Necessary+Tools&returntoquery=action%3Dedit" title="You are encouraged to create an account and log in; however, it is not mandatory">Create account</a></li><li id="pt-login"><a href="/index.php?title=Special:UserLogin&returnto=Sakaki%27s+EFI+Install+Guide%2FCompleting+OpenRC+Configuration+and+Installing+Necessary+Tools&returntoquery=action%3Dedit" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>			</ul>
-		</li>
-								</ul>
-					</div>
-				</div>
-			</div>
-		</nav>
-		
-		<nav class="navbar navbar-grey navbar-stick" id="wiki-actions" role="navigation">
-			<div class="container"><div class="row">
-				<div class="navbar-header">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#gw-toolbar">
-						<span class="sr-only">Toggle navigation</span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-					</button>
-				</div>
-				<div class="collapse navbar-collapse" id="gw-toolbar">
-					<ul class="nav navbar-nav">
-					<li id="ca-nstab-main" class="selected new active"><a href="/index.php?title=Sakaki%27s_EFI_Install_Guide/Completing_OpenRC_Configuration_and_Installing_Necessary_Tools&action=edit&redlink=1" title="View the content page (page does not exist) [c]" accesskey="c">Page</a></li><li id="ca-talk" class="new"><a href="/index.php?title=Talk:Sakaki%27s_EFI_Install_Guide/Completing_OpenRC_Configuration_and_Installing_Necessary_Tools&action=edit&redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) [t]" accesskey="t">Discussion</a></li>					</ul>
-							<form action="/index.php" id="searchform" class="navbar-form navbar-right" role="search">
-			<input type='hidden' name="title" value="Special:Search"/>
+<span id="config_openrc">In this section</span>, we'll be following along with [[Handbook:AMD64/Installation/Tools|Chapter 9]] of the Gentoo handbook, although of course you are at this point already booted into your new system (in contrast to the handbook flow).
 
-				<div class="input-group">
-					<input type="search" name="search" placeholder="Search" title="Search Gentoo Wiki [f]" accesskey="f" id="searchInput" class="form-control"/>					<div class="input-group-btn"><input type="submit" name="go" value="Go" title="Go to a page with this exact name if it exists" id="searchGoButton" class="searchButton btn btn-default"/><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton btn btn-default"/></div>
-				</div>
-		</form>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">more <span class="caret"></span></a>
-						<ul class="dropdown-menu" role="menu">
-												</ul>
-						</li>
-					</ul>
-				</div>
-			</div></div>
-		</nav>
-		</header>
-	
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<div id="content" class="mw-body" role="main">
-						<a id="top"></a>
-						
-						<h1 id="firstHeading" class="first-header" lang="en">
-							<span dir="auto">Permission error</span>
-						</h1>
+The steps we'll be undertaking are:
+# Noting our IP address, and re-establishing an {{c|ssh}} session from the helper PC;
+# Setting up additional {{c|OpenRC}} configuration options, such as locale;
+# Emerging additional system tools, such a logger, {{c|cron}} daemon etc.;
+# Ensuring the system is fully up-to-date (using {{c|genup}} from {{c|sakaki-tools}});
+# Making sure your system's {{c|efifvarfs}} is writable (no longer the default as of OpenRC 0.28);
+# Performing a precautionary reboot ''without'' the {{c|plymouth}} graphical boot manager;
+# Enabling the graphical boot manager ({{c|plymouth}}), and restarting.
 
-						<div id="bodyContent" class="mw-body-content">
-							<div id="siteSub">From Gentoo Wiki</div>
-							<div id="contentSub">
-															</div>
-														<div id="jump-to-nav" class="mw-jump">
-								Jump to:								<a href="#column-one">navigation</a>, 								<a href="#searchInput">search</a>
-							</div>
+Once this is complete, we'll be in a position to configure secure boot, and bring up GNOME 3.
 
-							<div id="mw-content-text"><p>You do not have permission to create this page, for the following reasons:
-</p>
-<ul class="permissions-errors">
-<li>The action you have requested is limited to users in the group: <a href="/index.php?title=Project:Users&action=edit&redlink=1" class="new" title="Project:Users (page does not exist)">Users</a>.</li>
-<li>You must confirm your email address before editing pages.
-Please set and validate your email address through your <a href="/wiki/Special:Preferences" title="Special:Preferences">user preferences</a>.</li>
-</ul></div><div class="printfooter">
-Retrieved from "<a dir="ltr" href="https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Completing_OpenRC_Configuration_and_Installing_Necessary_Tools">https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Completing_OpenRC_Configuration_and_Installing_Necessary_Tools</a>"</div>
-<div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div>						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+So, let's get going with the configuration!
 
-			<footer>
-		<div class="container">
-			<div class="row">
-				<div class="col-xs-12 col-md-offset-2 col-md-7">
-											<div class="spacer"></div>
-						<ul id="f-list">
-							<li id="privacy>"><a href="/wiki/Gentoo_Wiki:Privacy_policy" class="mw-redirect" title="Gentoo Wiki:Privacy policy">Privacy policy</a></li><li id="about>"><a href="/wiki/Gentoo_Wiki:About" title="Gentoo Wiki:About">About Gentoo Wiki</a></li><li id="disclaimer>"><a href="/wiki/Gentoo_Wiki:General_disclaimer" title="Gentoo Wiki:General disclaimer">Disclaimers</a></li>						</ul>
-									</div>
-				<div class="col-xs-12 col-md-3">
-					<!-- No questions or comments, the Wiki has enough information on how to contact us. -->
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-xs-3 col-md-2">
-					<ul class="footerlinks three-icons">
-						<li><a href="https://twitter.com/gentoo" title="@Gentoo on Twitter"><span class="fa fa-twitter fa-fw"></span></a></li>
-						<li><a href="https://www.facebook.com/gentoo.org" title="Gentoo on Facebook"><span class="fa fa-facebook fa-fw"></span></a></li>
-						<li></li>
-					</ul>
-				</div>
-				<div class="col-xs-9 col-md-9">
-					<strong>&copy; 2001&ndash;2020 Gentoo Foundation, Inc.</strong><br />
-					<small>
-						Gentoo is a trademark of the Gentoo Foundation, Inc.
-						The contents of this document, unless otherwise expressly stated, are licensed under the
-						<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license">CC-BY-SA-3.0</a> license.
-						The <a href="https://www.gentoo.org/inside-gentoo/foundation/name-logo-guidelines.html">Gentoo Name and Logo Usage Guidelines</a> apply.
-					</small>
-				</div>
-			</div>
-		</div>
-	</footer>
-	
-<script>
-function defer(method) {
-    if (window.jQuery) {
-        method();
-    } else {
-        setTimeout(function() { defer(method) }, 50);
-    }
-}
-defer(function() { mw.loader.load( 'https://assets.gentoo.org/tyrian/bootstrap.min.js'); });
-</script>
+== <span id="bring_back_ssh">Noting IP Address and Re-Establishing {{c|ssh}}</span> ==
 
-<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":99});});</script></body></html>
+Our first order of business is to check our IP address (the network connection - whether wired or wireless - should have started automatically, given that we set up {{c|dhcpcd}} to come up on boot [[../Final_Preparations_and_Reboot_into_EFI#setup_networking_openrc|earlier]]), and then {{c|ssh}} in again, so that we can use the facilities of the helper machine to complete the install.
+
+<span id="post_reboot_ip">Wait for a moment or two post-boot</span>, and then check to see that you have been allocated an IP address. Working directly at the keyboard of the target PC, issue:
+
+{{RootCmd
+|ifconfig
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+<pre>
+enp0s25: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.106  netmask 255.255.255.0  broadcast 192.168.1.255
+        ... etc ...
+</pre>
+}}
+
+Hopefully, {{c|dhcpcd}} will have autoconfigured an interface, as shown. You should of course look for the name corresponding to the interface on your machine (rather than <code>enp0s25</code>): you wrote this down [[../Final_Preparations_and_Reboot_into_EFI#note_if_name|earlier]]. Make a note of this address, you will need it shortly.
+{{Note|If you need to bring up a network interface with a static IP, please see the [[Handbook:AMD64/Installation/Networking#Manual_network_configuration|"Manual Network Configuration"]] section of chapter 3 of the Gentoo handbook.}}
+
+Now take <span id="note_new_fingerprints">note of the RSA, ED25519 and ECDSA fingerprints</span> (which one is used when you try to connect, will depend upon the settings and recency of the system in your helper PC). These will have been generated automatically when {{c|sshd}} started up on boot (and of course will be different from those created by the {{c|sshd}} instance we started in the outer, 'host' system [[../Setting_Up_Networking_and_Connecting_via_ssh#setup_ssh_server|earlier]]):
+{{RootCmd
+|for K in /etc/ssh/ssh_host_*key.pub; do ssh-keygen -l -f "${K}"; done
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|By default, the above command will now display [[:Wikipedia:SHA256{{!}}SHA-256]] fingerprints in [[:Wikipedia:Base64{{!}}Base64]] format (as used by more modern versions of the {{c|ssh}} client program); however, if your {{c|ssh}} client still uses [[:Wikipedia:MD5{{!}}MD5]] fingerprints, you can display these using the following command instead:
+{{RootCmd
+|for K in /etc/ssh/ssh_host_*key.pub; do ssh-keygen -l -E "md5" -f "${K}"; done
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+}}
+}}
+
+Now switch back to your helper PC. Note that, if the target PC's IP address is the same as it was originally, then the helper will already have a note of its previous fingerprint (from the [[../Setting_Up_Networking_and_Connecting_via_ssh#setup_ssh_server|previous {{c|sshd}} run]]), and will refuse to connect via {{c|ssh}} (since a mismatched fingerprint might suggest a [[:Wikipedia:Man-in-the-middle_attack|man-in-the-middle attack]]). Therefore, we need to remove the old fingerprint record for the IP from {{Path|~/.ssh/known_hosts}}. Issue:
+{{Cmd
+|sed -i '/^[^[:digit:]]*192.168.1.106[^[:digit:]]/d' ~/.ssh/known_hosts
+|prompt=user@pc2 $}}
+{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[#post_reboot_ip{{!}}above]] for <code>192.168.1.106</code> in the above command.}}
+
+Now we can connect via {{c|ssh}}. From the helper, issue:
+{{Cmd
+|ssh root@192.168.1.106
+|prompt=user@pc2 $
+}}
+{{Note|Substitute whatever IP address you got back from {{c|ifconfig}} [[#post_reboot_ip{{!}}above]] for <code>192.168.1.106</code> in the above command.}}
+{{Tip|Remember, if you have a large number of existing keys in your {{Path|~/.ssh}} directory, you may get a <code>Too many authentication failures</code> error when attempting to connect. In this case (which will not affect most users), simply add the <code>-o PubkeyAuthentication{{=}}no</code> option to your {{c|ssh}} command.<ref>Server Fault: [https://serverfault.com/questions/36291/how-to-recover-from-too-many-authentication-failures-for-user-root/540613#540613 "How to recover from 'Too many Authentication Failures for user root'"]</ref>}}
+
+Check the (relevant) key fingerprint against the one presented, and then, if it matches, continue as below:
+{{GenericCmd|<pre>
+... additional output suppressed ...
+Are you sure you want to continue connecting (yes/no)? <type 'yes', then Enter>
+... additional output suppressed ...
+Password: <enter the password for root>
+... additional output suppressed ...
+</pre>
+}}
+{{Note|The root password required here is the one you set ''within'' the {{c|chroot}} [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password{{!}}earlier]] in the tutorial (the same one you used to log in directly at the keyboard [[../Final_Preparations_and_Reboot_into_EFI#login_directly_to_new_system{{!}}a short time ago]].)}}
+
+== <span id="set_openrc_config_opts">Setting Remaining {{c|OpenRC}} Configuration Options</span> ==
+
+Next, and ''before'' we invoke {{c|screen}} again, we'll want to set our hostname (and a number of other {{c|OpenRC}} options). Note that all subsequent commands should be issued via the {{c|ssh}} connection on the helper PC, unless otherwise specified.
+
+=== <span id="set_hostname_openrc">Hostname</span> ===
+
+We'll begin by <span id="set_hostname">setting our hostname</span>. Choose whatever name you like; I'm going to use [http://www.urbandictionary.com/define.php?term=koneko {{c|koneko}}]. Issue:
+
+{{RootCmd
+|nano -w /etc/conf.d/hostname
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Edit the file so it reads:
+{{FileBox|filename=/etc/conf.d/hostname|title=Set your desired hostname|1=
+hostname="koneko"
+}}
+Save, and exit {{c|nano}}.
+{{Note|Substitute your own choice of machine name for <code>koneko</code> in the above.}}
+
+Now issue the following to pick up the change:
+{{RootCmd
+|/etc/init.d/hostname restart
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+The name change will not immediately reflect in your {{c|bash}} prompt until you [http://superuser.com/questions/200057/how-to-make-bash-update-its-idea-of-hostname enter another login shell]. So let's do that now:
+{{RootCmd
+|exec bash --login
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+=== <span id="set_locale_openrc">Locale, Keymap and Console Font</span> ===
+
+We set up some locale data [[../Building_the_Gentoo_Base_System_Minus_Kernel#modify_locale_gen|earlier]] in the tutorial, but elected to use the default [http://unix.stackexchange.com/questions/87745/what-does-lc-all-c-do 'C' locale] then, for simplicity. Now, we'll switch to use the 'real' locale. 
+
+Begin by listing the available locales. Issue:
+{{RootCmd
+|eselect locale list
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+Available targets for the LANG variable:
+  [1]   C *
+  [2]   C.utf8
+  [3]   POSIX
+  [4]   en_GB
+  [5]   en_GB.iso88591
+  [6]   en_GB.utf8
+  [ ]   (free form)
+</pre>
+}}
+{{Note|Your list of targets will also most likely differ from the one shown above, depending on the choices your made when running {{c|locale-gen}} [[../Building_the_Gentoo_Base_System_Minus_Kernel#modify_locale_gen{{!}}earlier]]. (Also, your prompt will of course be different, and reflect your personal choice of hostname.)}}
+The current <var>LANG</var> target is shown with a {{c|*}}. Now choose a [[:Wikipedia:UTF-8|UTF-8]] variant from the list (per the [[Handbook:AMD64/Installation/Base#Configure_locales|Gentoo handbook]]). For my particular case, that's option 6 in the list, {{c|en_GB.utf8}}, but yours will most likely vary. Issue:
+
+{{RootCmd
+|eselect locale set 6
+|source /etc/profile
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Substitute for the number <code>6</code> in the above, with the correct value to select your UTF-8 profile from the list provided by <code>eselect locale list</code>.}}
+
+Check that this choice has been reflected in the file {{Path|/etc/env.d/02locale}}; issue:
+{{RootCmd
+|nano -w /etc/env.d/02locale
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Review the file, appending the <var>LC_COLLATE</var> specification (if missing) as follows:
+{{FileBox|filename=/etc/env.d/02locale|title=Check language and collation settings, append LC_COLLATE if missing|1=
+LANG="en_GB.utf8"
+LC_COLLATE="C"
+}}
+Save (if you made changes), and exit {{c|nano}}.
+{{Note|The <var>LANG</var> value in the {{Path|/etc/env.d/02locale}} file may well differ, depending on the {{c|eselect locale}} choice you just made.}}
+{{Note|We have set the collation order to <code>"C"</code> here, per the [[Localization/Guide#Environment_variables_for_locales{{!}}Gentoo wiki recommendation]].}}
+
+We already set up the keymap for use in (post-boot) virtual terminals [[../Building_the_Gentoo_Base_System_Minus_Kernel#set_post_boot_keymap|earlier]]. However, we also need to make sure our X11 setup (which we'll exercise shortly) is correct. Confusingly, X Windows uses a different naming system for keyboard layouts from the virtual console ''and'' the initramfs settings.
+
+Find the appropriate X keyboard layout by scrolling through the list provided [http://pastebin.com/v2vCPHjs here].
+{{Note|We can't use <code>man xkeyboard-config</code>, as the relevant software {{Package|x11-misc/xkeyboard-config}} is not (yet) emerged on the target PC; however, if this command works on your ''helper'' PC, you can also review the list it provides there.}}
+In my case, the correct code is {{c|jp}}. Then, issue:
+{{RootCmd
+|mkdir -p -v /etc/X11/xorg.conf.d
+|nano -w /etc/X11/xorg.conf.d/00-keyboard.conf
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+}}
+and place the following text in that file (substituting the keyboard layout name you just looked up):
+{{FileBox|filename=/etc/X11/xorg.conf.d/00-keyboard.conf|title=Set keyboard mapping for X|1=
+Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "jp"
+EndSection
+}}
+Save, and exit {{c|nano}}.
+{{Note|Substitute for <code>jp</code> in the above with a value appropriate for your own keyboard! For example, a standard US layout would use <code>Option "XkbLayout" "us"</code> here; a standard UK layout, <code>Option "XkbLayout" "gb"</code>.}}
+{{Note|There are many other options possible here; see the [[Xorg/Guide#Configuring_the_keyboard{{!}}Xorg Guide]] on the Gentoo Wiki for further details.}}
+
+We are nearly done - the last step in this section is to ensure that the <span id="set_vconsole_font">virtual console font</span> and font mapper are set up appropriately.
+
+If the text output displayed directly on your target PC already looks OK, and you can press {{Key|Backspace}} (directly at the target machine's keyboard) and delete characters successfully, then you need do nothing further here, the default settings are already appropriate for you, and you should [[#regenerate_env|click here]] to skip directly to the next step (regenerating your environment).
+
+However, some users will need to set the <var>consolefont</var> and <var>consoletranslation</var> variables in the {{Path|/etc/conf.d/consolefont}} file (which is read by the optional {{c|OpenRC}} {{c|consolefont}}service) in order to fix their virtual console text display. See the {{c|setfont}} manpage, and the discussions "Into the Mist: How Linux Console Fonts Work" and the "UTF-8 and Unicode FAQ for Unix/Linux" for more background on this.<ref>[http://linux.die.net/man/8/setfont {{c|setfont}} manpage]</ref><ref>Linux Gazette: [http://tldp.org/LDP/LG/issue91/loozzr.html "Into the Mist: How Linux Console Fonts Work"]</ref><ref>Kuhn, Marcus. [http://www.cl.cam.ac.uk/~mgk25/unicode.html "UTF-8 and Unicode FAQ for Unix/Linux"]</ref>
+
+Issue:
+{{RootCmd
+|nano -w /etc/conf.d/consolefont
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+And edit that file, so that the only uncommented lines read as follows:
+{{FileBox|filename=/etc/conf.d/consolefont|title=Setting the console font (example only, adjust as needed)|lang=bash|1=
+consolefont="lat1-16"
+consoletranslation="8859-1_to_uni"
+}}
+{{Note|You should set an appropriate font and mapper for your system. You may find the information in the Gentoo wiki [[Localization/Guide{{!}}"Localization Howto"]] document useful. The above <var>consolefont</var> and <var>unicodemap</var> settings should work for a US machine also.}}
+<span id="fix_strange_characters_on_backspace">{{Important|If, after a reboot, you find that e.g., pressing the {{Key|Backspace}} key (when typing on your target machine's keyboard directly) produces strange characters on the screen, in the first instance try commenting out the <var>consolefont</var> line in {{Path|/etc/conf.d/consolefont}} (by placing a <code>#</code> symbol at the start), then rebooting.}}</span>
+
+{{Note|You can also specify <var>unicodemap</var> in the {{Path|/etc/conf.d/consolefont}} file, but that's generally unnecessary, since most fonts include a Unicode mapping table anyway.}}
+Save and exit the {{c|nano}} editor.
+
+Ensure that the necessary service will come up on boot, and start it (to pull in your new font settings):
+{{RootCmd
+|rc-update add consolefont boot
+|rc --service consolefont start
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+<span id="regenerate_env">Finally, whether or not you modified {{Path|/etc/conf.d/consolefont}} above,</span> regenerate your environment:
+{{RootCmd
+|env-update && source /etc/profile
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+=== <span id="set_rc_local_openrc">Post-Boot Script</span> ===
+
+At this point, it's useful to setup an {{Path|/etc/local.d/postboot.start}} script, which will be run each time the main boot process has concluded. We will use this to address the following glitch:
+* The virtual console does not always fully clear the [[:Wikipedia:Framebuffer|frame buffer]] properly (particularly, when taking over from {{c|plymouth}}), meaning that you sometimes get grey lines at the top or bottom of the console screen.
+
+To create the script, issue:
+{{RootCmd
+|nano -w /etc/local.d/postboot.start
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+and place the following text in that file:
+{{FileBox|filename=/etc/local.d/postboot.start|title=A script to run when boot completed|lang=bash|1=
+#!/bin/bash
+# commands in this script will be run once the main boot process is complete
+
+# ensure the framebuffer is properly cleared...
+cat /dev/zero > /dev/fb0 2>/dev/null {{!}}{{!}} true
+}}
+{{Note|Under {{c|OpenRC}}, the {{c|local}} service (which is enabled by default) will run any executable {{Path|/etc/local.d/<name>.start}} files at the final phase of system startup, and any executable {{Path|/etc/local.d/<name>.stop}} files at the first phase of system shutdown.}}
+{{Note|The {{c|cat}} of zeros will stop automatically when the end of the framebuffer ({{Path|/dev/fb0}}) is reached; this will be after 1920*1080*4 (rgba) {{=}} 8294400 bytes on the CF-AX3, but of course your system may vary.}}
+
+Save and exit {{c|nano}}. Now make sure the script is executable, and writeable by root only:
+{{RootCmd
+|chmod -v 755 /etc/local.d/postboot.start
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+That's it, the script will now be run automatically at the conclusion of each system boot! You can of course add your own commands to the {{Path|/etc/local.d/postboot.start}} script, if you like.
+
+=== <span id="set_time_date_openrc">Time and Date</span> ===
+
+Next, check that the date and time are OK (they ''should'' have been carried across successfully from when you set them earlier for [[OpenRC]] ([[../Installing_the_Gentoo_Stage_3_Files#set_date_and_time|here]]), but it is best to check). Issue:
+{{RootCmd
+|date
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Note that this should now reflect the timezone you set [[../Building_the_Gentoo_Base_System_Minus_Kernel#set_timezone|earlier]]. If the time is not correct, set it now in {{Highlight|MMDDhhmmYYYY}} format ('''M'''onth, '''D'''ay, '''h'''our, '''m'''inute, '''y'''ear):
+{{RootCmd
+|date MMDDhhmmYYYY
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+to set it.
+{{Note|Obviously, substitute for <code>MMDDhhmmYYYY</code> with the actual, numerical date and time. For example, to set the date/time to 5:12pm on February 9th 2017 (''local time''), you would issue:
+{{RootCmd
+|date 020917122017
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+}}
+{{Note|To reiterate, the date set should have carried across the reboot OK, unless there is an issue with your real-time-clock (which we will look at next).}}
+
+By default, {{c|OpenRC}} will use the {{c|hwclock}} service to load and save the system clock on your machine on startup and shutdown, and will do so based on UTC (unless instructed otherwise). The settings may be found in the file {{Path|/etc/conf.d/hwclock}}, and are discussed further [[System_time#OpenRC_2|here]].
+
+<span id="openrc_utc">Force the RTC</span> into sync with the system clock now; issue:
+{{RootCmd
+|hwclock --systohc
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+{{Note|This is ''different'' from the default behaviour in Windows (which will use local time for the RTC), so we will modify the setting in Windows, [[../Configuring_Secure_Boot_under_OpenRC#verify_win8_secure_boot{{!}}later]] in the tutorial.}}
+
+This command should have forced the hardware RTC into sync. To check that this is the case, issue:
+{{RootCmd
+|date; hwclock --show
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+and check that the reported times (which will both be shown in your local timezone) are in close agreement.
+
+=== <span id="misc_networking_openrc">Networking</span> ===
+
+As this tutorial covers the setup of a non-server-configuration machine, most users will not need to set an explicit domain name or NIS domain (if you do, see [[Handbook:AMD64/Installation/System#Networking_information|this section]] of the Gentoo handbook). 
+
+However, their absence results in the appearance of an annoying <code>This is koneko.(none)</code>-style message at console login. To fix this, enter:
+{{RootCmd
+|nano -w /etc/issue
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+and remove the <code>.\0</code> string from that file, so it reads:
+{{FileBox|filename=/etc/issue|title=Modify the string to read as follows|1=
+This is \n (\s \m \r) \t
+}}
+Save and exit {{c|nano}}.
+
+Also, although networking will automatically start up on boot, we do need to setup some local hostname information. Issue:
+{{RootCmd
+|nano -w /etc/hosts
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+And modify the {{c|127.0.0.1}} and {{c|::1}} lines in the 'localhost aliases' section, so they read:
+{{FileBox|filename=/etc/hosts|title=Ensure you have aliases for your chosen machine name|1=
+# IPv4 and IPv6 localhost aliases
+127.0.0.1       koneko localhost
+::1             koneko localhost
+}}
+Leave the rest of the file as-is. Save and exit {{c|nano}}.
+{{Note|Substitute your own choice of machine name (which you set [[#set_hostname|just recently]]) for <code>koneko</code> in the above command.}}
+
+=== <span id="boot_logging_openrc">OpenRC Logging</span> ===
+
+Lastly, it will be useful to turn on {{c|OpenRC}} logging, so that you can easily check for any errors post-boot. Issue:
+{{RootCmd
+|nano -w /etc/rc.conf
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Scroll down to the {{c|rc_logger}} section, and modify the lines so they read:
+{{FileBox|filename=/etc/rc.conf|title=Turn on OpenRC logging|1=
+# rc_logger launches a logging daemon to log the entire rc process to
+# /var/log/rc.log
+# NOTE: Linux systems require the devfs service to be started before
+# logging can take place and as such cannot log the sysinit runlevel.
+rc_logger="YES"
+}}
+{{Tip|If you wish, you can also set <code>rc_parallel{{=}}"YES"</code> in this file, which will speed up your boot times. It is perfectly safe to do so for most standard systems.}}
+Leave the rest of the file as-is. Save and exit {{c|nano}}. The log will be written to {{Path|/etc/log/rc.log}} by default.
+
+== <span id="emerge_misc_system_tools">Emerging Additional System Tools</span> ==
+
+Next, we will {{c|emerge}} some additional system tools that are not yet installed, but which are generally useful (many of these are covered in [[Handbook:AMD64/Installation/Tools|Chapter 9]] of the Gentoo handbook).
+
+However, before we start any heavy compilation, let's get our {{c|screen}} environment back. Issue:
+{{RootCmd
+|screen
+|export PS1{{=}}"(1) $PS1"
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+As [[../Building_the_Gentoo_Base_System_Minus_Kernel#second_virtual_console|before]], setup a second virtual console inside {{c|screen}}, which will be useful to e.g., monitor the status of long {{c|emerge}}s. Press {{Key|Ctrl}}{{Key|a}} then {{Key|c}} to start a new console. Then in that new console enter:
+{{RootCmd
+|export PS1{{=}}"(2) $PS1"
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Now hit {{Key|Ctrl}}{{Key|a}} then {{Key|p}} to get back to the original console.
+{{Note|Of course, there is no {{c|chroot}} to worry about any more, as we are booted natively into our new system.}}
+
+We'll begin by installing {{Package|app-admin/syslog-ng}} as the logger, so that we can view and parse regular textual log files. Issue:
+
+{{RootCmd
+|emerge --ask --verbose app-admin/syslog-ng
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+{{Note|As [[../Building_the_Gentoo_Base_System_Minus_Kernel#use_showem|before]], you can switch to the second console to watch the progress with {{c|showem}}, if you like.}}
+
+Per {{Bug|406623}}, we need to make a [http://forums.gentoo.org/viewtopic-t-917418-start-0.html minor configuration change] to avoid binary zero characters getting written to the {{Path|/var/log/messages}} file (making it look like a binary file to tools like {{c|grep}}; although marked as fixed in the bug tracker, the issue appears to affect some later versions too, so the below workaround is still recommended on modern systems). Issue:
+{{RootCmd
+|sed -i 's/threaded(yes)/threaded(no)/g' /etc/syslog-ng/syslog-ng.conf
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Now start it up (and enable at boot):
+{{RootCmd
+|rc-update add syslog-ng default
+|rc --service syslog-ng start
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|There are other choices of logger available to you, as discussed [[Handbook:AMD64/Installation/Tools#System_logger{{!}}here]]. In what follows, I'm going to assume you have chosen to install {{c|syslog-ng}}.}}
+
+Next, we need a [[Cron|{{c|cron}} daemon]] for scheduled commands. We'll choose {{Package|sys-process/cronie}}, a fork of {{c|vixie-cron}}. Issue:
+{{RootCmd
+|emerge --ask --verbose sys-process/cronie
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+Enable and start it:
+{{RootCmd
+|rc-update add cronie default
+|rc --service cronie start
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+{{Note|Per the [[Handbook:AMD64/Installation/Tools#Optional:_Cron_daemon|Gentoo Handbook]], installing a {{c|cron}} daemon is optional, but highly recommended, as many other system tools rely on it.<ref>[http://linux.die.net/man/8/cron {{c|cron}} daemon manpage]</ref> The rest of this tutorial assumes you have chosen to install it.}}
+
+Next, we add file indexing, so that you can quickly search for files with the {{c|locate}} tool. Issue:
+{{RootCmd
+|emerge --ask --verbose sys-apps/mlocate
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+There is no service to explicitly enable for {{c|mlocate}}. It automatically adds an entry (for {{c|updatedb}}<ref>[http://linux.die.net/man/8/updatedb {{c|updatedb}} manpage]</ref>) to {{Path|/etc/cron.daily}} on installation.
+{{Note|Per the [[Handbook:AMD64/Installation/Tools#Optional:_File_indexing|Gentoo Handbook]], installation of {{c|mlocate}} is optional.}}
+
+Next, we add a program to manage log rotation (important to stop files like {{Path|/var/log/messages}} from growing to an unwieldy size). Issue:
+{{RootCmd
+|emerge --ask --verbose app-admin/logrotate
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+Again, there is no need to activate any service here, as this creates a daily job (via {{Path|/etc/cron.daily}}) upon installation.
+{{Note|Use of a log rotation service is optional, but recommended. You can set the preferences for log rotation with {{c|logrotate}} in the file {{Path|/etc/logrotate.conf}}, and with application-specific files under {{Path|/etc/logrotate.d}}. See the {{c|logrotate}} manual page for more details.<ref>[http://linux.die.net/man/8/logrotate {{c|logrotate}} manpage]</ref>}}
+
+We have [[../Final_Preparations_and_Reboot_into_EFI#setup_sshd_openrc|already]] activated {{c|sshd}}, and I assume you have no need for serial console access (as this tutorial is not aimed at configuring server machines); if you do, however, please see [[Handbook:AMD64/Installation/Tools#Optional:_Remote_access|this section]] of the Gentoo handbook.
+
+Next, as the handbook notes, we already have necessary file system utilities (for checking integrity, formatting etc.) installed to deal with [[:Wikipedia:Ext2|ext2]], [[:Wikipedia:Ext3|ext3]] and [[:Wikipedia:Ext4|ext4]] filesystems. If you need to support other file systems (e.g., XFS), you should, [[Handbook:AMD64/Installation/Tools#Filesystem_tools|per the handbook]], emerge the necessary package(s) now.
+
+One set of filesystem tools we will definitely need, since we're forced to deal with fat32-formatted partitions for [[:Wikipedia:Unified_Extensible_Firmware_Interface|UEFI]], is {{Package|sys-fs/dosfstools}}. Issue:
+{{RootCmd
+|emerge --ask --verbose sys-fs/dosfstools
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+{{Note|This package is required when working with UEFI volumes (in particular, for the {{c|mkfs.vfat}} command<ref>[http://linux.die.net/man/8/mkfs.vfat {{c|mkfs.vfat}} manpage]</ref>), so it is strongly recommended that you install it (and the rest of this tutorial assumes you have indeed done so).}}
+
+We have [[../Final_Preparations_and_Reboot_into_EFI#setup_dhcpcd_openrc|already]] installed and activated {{c|dhcpcd}}, and I will assume you do not require any additional networking tools installed at this point (if you do, please see the [[Handbook:AMD64/Installation/Tools#Networking_tools|relevant section]] of the Gentoo handbook for more details).
+
+Next, we'll add some useful utilities that let you discover information about the hardware in your system (this will come in handy when e.g., pruning kernel drivers). Issue:
+{{RootCmd
+|emerge --ask --verbose sys-apps/{usbutils,hwinfo}
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+As it's name suggests, {{c|usbutils}} provides similar facilities to the {{c|pciutils}} package (present in the [[System set (Portage)|@system]] set), but for USB devices. In particular, the {{c|lsusb}} command it includes is very useful.<ref>[http://linux.die.net/man/8/lsusb {{c|lsusb}} manpage]</ref> The {{c|hwinfo}} package provides (inter alia) the eponymous {{c|hwinfo}} tool, which can be used to generate a system overview log.<ref>[http://manpages.ubuntu.com/manpages/precise/en/man8/hwinfo.8.html {{c|hwinfo}} manpage]</ref>
+
+Check that these work. Issue:
+{{RootCmd
+|lsusb
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+and review the output, then:
+{{RootCmd
+|hwinfo {{!}} less
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+and do the same (you can press {{Key|Page Up}} and {{Key|Page Down}} to page through the output here, and {{Key|q}} to quit).
+{{Note|Installation of both of these packages is optional, but recommended.}}
+
+Now we'll {{c|emerge}} some useful Portage tools. Issue:
+{{RootCmd
+|emerge --ask --verbose app-portage/{mirrorselect,eix,gentoolkit,euses}
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+Here's what these packages provide:
+* '''{{c|[[mirrorselect]]}}''' we've [[../Building_the_Gentoo_Base_System_Minus_Kernel#use_mirrorselect|already used]] (in the minimal install image system) - it is a tool to simplify the selection of Gentoo mirror servers;
+* '''{{c|[[eix]]}}''' is a set of utilities for searching, diffing and updating a binary cache of your local Portage tree (and additional ebuild repositories (aka overlays), if you have them); it is fast and convenient to use;
+* '''{{c|[[gentoolkit]]}}''' is a set of miscellaneous administration scripts for Gentoo; these allow you to show package dependency graphs, find out which package installed a particular file, view package changelogs, show package use flags, and many other useful things;
+* '''{{c|euses}}''' is a simple tool that allows you to query for use flag descriptions quickly.
+
+{{Note|Installation of all of the above packages is optional, but highly recommended (and the rest of this tutorial will assume that you have indeed done so).}}
+{{Tip|If you use the {{c|eix}} utility on the command line, you may find that its output has an unpleasant background colour effect, particuarly on white-background terminals. To fix this, simply issue:<ref>Gentoo Forums: [http://forums.gentoo.org/viewtopic-p-7284042.html#7284042 "eix colors changed"]</ref>{{RootCmd
+|echo "SOLARIZED{{=}}true" > /etc/eixrc/99-colour
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>}}}}
+
+== <span id="ensure_system_up_to_date">Ensuring the System is Fully Up-to-Date</span> ==
+
+As there are quite a few interlocking steps required to properly keep a Gentoo system up-to-date, I have provided a convenience script, {{c|genup}}, to do this as part of the {{c|sakaki-tools}} ebuild repository (aka 'overlay'). To install it now, issue:
+{{RootCmd
+|emerge --ask --verbose app-portage/genup
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+{{Note|When {{c|genup}} is emerged, it will setup the configuration files {{Path|/etc/eix-sync.conf}} and {{Path|/etc/eixrc/01-cache}}, per the instructions in [[Overlay#eix_integration{{!}}this wiki article]]. This ensures that {{c|eix-sync}} will also sync all active [[Layman|layman]] ebuild repositories, and that it will regenerate cached metadata on a sync (and use the metadata on an {{c|eix-update}} for a speed-up and better accuracy).
+Please note that if you do not have the {{Package|app-portage/layman}} package installed (which, if you have been following these instructions, you will not at this point), then you will see the error message when running {{c|genup}}:{{GenericCmd|/usr/bin/eix-sync: line xxx: layman: command not found<br>&nbsp;* layman -S failed}}This is to be expected and not a cause for concern.
+}}
+
+Assuming this looks OK, execute the {{c|genup}} script to bring your system fully up to date (we'll avoid checking for kernel updates at this point). Issue:
+{{RootCmd
+|genup --no-kernel-upgrade
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+You can read more about {{c|genup}} via its manpage. However, in summary, when invoked in non-interactive ('batch') mode (as here), and with the <code>--no-kernel-upgrade</code> flag, it will:
+* update your Portage tree (including any active ebuild repositories, such as {{c|sakaki-tools}}) and the {{c|eix}} cache (using <code>emaint sync --auto</code> / <code>eix-sync</code>);
+* remove any prior {{c|emerge}} resume history (using <code>emaint --fix cleanresume</code>)
+* ensure Portage itself is up-to-date (using <code>emerge --oneshot --update portage</code>);
+* ensure {{c|genup}} itself is up-to-date (using <code>emerge --oneshot --update genup</code>), restarting if not;
+* emerge any packages which have been updated, or whose use flags have changed (using <code>emerge --deep --with-bdeps=y --changed-use --update --backtrack=50 @world</code>);
+* remove any unreferenced packages (using <code>emerge --depclean</code>);
+* rebuild any external modules if necessary (such as those for VirtualBox) (using <code>emerge @module-rebuild</code>)
+* rebuild any packages depending on stale libraries (using <code>emerge @preserved-rebuild</code>);
+* update old Perl modules not caught by {{c|emerge}} (using <code>perl-cleaner</code>);
+* remove stale versions of Python from the {{c|eselect}} list (using <code>eselect python cleanup</code>);
+* ''not'' attempt to rebuild the kernel, even if a new version of {{Package|sys-kernel/gentoo-sources}} has become available (because we specified <code>--no-kernel-upgrade</code>);
+* remove any unreferenced packages again (using <code>emerge --depclean</code>);
+* re-emerge any packages depending on libraries removed by the previous step (using <code>revdep-rebuild</code>); 
+* rebuild any packages depending on stale libraries again (using <code>emerge @preserved-rebuild</code>);
+* remove any unused source tarballs (using <code>eclean --deep distfiles</code>); and
+* update environment settings as a precautionary measure (using <code>env-update</code>);
+* update {{c|eix}} package metadata (using <code>eix-sync -0</code>); and
+* run any custom updaters in {{Path|/etc/genup/updaters.d}}.
+
+{{Note|If you should have any issues when running {{c|genup}}, particularly the deep {{c|emerge}} stage, then you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build|these earlier notes]]. (As of version 1.0.4, {{c|genup}} will ''automatically'' retry failed {{c|emerge}} runs with make parallelism inhibited.)}}
+
+{{Important|With [[../Building_the_Gentoo_Base_System_Minus_Kernel#switch_back_to_rsync|{{c|rsync}}-based updates]] over a slow network connection, you will sometimes encounter the situation when the update of the {{c|gentoo}} repository fails validation (as a change is committed to it mid-download, making the overall {{c|gemato}} signature incorrect). If this happens to you, simply run {{c|genup}} again. And if you have the problem repeatedly, switch to using {{c|webrsync}}, as described [[../Building_the_Gentoo_Base_System_Minus_Kernel#stick_with_webrsync|here]].}}
+
+{{Note|For avoidance of doubt, {{c|genup}} ''will'' signature-verify the Gentoo repo before using it, since we set things up that way earlier ([[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_gentoo_dot_conf|here]] and [[../Building_the_Gentoo_Base_System_Minus_Kernel#switch_back_to_rsync|here]]). As before, warnings that the <code>key is not certified with a trusted signature</code> are to be expected<ref>Information Security Stack Exchange: [http://security.stackexchange.com/questions/6841/ways-to-sign-gpg-public-key-so-it-is-trusted "Ways to sign gpg public key so it is trusted?"]</ref> and do not impact the signature check validity.}}
+
+Assuming that completed successfully (you receive the message <code>All done - your system is now up-to-date!</code>), look at the preceding few lines of output from {{c|genup}}. If you see:
+{{GenericCmd|<pre>
+* There are no configuration file changes pending review.
+</pre>
+}}
+then there's nothing more to do; however, if instead you see:
+{{GenericCmd|<pre>
+* genup: Warning: There are configuration file changes pending review!
+* genup: Warning: Please run dispatch-conf to interactively resolve them.
+</pre>
+}}
+then (as instructed) you need to run {{c|dispatch-conf}} (this is an inherently interactive process, and so is not called by {{c|genup}} when running in batch mode, as here). To do so, issue:
+{{RootCmd
+|dispatch-conf
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and follow the prompts to accept, zap (ignore) or merge each proposed change.
+{{Note|The [[Handbook:AMD64/Portage/Tools#dispatch-conf|{{c|dispatch-conf}}]] tool is discussed in more detail in the bootstrapping section [[../Building_the_Gentoo_Base_System_Minus_Kernel#using_dispatch_conf|earlier]].}}
+
+{{Important|If {{Package|net-misc/openssh}} has just been updated, you may be prompted a change to {{Path|/etc/ssh/sshd_config}}, undoing the ability to log in with a password. As we still require this for now, any such proposed change to this file should be {{Key|z}}apped (rejected).}}
+
+{{Note|If you prefer, you can add the <code>--ask</code> flag to {{c|genup}}, in which case it ''will'' run {{c|dispatch-conf}} for you at the appropriate point in the update. Alternatively, you can also force {{c|genup}} to invoke {{c|dispatch-conf}} even in non-interactive (batch) mode, by appending the <code>--dispatch-conf</code> option.}}
+
+{{Note|If you should have any issues when running {{c|genup}}, particularly the deep {{c|emerge}} stage, then you may find it useful to refer to [[../Building_the_Gentoo_Base_System_Minus_Kernel#troubleshooting_failed_build{{!}}these earlier notes]].}}
+
+{{Note|For avoidance of doubt, the [[World set (Portage)|@world]] set ''includes'' the [[System set (Portage)|@system]] set.}}
+
+== <span id="efivarfs_rw">Ensuring {{c|efivarfs}} is Writable</span> ==
+
+Unfortunately, as of {{c|sys-apps/openrc-0.28}}, the special {{Path|/sys/firmware/efi/efivars}} filesystem (which [https://www.kernel.org/doc/Documentation/filesystems/efivarfs.txt maintains a mapping] to the EFI variables, held on non-volatile storage on your machine) has changed<ref>Gentoo Archives: gentoo-dev: [https://archives.gentoo.org/gentoo-dev/message/35304b0db4de9e06fea322275379fa81 "newsitem: openrc-0.28 mounts efivars read only"]</ref> to being mounted read-only by default (at odds with {{c|systemd}}, incidentally, which still mounts it read-write). While modern (>= 1.0.31) versions of {{c|buildkernel}} will automatically deal with this problem, it is inconvenient should you want to e.g. use {{c|efibootmgr}} to set the boot order manually, modify secure boot settings from the command line, etc..
+
+To work around this issue (and revert to read-write mounting), issue:
+
+{{RootCmd
+|nano -w /etc/fstab
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and ''append'' the following line to that file:
+{{FileBox|filename=/etc/fstab|title=Append line to ensure efivarfs still writable under OpenRC >{{=}} 0.28|1=
+efivarfs /sys/firmware/efi/efivars efivarfs rw,nosuid,nodev,noexec,relatime 0 0
+}}
+
+Leave the rest of the file as-is. Save, and exit {{c|nano}}.
+{{Note|With this entry in your {{Path|/etc/fstab}}, OpenRC will mount {{c|efivarfs}} read-write ''automatically'' on subsequent boots. Note that the efivarfs filesystem is ''only'' available when booted under UEFI.}}
+
+Next, ensure that the {{c|efivarfs}} filesystem is writeable in the ''current'' session:
+{{RootCmd
+|umount -v efivarfs && mount -v efivarfs
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Verify that it has remounted correctly:
+{{RootCmd
+|mount {{!}} grep efivarfs
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=<pre>
+efivarfs on /sys/firmware/efi/efivars type efivarfs (rw,nosuid,nodev,noexec,relatime)
+</pre>
+}}
+Check particularly that "{{c|rw}}" is present in the output property list, as above.
+
+{{Tip|If you ''don't'' want to leave {{c|eifvarfs}} writeable all the time, you can omit the {{Path|/etc/fstab}} edit suggested above, instead issuing:
+{{RootCmd
+|mount -o remount,rw /sys/firmware/efi/efivars
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}prior to any operation that requires (manual) write-access to {{c|efivarfs}}, and then issuing:
+{{RootCmd
+|mount -o remount,ro /sys/firmware/efi/efivars
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+afterwards, to revert.
+
+This is somewhat fiddly, however, so in the remainder of this guide I'm going to assume you ''have'' elected to mount {{c|efivarfs}} permanently read-write (per the main body of the text).}}
+
+== <span id="reboot_sans_plymouth">Performing a Precautionary Reboot without {{c|plymouth}}</span> ==
+
+To be cautious, we will now reboot the system to check that our changes to the {{c|OpenRC}} configuration have not caused any issues. This will then also ensure that we have a 'known good' version to fall back to, should any problems arise when we enable the {{c|plymouth}} boot splash manager in the next step.
+
+Ensure that the boot USB key is still inserted in the target machine, then close out the two {{c|screen}} virtual terminals, and then the {{c|ssh}} connection itself. Issue:
+
+{{RootCmd
+|exit
+|prompt=<span style{{=}}"color:gray;">(1)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+which will close the first {{c|screen}} terminal, then:
+
+{{RootCmd
+|exit
+|prompt=<span style{{=}}"color:gray;">(2)</span> koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+to close the second one. Then exit the enclosing {{c|ssh}} session itself:
+{{RootCmd
+|exit
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Now, ensure your boot USB key is (still) inserted, and then, ''directly'' on the target machine (i.e., at its keyboard), issue:
+{{RootCmd
+|reboot
+|prompt=localhost <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+If all is OK, your target system should restart, and boot the UEFI stub kernel off the USB boot key as before. After some initialization, you should be prompted for a passphrase to unlock the {{c|gpg}} keyfile for your LUKS partition (this is the passphrase you set up [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]). Type this in (directly at the target machine keyboard), and press {{Key|Enter}}. Shortly after, assuming that your passphrase is correct, you'll be presented with a login prompt. Enter 'root' as the user (again, directly at the keyboard, without quotes), and then type the root password you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]].
+
+{{Note|If, having rebooted, you find strange characters being printed out when you press e.g. the {{Key|Backspace}} key, please see the note [[#fix_strange_characters_on_backspace|above]].}}
+
+Next, check that everything {{c|OpenRC}}-related started up OK (do this directly at the target machine's keyboard, there's no need to re-establish {{c|ssh}}/{{c|screen}} for this short interlude):
+
+{{RootCmd
+|less /var/log/rc.log
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+Provided this shows <code>[ ok ]</code> against all services, then all is well (you can press {{Key|Page Up}} and {{Key|Page Down}} to page through the output here, and {{Key|q}} to quit).
+{{Note|We set up {{c|OpenRC}} to produce logs [[#boot_logging_openrc{{!}}earlier]].}}
+
+Next, ensure that your active kernel is still selected (occasionally, the {{Path|/usr/src/linux}} link can be removed if the [[#ensure_system_up_to_date|above {{c|genup}} step]] upgraded your {{Package|sys-kernel/gentoo-sources}} package). Issue:
+{{RootCmd
+|eselect kernel list
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+and check that the current kernel (at the moment, there should only be one version in the list) has an asterisk marking it. If it does '''not''', then issue:
+{{RootCmd
+|eselect kernel set 1
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+to select it.
+
+== <span id="reboot_with_plymouth">Enabling {{c|plymouth}}, Rebuilding the Kernel, and Restarting (Optional Step)</span> ==
+
+If you do ''not'' want to use a graphical boot splash manager, then you can safely [[#next_steps|skip this step]], and stay with a textual boot. Otherwise, let's continue, and set up {{c|plymouth}}. We'll also <span id="change_bootfile_path">take this chance to migrate our bootfile</span> from {{Path|/EFI/Boot/bootx64.efi}} to the less generic {{Path|/EFI/Boot/gentoo.efi}}.
+
+{{Note|On some systems (for example, when running Gentoo as a [[:Wikipedia:VirtualBox|VirtualBox]] guest), you should ''not'' change the bootfile location, but rather leave it set as {{Path|/EFI/Boot/bootx64.efi}}. For avoidance of doubt, {{c|plymouth}} ''may'' still be used in such situations.}}
+{{Important|If you ''do'' change the bootfile location to {{Path|/EFI/Boot/gentoo.efi}} below, please note that by default you will still have your prior kernel present on the boot USB key, with the path {{Path|/EFI/Boot/bootx64.efi}}. Since this can cause 'versionitis' issues in the future (for example, if your BIOS attempts to boot it, because the EFI boot order has become corrupted for some reason), feel free to delete the older {{Path|/EFI/Boot/bootx64.efi}} file from the USB key, once you have verified that the new {{Path|/EFI/Boot/gentoo.efi}} variant works.}}
+
+Still directly at the target machine, use the {{c|buildkernel --easy-setup}} tool to turn on Plymouth (the following is an example only; the values shown will vary for your machine). Issue:
+
+{{RootCmd
+|buildkernel --easy-setup
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+... significant amounts of output suppressed in what follows ...
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              bootx64.efi                         
+   Plymouth theme:             NONE (textual boot)                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|5}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:green;">*</span> Current boot splash settings:
+ <span style{{=}}"color:green;">*</span> Using textual boot (no Plymouth)
+ <span style{{=}}"color:green;">*</span> Please choose your desired boot splash setting (or GO BACK):
+ 1) Use textual boot (no Plymouth)
+ 2) Use Plymouth graphical boot splash ('fade-in')
+ 3) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|2}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:green;">*</span> New boot splash settings:
+ <span style{{=}}"color:green;">*</span> Using Plymouth on boot, with theme 'fade-in'
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf - MODIFIED):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              bootx64.efi                         
+   Plymouth theme:             fade-in                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|4}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:red;">NB - users on VirtualBox should leave the EFI boot file path as is</span>
+ <span style{{=}}"color:red;">Only change this (to /EFI/Boot/gentoo.efi)  on a 'real' PC</span>
+ <span style{{=}}"color:green;">*</span> Current EFI boot file setting:
+ <span style{{=}}"color:green;">*</span> EFI boot file path: /EFI/Boot/bootx64.efi
+ <span style{{=}}"color:green;">*</span>  (under EFI system partition mountpoint)
+ <span style{{=}}"color:green;">*</span> Please choose your desired EFI boot file setting (or GO BACK):
+ 1) Use /EFI/Boot/bootx64.efi (recommended for initial USB install)
+ 2) Use /EFI/Microsoft/Boot/bootmgfw.efi (fallback for certain systems)
+ 3) Use /EFI/Boot/gentoo.efi (recommended for post-install use)
+ 4) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|3}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:green;">*</span> New EFI boot file setting:
+ <span style{{=}}"color:green;">*</span> EFI boot file path: /EFI/Boot/gentoo.efi
+ <span style{{=}}"color:green;">*</span>  (under EFI system partition mountpoint)
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf - MODIFIED):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              gentoo.efi                         
+   Plymouth theme:             fade-in                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|9}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ 
+ <span style{{=}}"color:green;">*</span> Configuration saved to /etc/buildkernel.conf.
+ <span style{{=}}"color:green;">*</span> Be sure to run buildkernel, to rebuild the kernel with the new
+ <span style{{=}}"color:green;">*</span> settings, before rebooting.
+
+... significant amounts of output suppressed in the above ...
+}}
+
+{{Note|Once you have things working, you can directly edit {{Path|/etc/buildkernel.conf}} and set the variable {{c|PLYMOUTHTHEME}} to be a {{c|plymouth}} theme that you like. You can get a list of available themes by issuing:
+{{RootCmd
+|plymouth-set-default-theme --list
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+However, stay with the {{c|fade-in}} theme for the moment.
+}}
+
+Specifying a {{c|plymouth}} theme will have {{c|buildkernel}} automatically turn on the [[../Configuring_and_Building_the_Kernel#quiet_kernel_parameter|{{c|quiet}}]] and [[../Configuring_and_Building_the_Kernel#splash_kernel_parameter|{{c|splash}}]]
+kernel command line options, disable the 'penguin logo' display on boot (via [[../Configuring_and_Building_the_Kernel#logo|{{c|CONFIG_LOGO}}]]) and instruct [[Genkernel|{{c|genkernel}}]] to ensure that the necessary {{c|plymouth}} modules are installed into the initramfs. Of course, we need to run {{c|buildkernel}} to make these changes take effect, so let's do that now. Ensure that the boot USB key is still inserted in your target machine, and then (directly at the keyboard) issue:
+
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Wait for the process to complete (it will ''not'' do a {{c|make clean}} by default, so it shouldn't take long).
+{{Note|If {{c|buildkernel}} exits with an error, complaining that the {{c|efivarfs}} is not writeable, double-check that you have made the necessary (under {{c|OpenRC}}) changes to address this issue, which were detailed [[#efivarfs_rw{{!}}earlier]]. If you find you haven't, don't worry, you can apply the [[#efivarfs_rw{{!}}necessary fixes]] now (working directly at the machine's keyboard), and, once done, try running {{c|buildkernel}} again.}}
+{{Note|Since you now ''are'' booted under EFI, this will also add an EFI boot entry for your new kernel and set it at the top of the EFI boot list.}}
+
+When you get the message "{{c|All done!}}",  reboot. To do so, ensure that the boot USB key is still inserted in the target machine, then issue:
+
+{{RootCmd
+|reboot
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+When <span id="entering_plymouth_LUKS_password">the target system restarts</span>, you should now see a graphical password entry screen, as shown below. Enter your LUKS keyfile {{c|gpg}} passphrase (the one you created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#create_gpg_luks_keyfile|earlier]]), directly at the target machine keyboard, and you should then get a brief animation before the textual login console appears:
+
+{|style="background:transparent; color:black" 
+|[[File:Plymouth_password.jpg|thumb|none|400px|Graphical (plymouth) Prompt for GPG/LUKS Passphrase...]]
+|[[File:Plymouth_fade.jpg|thumb|none|400px|...And Subsequent Boot-Time Animation]]
+|}
+
+(The exact display you see may differ from the above.)
+
+{{Important|With certain graphics cards, {{c|plymouth}} may actually '''not''' be able to display a graphical boot splash at this point in the install, due to missing kernel graphics drivers. If this happens to you, and you get a textual prompt for your {{c|gpg}} passphrase, ''despite'' having enabled {{c|plymouth}}, there is no need to worry. Just type in your passphrase and continue with the install; {{c|plymouth}} ''is'' running. Once you set up the correct kernel graphics drivers, which we will get to [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#install_drm_driver|shortly]], {{c|plymouth}}'s graphical boot splash should also (automatically) start working.}}
+{{Tip|If you are having difficulties with the graphical LUKS keyfile {{c|gpg}} passphrase entry screen, pressing {{Key|Esc}} will revert {{c|plymouth}} to a text-based mode, where you can see any error messages etc. Also, '''if the boot process appears to 'hang'''' at the graphical splash screen ''after'' typing the passphrase, reboot, and then try this approach (i.e., pressing {{Key|Esc}}).}}
+{{Note|Similarly, depending on your installed version of {{Package|sys-boot/plymouth}}, under OpenRC you may only see a simplified 'three square boxes' startup progress screen, rather than the full animation shown in the screenshots above. However, once you set up the correct [[:Wikipedia:Direct_Rendering_Manager|Direct Rendering Manager]] graphics drivers in the kernel [[../Setting_up_the_GNOME_3_Desktop_under_OpenRC#install_drm_driver|shortly]], you should find that it is replaced by a properly rendered graphic (as above). It won't otherwise affect the operation of your system.}}
+{{Note|Due to [[Genkernel|{{c|genkernel}}]] not including certain {{c|plymouth}} modules into the initramfs, you normally won't get any textual prompts or progress indicators overlaid on the graphical splash during boot (unless {{c|plymouth}} has to fall back completely into text mode, as just mentioned). I haven't fixed this here as I quite like the resulting minimalist look.}}
+
+Once you receive the login prompt, enter 'root' as the user (again, directly at the keyboard, without quotes), and then type the root password you set up [[../Final_Preparations_and_Reboot_into_EFI#setup_new_root_password|earlier]].
+
+{{Note|Obviously, there's not much point having a graphical boot splash followed by a textual console, but this is only a staging point, we are shortly going to install GNOME3!}}
+
+If that all worked, [[#next_steps{{!}}click here]] to skip to the next section now.
+
+=== <span id="if_plymouth_fails">If {{c|plymouth}} Doesn't Work Properly</span> ===
+
+{{Note|If you managed to successfully boot using {{c|plymouth}} (and even if {{c|plymouth}} used its fallback text mode), then you should [[#next_steps{{!}}skip to the next section]] now - the following is only for troubleshooting a failed boot.}}
+
+If you encounter problems when using {{c|plymouth}} (for example, it failing to accept your {{c|gpg}}-encrypted LUKS keyfile passphrase), you'll need to fall back to the textual boot manager (as debugging {{c|plymouth}} is beyond the scope of this tutorial). Fortunately, because {{c|buildkernel}} automatically preserves the prior kernel on the USB boot key, you should be able to do this easily, ''without'' having to remount the system using the minimal install image USB key / {{c|chroot}}.
+
+<span id="revert_to_previous_kernel">Simply remove</span> the boot USB key, insert it into the helper PC, and then issue (I am assuming that you need to be the superuser to {{c|mount}} on your helper PC):
+
+{{Cmd
+|su --login root
+|prompt=user@pc2 $}}
+Enter the {{c|root}} password (for the helper PC, that is), and then as {{c|root}}, on the helper, mount the USB boot key's EFI system partition at {{Path|/mnt/tmpefi}}:
+
+{{RootCmd
+|mkdir -v -p /mnt/tmpefi
+|mount -v -t vfat /dev/sdU1 /mnt/tmpefi
+|prompt=root@pc2 #}}
+{{Note|Replace {{Path|/dev/sdU1}} in the above with the appropriate device path for the USB key's first partition on your helper PC, such as {{Path|/dev/sdc1}}, {{Path|/dev/sdd1}} etc. You can find the path using the {{c|lsblk}} command.}}
+
+Next, delete the old (failed) kernel and config (the one that tries to use {{c|plymouth}} during {{c|init}}) and replace it with the previous version.
+
+{{Tip|Since all the essential commands below are simply file delete and copy operations over a {{c|FAT32}} filesystem on a USB key, you can even carry them out on a Windows box (via the GUI or CLI), in a pinch. This is useful to bear in mind for later reference, should you be trying to fall back to a previous kernel at a point when you ''don't'' have a Linux helper PC immediately available.}}
+
+If you have only run {{c|buildkernel}} ''once'' since [[#change_bootfile_path|changing the path of the bootfile]] (from {{Path|/EFI/Boot/bootx64.efi}} to {{Path|/EFI/Boot/gentoo.efi}}) in the last step, then issue:
+{{RootCmd
+|rm -v /mnt/tmpefi/EFI/Boot/gentoo.efi /mnt/tmpefi/EFI/Boot/config
+|cp -v /mnt/tmpefi/EFI/Boot/bootx64.efi /mnt/tmpefi/EFI/Boot/gentoo.efi
+|cp -v /mnt/tmpefi/EFI/Boot/config.old /mnt/tmpefi/EFI/Boot/config
+|prompt=root@pc2 #}}
+otherwise, if you have run {{c|buildkernel}} more than once since changing the path, issue:
+{{RootCmd
+|rm -v /mnt/tmpefi/EFI/Boot/gentoo.efi /mnt/tmpefi/EFI/Boot/config
+|cp -v /mnt/tmpefi/EFI/Boot/gentoo.efi.old /mnt/tmpefi/EFI/Boot/gentoo.efi
+|cp -v /mnt/tmpefi/EFI/Boot/config.old /mnt/tmpefi/EFI/Boot/config
+|prompt=root@pc2 #}}
+{{Note|If you ''didn't'' change the EFI bootfile path (for example, because you are running on VirtualBox), then issue:
+{{RootCmd
+|rm -v /mnt/tmpefi/EFI/Boot/bootx64.efi /mnt/tmpefi/EFI/Boot/config
+|cp -v /mnt/tmpefi/EFI/Boot/bootx64.efi.old /mnt/tmpefi/EFI/Boot/bootx64.efi
+|cp -v /mnt/tmpefi/EFI/Boot/config.old /mnt/tmpefi/EFI/Boot/config
+|prompt=root@pc2 #
+}}
+}}
+
+{{Note|If you happen to have used {{c|buildkernel}}'s <code>--snapshot-backup</code> option in the past (to ensure a 'known good' kernel was preserved), you'll also see (kernel and config) files in {{Path|/mnt/tmpefi/EFI/Boot}} with prefixed timestamps. For example, if you had previously issued <code>buildkernel --snapshot-backup</code> on 4 May 2014 at 12:23:07 say, you would see the files {{c|2014-05-04-12-23-07-gentoo.efi.old}} and {{c|2014-05-04-12-23-07-config.old}} in the {{Path|/mnt/tmpefi/EFI/Boot}} directory. You can use such files instead of {{c|gentoo.efi.old}} and {{c|config.old}}, if you like.}}
+
+Finally, ensure the data has been written, unmount the USB key, and remove the temporary mountpoint you created, then exit back to the normal user. Issue
+{{RootCmd
+|sync
+|umount -v /mnt/tmpefi
+|rmdir -v /mnt/tmpefi
+|exit
+|prompt=root@pc2 #}}
+
+{{Note|I have assumed in the above that your helper machine does ''not'' automount the USB key. However, if it does, that's no problem, you can simply do the delete-and-replace operation graphically. Similarly, since the boot key is formatted with {{c|fat32}}, you should be able to insert it into any Windows machine and make the necessary changes. Just remember that in either of these two cases, your mountpoint will ''not'' be {{Path|/mnt/tmpefi}}.}}
+
+Remove the boot USB key from the helper, and re-insert it into the target machine. Power cycle the target machine, and you should now be able to boot up successfully.
+
+{{Important|If you '''still''' can't get the machine to boot, you'll need to follow the instructions [[../Final_Preparations_and_Reboot_into_EFI#if_things_go_wrong|given earlier]] to boot with the minimal install USB key, unlock the LUKS partition, mount the LVM volumes, then {{c|chroot}} and make any necessary changes.}}
+
+Once you have got your target machine environment back online, you will need to ensure that any subsequent kernels (created by {{c|buildkernel}}) will not attempt to use {{c|plymouth}} during {{c|init}}. Issue (the details in the below will obviously differ on your machine):
+
+{{RootCmd
+|buildkernel --easy-setup
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+|output=
+... significant amounts of output suppressed in what follows ...
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              gentoo.efi                         
+   Plymouth theme:             fade-in                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|5}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:green;">*</span> Current boot splash settings:
+ <span style{{=}}"color:green;">*</span> Using Plymouth on boot, with theme 'fade-in'
+ <span style{{=}}"color:green;">*</span> Please choose your desired boot splash setting (or GO BACK):
+ 1) Use textual boot (no Plymouth)
+ 2) Use Plymouth graphical boot splash ('fade-in')
+ 3) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|1}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:green;">*</span> New boot splash settings:
+ <span style{{=}}"color:green;">*</span> Using textual boot (no Plymouth)
+ 
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf - MODIFIED):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              gentoo.efi                         
+   Plymouth theme:             NONE (textual boot)                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|9}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ 
+ <span style{{=}}"color:green;">*</span> Configuration saved to /etc/buildkernel.conf.
+ <span style{{=}}"color:green;">*</span> Be sure to run buildkernel, to rebuild the kernel with the new
+ <span style{{=}}"color:green;">*</span> settings, before rebooting.
+
+... significant amounts of output suppressed in the above ...
+}}
+
+Ensure that the boot USB key is still inserted in your target machine, and then issue:
+
+{{RootCmd
+|buildkernel
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+Once the build completes, reboot:
+
+{{RootCmd
+|reboot
+|prompt=koneko <span style{{=}}"color:royalblue;">~ #</span>
+}}
+
+and you should be back to a textual boot (where you of course need to enter the LUKS keyfile {{c|gpg}} passphrase, then login as root, as before). You can then continue with the remainder of the tutorial (having a graphical boot splash is nice, but not necessary for what follows).
+
+== <span id="next_steps">Next Steps</span> ==
+
+Now that we have standard EFI boot operational, we will next set up {{Highlight|secure boot}}, to ensure (as a safeguard) that the integrity of our bootable kernel will be checked by the system at startup. [[../Configuring_Secure_Boot_under_OpenRC|Click here]] to go to the next chapter, "Configuring Secure Boot under OpenRC".
+
+== <span id="notes">Notes</span> ==
+{{reflist}}
+
+{| class="wikitable" style="margin: 1em auto 1em auto;"
+|-
+| [[../Final_Preparations_and_Reboot_into_EFI|< Previous]]
+| [[../|Home]]
+| [[../Configuring_Secure_Boot_under_OpenRC|Next >]]
+|}
+
+[[Category:Bootloaders]]
+[[Category:Core system]]
+[[Category:Kernel]]
+[[Category:Localization]]
+

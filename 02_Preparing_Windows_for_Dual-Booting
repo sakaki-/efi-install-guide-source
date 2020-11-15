@@ -1,216 +1,48 @@
+<!-- Page: Preparing_Windows_for_Dual-Booting -->
 
-<html class="client-nojs" lang="en" dir="ltr">
-<head>
-<meta charset="UTF-8"/>
-<title>Permission error - Gentoo Wiki</title>
-<script>document.documentElement.className="client-js";RLCONF={"wgBreakFrames":!1,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"2e6a253603d773d0f11752dc","wgCSPNonce":!1,"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":!1,"wgNamespaceNumber":0,"wgPageName":"Sakaki's_EFI_Install_Guide/Preparing_Windows_for_Dual-Booting","wgTitle":"Sakaki's EFI Install Guide/Preparing Windows for Dual-Booting","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":!1,"wgIsRedirect":!1,"wgAction":"edit","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgRelevantPageName":"Sakaki's_EFI_Install_Guide/Preparing_Windows_for_Dual-Booting","wgRelevantArticleId":0,"wgIsProbablyEditable":!1,"wgRelevantPageIsProbablyEditable":
-!1,"wgRestrictionCreate":[],"wgULSCurrentAutonym":"English","wgPageFormsTargetName":null,"wgPageFormsAutocompleteValues":[],"wgPageFormsAutocompleteOnAllChars":!1,"wgPageFormsFieldProperties":[],"wgPageFormsCargoFields":[],"wgPageFormsDependentFields":[],"wgPageFormsCalendarValues":[],"wgPageFormsCalendarParams":[],"wgPageFormsCalendarHTML":null,"wgPageFormsGridValues":[],"wgPageFormsGridParams":[],"wgPageFormsContLangYes":null,"wgPageFormsContLangNo":null,"wgPageFormsContLangMonths":[],"wgPageFormsHeightForMinimizingInstances":800,"wgPageFormsShowOnSelect":[],"wgPageFormsScriptPath":"/extensions/PageForms","edgValues":null,"wgPageFormsEDSettings":null,"wgAmericanDates":!1,"wgVisualEditor":{"pageLanguageCode":"en","pageLanguageDir":"ltr","pageVariantFallbacks":"en"},"wgULSPosition":"personal","wgEditSubmitButtonLabelPublish":!1};RLSTATE={"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","user.options":"loading","ext.uls.pt":"ready",
-"ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.smw.style":"ready","ext.smw.tooltip.styles":"ready","mediawiki.skinning.interface":"ready","mediawiki.skinning.content.externallinks":"ready","skins.tyrian.styles":"ready","skins.tyrian.icons":"ready"};RLPAGEMODULES=["ext.gentooPackages","site","mediawiki.page.startup","mediawiki.page.ready","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader"];</script>
-<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.implement("user.options@1hzgi",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
-});});</script>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.smw.style%7Cext.smw.tooltip.styles&only=styles&skin=tyrian"/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.uls.pt%7Cext.visualEditor.desktopArticleTarget.noscript%7Cmediawiki.skinning.content.externallinks%7Cmediawiki.skinning.interface%7Cskins.tyrian.icons%2Cstyles&only=styles&skin=tyrian"/>
-<script async="" src="/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=tyrian"></script>
-<link rel="stylesheet" href="https://assets.gentoo.org/tyrian/bootstrap.min.css"/><link rel="stylesheet" href="https://assets.gentoo.org/tyrian/tyrian.min.css"/>
-<meta name="ResourceLoaderDynamicStyles" content=""/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=site.styles&only=styles&skin=tyrian"/>
-<meta name="generator" content="MediaWiki 1.35.0"/>
-<meta name="robots" content="noindex,nofollow"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="theme-color" content="#54487a"/>
-<link rel="alternate" type="application/rdf+xml" title="Sakaki&#039;s EFI Install Guide/Preparing Windows for Dual-Booting" href="/index.php?title=Special:ExportRDF/Sakaki%27s_EFI_Install_Guide/Preparing_Windows_for_Dual-Booting&xmlmime=rdf"/>
-<link rel="shortcut icon" href="https://www.gentoo.org/favicon.ico"/>
-<link rel="search" type="application/opensearchdescription+xml" href="/opensearch_desc.php" title="Gentoo Wiki (en)"/>
-<link rel="EditURI" type="application/rsd+xml" href="//wiki.gentoo.org/api.php?action=rsd"/>
-<link rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/"/>
-<!--[if lt IE 9]><script src="/resources/lib/html5shiv/html5shiv.js"></script><![endif]-->
-</head>
-<body class="mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-Sakaki_s_EFI_Install_Guide_Preparing_Windows_for_Dual-Booting rootpage-Sakaki_s_EFI_Install_Guide skin-tyrian action-edit">	<div class="mw-jump sr-only">
-		Jump to:		<a href="#top">content</a>
-	</div>
-	<header>
-		<div class="site-title">
-			<div class="container">
-				<div class="row">
-					<div class="site-title-buttons">
-						<div class="btn-group btn-group-sm">
-							<a href="https://get.gentoo.org/" role="button" class="btn get-gentoo"><span class="fa fa-fw fa-download"></span> <strong>Get Gentoo!</strong></a>
-							<div class="btn-group btn-group-sm">
-								<a class="btn gentoo-org-sites dropdown-toggle" data-toggle="dropdown" data-target="#" href="#">
-									<span class="fa fa-fw fa-map-o"></span> <span class="hidden-xs">gentoo.org sites</span> <span class="caret"></span>
-								</a>
-								<ul class="dropdown-menu dropdown-menu-right">
-									<li><a href="https://www.gentoo.org/" title="Main Gentoo website"><span class="fa fa-home fa-fw"></span> gentoo.org</a></li>
-									<li><a href="https://wiki.gentoo.org/" title="Find and contribute documentation"><span class="fa fa-file-text-o fa-fw"></span> Wiki</a></li>
-									<li><a href="https://bugs.gentoo.org/" title="Report issues and find common issues"><span class="fa fa-bug fa-fw"></span> Bugs</a></li>
-									<li><a href="https://forums.gentoo.org/" title="Discuss with the community"><span class="fa fa-comments-o fa-fw"></span> Forums</a></li>
-									<li><a href="https://packages.gentoo.org/" title="Find software for your Gentoo"><span class="fa fa-hdd-o fa-fw"></span> Packages</a></li>
-									<li class="divider"></li>
-									<li><a href="https://planet.gentoo.org/" title="Find out what's going on in the developer community"><span class="fa fa-rss fa-fw"></span> Planet</a></li>
-									<li><a href="https://archives.gentoo.org/" title="Read up on past discussions"><span class="fa fa-archive fa-fw"></span> Archives</a></li>
-									<li><a href="https://gitweb.gentoo.org/" title="Browse our source code in Gitweb"><span class="fa fa-code fa-fw"></span> Gitweb</a></li>
-									<li><a href="https://sources.gentoo.org/" title="Browse our source code in CVS"><span class="fa fa-code fa-fw"></span> CVS sources</a></li>
-									<li class="divider"></li>
-									<li><a href="https://infra-status.gentoo.org/" title="Get updates on the services provided by Gentoo"><span class="fa fa-server fa-fw"></span> Infra Status</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="logo">
-						<a href="/" title="Back to the homepage" class="site-logo"><object data="https://assets.gentoo.org/tyrian/site-logo.svg" type="image/svg+xml">
-							<img src="https://assets.gentoo.org/tyrian/site-logo.png" alt="Gentoo Linux Logo">
-						</object></a>
-						<span class="site-label">Wiki</span>
-					</div>
-				</div>
-			</div>
-		</div>
-		<nav class="tyrian-navbar" role="navigation">
-			<div class="container">
-				<div class="row">
-					<div class="navbar-header">
-						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-main-collapse">
-							<span class="sr-only">Toggle navigation</span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-						</button>
-					</div>
-					<div class="collapse navbar-collapse navbar-main-collapse">
-						<ul class="nav navbar-nav">
-							<li id="n-mainpage-description"><a href="/wiki/Main_Page" title="Visit the main page [z]" accesskey="z">Main page</a></li><li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li><li id="n-help"><a href="/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Gentoo" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Gentoo <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Projects"><a href="/wiki/Project:Gentoo">Gentoo Projects</a></li>				</ul>
-			</li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Documentation" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Documentation <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Handbook"><a href="/wiki/Handbook:Main_Page">Gentoo Handbook</a></li><li id="n-Gentoo-FAQ"><a href="/wiki/FAQ">Gentoo FAQ</a></li><li id="n-Featured-Documents"><a href="/wiki/Project:Documentation/Overview">Featured Documents</a></li><li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Topics</li><li id="n-Core-system"><a href="/wiki/Category:Core_system">Core system</a></li><li id="n-Hardware"><a href="/wiki/Category:Hardware">Hardware</a></li><li id="n-Software"><a href="/wiki/Category:Software">Software</a></li><li id="n-Desktop"><a href="/wiki/Category:Desktop">Desktop</a></li><li id="n-Server-.26-Security"><a href="/wiki/Category:Server_and_Security">Server & Security</a></li><li id="n-Project-.26-Community"><a href="/wiki/Category:Project_and_Community">Project & Community</a></li>				</ul>
-			</li>						</ul>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-									<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-cog"></i> Tools <span class="caret"></span></a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>			</ul>
-		</li>
-			<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-				<span class="fa fa-user" aria-label="Personal tools"></span>
-				User				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="pt-createaccount"><a href="/index.php?title=Special:CreateAccount&returnto=Sakaki%27s+EFI+Install+Guide%2FPreparing+Windows+for+Dual-Booting&returntoquery=action%3Dedit" title="You are encouraged to create an account and log in; however, it is not mandatory">Create account</a></li><li id="pt-login"><a href="/index.php?title=Special:UserLogin&returnto=Sakaki%27s+EFI+Install+Guide%2FPreparing+Windows+for+Dual-Booting&returntoquery=action%3Dedit" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>			</ul>
-		</li>
-								</ul>
-					</div>
-				</div>
-			</div>
-		</nav>
-		
-		<nav class="navbar navbar-grey navbar-stick" id="wiki-actions" role="navigation">
-			<div class="container"><div class="row">
-				<div class="navbar-header">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#gw-toolbar">
-						<span class="sr-only">Toggle navigation</span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-					</button>
-				</div>
-				<div class="collapse navbar-collapse" id="gw-toolbar">
-					<ul class="nav navbar-nav">
-					<li id="ca-nstab-main" class="selected new active"><a href="/index.php?title=Sakaki%27s_EFI_Install_Guide/Preparing_Windows_for_Dual-Booting&action=edit&redlink=1" title="View the content page (page does not exist) [c]" accesskey="c">Page</a></li><li id="ca-talk" class="new"><a href="/index.php?title=Talk:Sakaki%27s_EFI_Install_Guide/Preparing_Windows_for_Dual-Booting&action=edit&redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) [t]" accesskey="t">Discussion</a></li>					</ul>
-							<form action="/index.php" id="searchform" class="navbar-form navbar-right" role="search">
-			<input type='hidden' name="title" value="Special:Search"/>
+As shipped, a typical Windows 10 (or Windows 8) installation spans its host machine's entire drive.
 
-				<div class="input-group">
-					<input type="search" name="search" placeholder="Search" title="Search Gentoo Wiki [f]" accesskey="f" id="searchInput" class="form-control"/>					<div class="input-group-btn"><input type="submit" name="go" value="Go" title="Go to a page with this exact name if it exists" id="searchGoButton" class="searchButton btn btn-default"/><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton btn btn-default"/></div>
-				</div>
-		</form>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">more <span class="caret"></span></a>
-						<ul class="dropdown-menu" role="menu">
-												</ul>
-						</li>
-					</ul>
-				</div>
-			</div></div>
-		</nav>
-		</header>
-	
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<div id="content" class="mw-body" role="main">
-						<a id="top"></a>
-						
-						<h1 id="firstHeading" class="first-header" lang="en">
-							<span dir="auto">Permission error</span>
-						</h1>
+Accordingly, our first order of business is to shrink the size of the Windows {{Path|C:}} partition, thereby freeing up some space on which to install our new Gentoo system.
 
-						<div id="bodyContent" class="mw-body-content">
-							<div id="siteSub">From Gentoo Wiki</div>
-							<div id="contentSub">
-															</div>
-														<div id="jump-to-nav" class="mw-jump">
-								Jump to:								<a href="#column-one">navigation</a>, 								<a href="#searchInput">search</a>
-							</div>
+The good news is that Windows already contains the necessary tools to shrink partitions. The not-so-good news is that Windows also sprinkles various files around the drive (for hibernation, paging and system restore), such that even if you have just started using the machine, without some additional work you can only reclaim about half of your {{Path|C:}} drive for Linux.
 
-							<div id="mw-content-text"><p>You do not have permission to create this page, for the following reasons:
-</p>
-<ul class="permissions-errors">
-<li>The action you have requested is limited to users in the group: <a href="/index.php?title=Project:Users&action=edit&redlink=1" class="new" title="Project:Users (page does not exist)">Users</a>.</li>
-<li>You must confirm your email address before editing pages.
-Please set and validate your email address through your <a href="/wiki/Special:Preferences" title="Special:Preferences">user preferences</a>.</li>
-</ul></div><div class="printfooter">
-Retrieved from "<a dir="ltr" href="https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Preparing_Windows_for_Dual-Booting">https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Preparing_Windows_for_Dual-Booting</a>"</div>
-<div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div>						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+But, fear not: the instructions below will show you how to get around this restriction.<ref>Download 3K: [http://www.download3k.com/articles/How-to-shrink-a-disk-volume-beyond-the-point-where-any-unmovable-files-are-located-00432 "How to shrink a disk volume beyond the point where any unmovable files are located"]</ref>
 
-			<footer>
-		<div class="container">
-			<div class="row">
-				<div class="col-xs-12 col-md-offset-2 col-md-7">
-											<div class="spacer"></div>
-						<ul id="f-list">
-							<li id="privacy>"><a href="/wiki/Gentoo_Wiki:Privacy_policy" class="mw-redirect" title="Gentoo Wiki:Privacy policy">Privacy policy</a></li><li id="about>"><a href="/wiki/Gentoo_Wiki:About" title="Gentoo Wiki:About">About Gentoo Wiki</a></li><li id="disclaimer>"><a href="/wiki/Gentoo_Wiki:General_disclaimer" title="Gentoo Wiki:General disclaimer">Disclaimers</a></li>						</ul>
-									</div>
-				<div class="col-xs-12 col-md-3">
-					<!-- No questions or comments, the Wiki has enough information on how to contact us. -->
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-xs-3 col-md-2">
-					<ul class="footerlinks three-icons">
-						<li><a href="https://twitter.com/gentoo" title="@Gentoo on Twitter"><span class="fa fa-twitter fa-fw"></span></a></li>
-						<li><a href="https://www.facebook.com/gentoo.org" title="Gentoo on Facebook"><span class="fa fa-facebook fa-fw"></span></a></li>
-						<li></li>
-					</ul>
-				</div>
-				<div class="col-xs-9 col-md-9">
-					<strong>&copy; 2001&ndash;2020 Gentoo Foundation, Inc.</strong><br />
-					<small>
-						Gentoo is a trademark of the Gentoo Foundation, Inc.
-						The contents of this document, unless otherwise expressly stated, are licensed under the
-						<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license">CC-BY-SA-3.0</a> license.
-						The <a href="https://www.gentoo.org/inside-gentoo/foundation/name-logo-guidelines.html">Gentoo Name and Logo Usage Guidelines</a> apply.
-					</small>
-				</div>
-			</div>
-		</div>
-	</footer>
-	
-<script>
-function defer(method) {
-    if (window.jQuery) {
-        method();
-    } else {
-        setTimeout(function() { defer(method) }, 50);
-    }
-}
-defer(function() { mw.loader.load( 'https://assets.gentoo.org/tyrian/bootstrap.min.js'); });
-</script>
+{{Note|A similar process may be used to free up space in a Windows 7 system too.<ref>SuperUser Forum: [http://superuser.com/questions/88131/how-to-shrink-windows-7-boot-partition-with-unmovable-files "How to shrink Windows 7 boot partition with unmovable files"]</ref>}}
 
-<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":102});});</script></body></html>
+== <span id="win_dual_boot_prep">Shrinking Windows' Disk Footprint</span> ==
+
+Boot your target machine into Windows as normal, and login to your account (which must have administrator rights - the first user created on a new Windows install has these by default). Next, perform the following steps (I have noted where things differ between Windows 10, 8.1 and 8):
+{{Note|For Windows 10 users, the following assumes you are logged in with a local account and have options like "Search online and include web results" and Cortana turned off.<ref>Gizmodo UK: [http://www.gizmodo.co.uk/2015/11/windows-10-privacy-settings-what-you-need-to-know/ "Windows 10 Privacy Settings: What You Need to Know"]</ref> If you are running Windows 10 with more permissive settings, be sure to choose the correct item from those returned when directed to perform a search in the following instructions. The correct items will generally be tagged as "Control panel" or "Desktop app".}}
+
+# Ensure you have '''backups''' of everything important. Last chance ^-^
+# Done that? OK then, to begin with, we'll {{Highlight|turn off system protection (restore points)}}.<ref>Ubuntu Forums: [http://ubuntuforums.org/showthread.php?t=2087466#post_message_12372055 "shrinking Windows 8 partition for dual boot"]</ref> Hit the {{Key|Windows Key}}, which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8), and type <code>restore point</code>. Then click on the 'Create a restore point' item which appears (in Windows 10 and 8.1; Windows 8 users will need to click the 'Settings' icon to see this result). You will now be presented with a dialog box with 'System Protection' as the selected tab. Choose the relevant drive (generally, {{Path|C:}}). Click the 'Configure...' button. Another dialog pops up - click on the 'Disable system protection' radio button, and click 'OK'. When asked if you are sure, click 'Yes'. (N.B., this will remove existing restore points from the drive, if any; if they are important to you, do not perform this step.) Close out the other dialogs by clicking on 'OK'.
+# Next, we'll {{Highlight|turn off the virtual memory paging file}}. Hit the {{Key|Windows Key}}, which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8), and type <code>adjust the appearance</code>. Then click on the 'Adjust the appearance and performance of Windows' item that appears (in Windows 10 and 8.1; Windows 8 users will again need to click the 'Settings' icon to see this result). You will now be presented with a 'Performance Options' dialog; select the 'Advanced' tab in it. In the virtual memory area, click on 'Change...', and, in the dialog that next appears, untick 'Automatically manage paging file size for all drives', then choose the relevant drive (generally, {{Path|C:}}), select the 'No paging file' radio button and click 'Set'. You'll get warnings about the problems this can cause; if happy to proceed select 'Yes', then choose 'OK' again to close out the Virtual Memory dialog itself. If you get a warning about needing to reboot, accept this (but don't reboot yet). Then close out any remaining dialogs.
+# Now to {{Highlight|turn off hibernation}}. This is most easily done from the Windows command line. Hit the {{Key|Windows Key}} , which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8), and type <code>command</code>. Now ''right-click'' on the 'Command Prompt' icon that appears, then click on 'Run as administrator' item in the context menu (in Windows 10 and 8.1; it appears at the bottom of the screen in Windows 8). If asked whether you wish to proceed, click 'Yes'. You will be presented with an open command window. Now enter <code>powercfg /H off</code>. After this, hit {{Key|Ctrl}}{{Key|Alt}}{{Key|Delete}}, then click on the power icon at the bottom right of the screen, and choose 'Restart' from the pop-up menu.
+# Allow the machine to reboot back into Windows, and log in again.
+# Now we will {{Highlight|defragment the drive}}. Hit the {{Key|Windows Key}}, which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8), and type <code>defragment</code>. Then click on the 'Defragment and Optimize Drives' item that appears (in Windows 10; in Windows 8.1 and 8 the required item is named 'Defragment and optimize your drives'). Select the {{Path|C:}} drive in the dialog box that appears, and select 'Optimize' (this will defragment the drive). When it has completed, click the 'Close' button to dismiss the dialog.
+# Follow the process described earlier to reboot and log in again to Windows. (Without this reboot, the shrink step below may fail.)
+# Finally, we are ready to <span id="shrink_windows_partition">{{Highlight|shrink the Windows partition}}</span>.<ref>Liberian Geek: [http://www.liberiangeek.net/2012/11/shrink-resize-partitions-in-windows-8/ "Shrink / Resize Partitions in Windows 8"]</ref> Hit {{Key|Windows Key}}, which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8), and type <code>partitions</code>. Then click on the 'Create and format hard disk partitions' item that appears (in Windows 10 and 8.1; Windows 8 users will again need to click the 'Settings' icon to see this result). ''Right click'' on the {{Path|C:}} partition in the display for Disk0 at the bottom of the 'Disk Management' dialog that appears, and select 'Shrink Volume...' from the context menu. Another dialog entitled 'Shrink {{Path|C:}}' appears. If all has gone according to plan with the changes above, you should now be able to enter quite a large amount of shrink space: enter (as you wish) anything up to the maximum amount allowed as shown on the dialog:[[File:Win8PartitionShrink.png|thumb|none|400px|Shrinking the C: Partition in Windows]] To proceed, click on 'Shrink'. When the process completes, you should now see an additional 'Unallocated' partition at the end of Disk 0 on the 'Disk Management' dialog, and it should be a meaningful percentage of the drive (note that the partition graphical display is not proportional). Note: as an indication, I was able to create a 195.86GB unallocated partition using this method (on a 238.35GB drive, with the {{Path|C:}} partition shrunk to 42.10GB from 237.96GB). [https://en.wiktionary.org/wiki/your_mileage_may_vary YMMV]. {{Note|If you encounter a problem during the shrink operation, for example Windows informing you that there is not enough disk space available to complete the operation, then try performing a shrink of ''half'' of the claimed 'available shrink space', and then immediately repeating if successful.}}{{Note|With certain versions of Windows, you may find that the very end of the disk contains a recovery partition (and possibly a number of additional "OEM" partitions). That's nothing to worry about, just shrink the {{Path|C:}} partition as described &mdash; you'll still be able to install Gentoo onto the space you have freed up, even if it does not span completely to the end of the drive.}}{{Note|How much space to free up for Gentoo / leave for Windows will obviously depend upon your particular usage pattern. You should probably aim to free up a ''minimum'' of 20GB or so for Gentoo, however. If you are running Windows 8 or 8.1, and planning to upgrade to Windows 10 in the future, you should ensure that your Windows {{Path|C:}} partition has a ''minimum'' of 5GB free space after the shrink.<ref>WindowsCentral: [http://www.windowscentral.com/how-prepare-your-pc-windows-10-upgrade "How to prepare your PC for the Windows 10 upgrade"] (see section "Making space for the upgrade")</ref> (Incidentally, even once Gentoo is co-installed, you ''can'' safely upgrade to Windows 10 without harming the Linux side of things; in this author's experience anyhow.)}}
+# For safety, follow the process described earlier to reboot and log in ''again'' to Windows. This ensures that all system processes take note of the new partition boundaries.
+# Now we'll revert the changes we made to Windows (other than the partition shrink!), prior to installing Gentoo Linux on our newly reclaimed disk space. First, we'll {{Highlight|turn on hibernation again}}. Hit the {{Key|Windows Key}} , which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8), and type <code>command</code>. Now ''right-click'' on the 'Command Prompt' icon that appears, then click on 'Run as administrator' item in the context menu (in Windows 10 and 8.1; it appears at the bottom of the screen in Windows 8). If asked whether you wish to proceed, click 'Yes'. You will be presented with an open command window. Now enter <code>powercfg /H on</code>. Note that although this enables hibernation, the option to trigger it may still be hidden in the power menu, even after you reboot. We'll fix this shortly.
+# Next, let's {{Highlight|activate the virtual memory paging file again}}. Hit the {{Key|Windows Key}}, which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8), and type <code>adjust the appearance</code>. Then click on the 'Adjust the appearance and performance of Windows' item that appears (in Windows 10 and 8.1; Windows 8 users will again need to click the 'Settings' icon to see this result). You will now be presented with a 'Performance Options' dialog; select the 'Advanced' tab in it. In the virtual memory area, click on 'Change...', and, in the dialog that next appears, tick 'Automatically manage paging file size for all drives', then choose 'OK' to close out the Virtual Memory dialog. If you get a warning about needing to reboot, accept this (but don't reboot yet). Close out all the remaining dialogs.
+# Now we'll {{Highlight|turn on system protection (restore points) again}}. Hit the {{Key|Windows Key}}, which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8), and type <code>restore point</code>. Then click on the 'Create a restore point' item which appears (in Windows 10 and 8.1; Windows 8 users will again need to click the 'Settings' icon to see this result). You will now be presented with a dialog box with 'System Protection' as the selected tab. Choose the relevant drive (generally, {{Path|C:}}). Click the 'Configure...' button. Another dialog pops up - click on the 'Turn on system protection' radio button, and click 'OK'. Close out the other dialogs by clicking on 'OK'.
+# Follow the process described earlier to reboot and log in one last time to Windows. Check that everything still works as expected.
+# The final step is to ensure that {{Highlight|hibernation shows up on the Windows power menu}}.<ref>AddictiveTips: [http://www.addictivetips.com/windows-tips/how-to-enable-windows-8-hibernate-option/ "How To Enable Windows 8 Hibernate Option"]</ref><ref>Winaero: [http://winaero.com/blog/add-hibernate-to-the-start-menu-in-windows-10/ "Add Hibernate to the Start Menu in Windows 10"]</ref> Hit the {{Key|Windows Key}}, which will bring up the start menu in Windows 10 (or the "start screen" in Windows 8.1 and 8). What you need to do next depends on your Windows version. In Windows 10, type <code>power options</code>, and click on the 'Power Options' item which appears (in newer versions of Windows 10, the item has been renamed; you should click on 'Power & sleep settings' instead); then, click 'Choose what the power button does' in the presented dialog box (in newer versions of Windows 10 you will need to click on 'Additional power settings' to see this dialog; the item you want inside it has been renamed also, to 'Choose what the power buttons do'). In Windows 8.1 or 8, type <code>power buttons</code>, then click on the 'Change what the power buttons do' item that appears (Windows 8 users will again need to click the 'Settings' icon to see this result). For all version of Windows, next click on the 'Change settings that are currently unavailable' link in the 'System Settings' dialog. In response, the dialog will display some 'Shut-down settings' (Windows 10) or 'Power options settings' (Windows 8.1 and 8). Ensure 'Hibernate' (in Windows 10) or 'Show Hibernate' (in Windows 8.1 and 8) is checked. <span id="disable_fast_boot">You should also ensure</span> that the entry 'Turn on fast startup (recommended)' is ''unchecked'' (this entry might be called 'Hybrid Boot', depending on your system version),<ref>ArchLinux Wiki:[https://wiki.archlinux.org/index.php/Windows_and_Arch_Dual_Boot#Fast_Start-Up "Windows and Arch Dual Boot: Fast Start-Up"]</ref> and then click the 'Save Changes' button (if you had to make any modifications). Hibernation should now be an option on the power menu. Hit {{Key|Ctrl}}{{Key|Alt}}{{Key|Delete}}, then click on the power icon at the bottom right of the screen, to make sure. ''Don't'' actually hibernate the machine though, simply cancel back out to the main screen, once you've verified that the item is now present.
+
+== <span id="next_steps">Next Steps</span> ==
+
+Although we're done with our Windows prep work for now, leave the target machine running Windows for the moment. [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB|Click here]] to go to the next chapter, "Creating and Booting the Minimal-Install Image on USB".
+
+== <span id="notes">Notes</span> ==
+{{reflist}}
+
+{| class="wikitable" style="margin: 1em auto 1em auto;"
+|-
+| [[../Installation_Prerequisites|< Previous]]
+| [[../|Home]]
+| [[../Creating_and_Booting_the_Minimal-Install_Image_on_USB|Next >]]
+|}
+
+[[Category:Core system]]
+

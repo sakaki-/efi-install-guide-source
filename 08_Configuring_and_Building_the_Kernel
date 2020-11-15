@@ -1,216 +1,989 @@
+<!-- Page: Configuring_and_Building_the_Kernel -->
 
-<html class="client-nojs" lang="en" dir="ltr">
-<head>
-<meta charset="UTF-8"/>
-<title>Permission error - Gentoo Wiki</title>
-<script>document.documentElement.className="client-js";RLCONF={"wgBreakFrames":!1,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"24882599cef6466a57e5abc8","wgCSPNonce":!1,"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":!1,"wgNamespaceNumber":0,"wgPageName":"Sakaki's_EFI_Install_Guide/Configuring_and_Building_the_Kernel","wgTitle":"Sakaki's EFI Install Guide/Configuring and Building the Kernel","wgCurRevisionId":0,"wgRevisionId":0,"wgArticleId":0,"wgIsArticle":!1,"wgIsRedirect":!1,"wgAction":"edit","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgRelevantPageName":"Sakaki's_EFI_Install_Guide/Configuring_and_Building_the_Kernel","wgRelevantArticleId":0,"wgIsProbablyEditable":!1,
-"wgRelevantPageIsProbablyEditable":!1,"wgRestrictionCreate":[],"wgULSCurrentAutonym":"English","wgPageFormsTargetName":null,"wgPageFormsAutocompleteValues":[],"wgPageFormsAutocompleteOnAllChars":!1,"wgPageFormsFieldProperties":[],"wgPageFormsCargoFields":[],"wgPageFormsDependentFields":[],"wgPageFormsCalendarValues":[],"wgPageFormsCalendarParams":[],"wgPageFormsCalendarHTML":null,"wgPageFormsGridValues":[],"wgPageFormsGridParams":[],"wgPageFormsContLangYes":null,"wgPageFormsContLangNo":null,"wgPageFormsContLangMonths":[],"wgPageFormsHeightForMinimizingInstances":800,"wgPageFormsShowOnSelect":[],"wgPageFormsScriptPath":"/extensions/PageForms","edgValues":null,"wgPageFormsEDSettings":null,"wgAmericanDates":!1,"wgVisualEditor":{"pageLanguageCode":"en","pageLanguageDir":"ltr","pageVariantFallbacks":"en"},"wgULSPosition":"personal","wgEditSubmitButtonLabelPublish":!1};RLSTATE={"site.styles":"ready","noscript":"ready","user.styles":"ready","user":"ready","user.options":"loading",
-"ext.uls.pt":"ready","ext.visualEditor.desktopArticleTarget.noscript":"ready","ext.smw.style":"ready","ext.smw.tooltip.styles":"ready","mediawiki.skinning.interface":"ready","mediawiki.skinning.content.externallinks":"ready","skins.tyrian.styles":"ready","skins.tyrian.icons":"ready"};RLPAGEMODULES=["ext.gentooPackages","site","mediawiki.page.startup","mediawiki.page.ready","ext.visualEditor.desktopArticleTarget.init","ext.visualEditor.targetLoader"];</script>
-<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.implement("user.options@1hzgi",function($,jQuery,require,module){/*@nomin*/mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});
-});});</script>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.smw.style%7Cext.smw.tooltip.styles&only=styles&skin=tyrian"/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=ext.uls.pt%7Cext.visualEditor.desktopArticleTarget.noscript%7Cmediawiki.skinning.content.externallinks%7Cmediawiki.skinning.interface%7Cskins.tyrian.icons%2Cstyles&only=styles&skin=tyrian"/>
-<script async="" src="/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=tyrian"></script>
-<link rel="stylesheet" href="https://assets.gentoo.org/tyrian/bootstrap.min.css"/><link rel="stylesheet" href="https://assets.gentoo.org/tyrian/tyrian.min.css"/>
-<meta name="ResourceLoaderDynamicStyles" content=""/>
-<link rel="stylesheet" href="/load.php?lang=en&modules=site.styles&only=styles&skin=tyrian"/>
-<meta name="generator" content="MediaWiki 1.35.0"/>
-<meta name="robots" content="noindex,nofollow"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="theme-color" content="#54487a"/>
-<link rel="alternate" type="application/rdf+xml" title="Sakaki&#039;s EFI Install Guide/Configuring and Building the Kernel" href="/index.php?title=Special:ExportRDF/Sakaki%27s_EFI_Install_Guide/Configuring_and_Building_the_Kernel&xmlmime=rdf"/>
-<link rel="shortcut icon" href="https://www.gentoo.org/favicon.ico"/>
-<link rel="search" type="application/opensearchdescription+xml" href="/opensearch_desc.php" title="Gentoo Wiki (en)"/>
-<link rel="EditURI" type="application/rsd+xml" href="//wiki.gentoo.org/api.php?action=rsd"/>
-<link rel="license" href="https://creativecommons.org/licenses/by-sa/3.0/"/>
-<!--[if lt IE 9]><script src="/resources/lib/html5shiv/html5shiv.js"></script><![endif]-->
-</head>
-<body class="mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-Sakaki_s_EFI_Install_Guide_Configuring_and_Building_the_Kernel rootpage-Sakaki_s_EFI_Install_Guide skin-tyrian action-edit">	<div class="mw-jump sr-only">
-		Jump to:		<a href="#top">content</a>
-	</div>
-	<header>
-		<div class="site-title">
-			<div class="container">
-				<div class="row">
-					<div class="site-title-buttons">
-						<div class="btn-group btn-group-sm">
-							<a href="https://get.gentoo.org/" role="button" class="btn get-gentoo"><span class="fa fa-fw fa-download"></span> <strong>Get Gentoo!</strong></a>
-							<div class="btn-group btn-group-sm">
-								<a class="btn gentoo-org-sites dropdown-toggle" data-toggle="dropdown" data-target="#" href="#">
-									<span class="fa fa-fw fa-map-o"></span> <span class="hidden-xs">gentoo.org sites</span> <span class="caret"></span>
-								</a>
-								<ul class="dropdown-menu dropdown-menu-right">
-									<li><a href="https://www.gentoo.org/" title="Main Gentoo website"><span class="fa fa-home fa-fw"></span> gentoo.org</a></li>
-									<li><a href="https://wiki.gentoo.org/" title="Find and contribute documentation"><span class="fa fa-file-text-o fa-fw"></span> Wiki</a></li>
-									<li><a href="https://bugs.gentoo.org/" title="Report issues and find common issues"><span class="fa fa-bug fa-fw"></span> Bugs</a></li>
-									<li><a href="https://forums.gentoo.org/" title="Discuss with the community"><span class="fa fa-comments-o fa-fw"></span> Forums</a></li>
-									<li><a href="https://packages.gentoo.org/" title="Find software for your Gentoo"><span class="fa fa-hdd-o fa-fw"></span> Packages</a></li>
-									<li class="divider"></li>
-									<li><a href="https://planet.gentoo.org/" title="Find out what's going on in the developer community"><span class="fa fa-rss fa-fw"></span> Planet</a></li>
-									<li><a href="https://archives.gentoo.org/" title="Read up on past discussions"><span class="fa fa-archive fa-fw"></span> Archives</a></li>
-									<li><a href="https://gitweb.gentoo.org/" title="Browse our source code in Gitweb"><span class="fa fa-code fa-fw"></span> Gitweb</a></li>
-									<li><a href="https://sources.gentoo.org/" title="Browse our source code in CVS"><span class="fa fa-code fa-fw"></span> CVS sources</a></li>
-									<li class="divider"></li>
-									<li><a href="https://infra-status.gentoo.org/" title="Get updates on the services provided by Gentoo"><span class="fa fa-server fa-fw"></span> Infra Status</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="logo">
-						<a href="/" title="Back to the homepage" class="site-logo"><object data="https://assets.gentoo.org/tyrian/site-logo.svg" type="image/svg+xml">
-							<img src="https://assets.gentoo.org/tyrian/site-logo.png" alt="Gentoo Linux Logo">
-						</object></a>
-						<span class="site-label">Wiki</span>
-					</div>
-				</div>
-			</div>
-		</div>
-		<nav class="tyrian-navbar" role="navigation">
-			<div class="container">
-				<div class="row">
-					<div class="navbar-header">
-						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-main-collapse">
-							<span class="sr-only">Toggle navigation</span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-						</button>
-					</div>
-					<div class="collapse navbar-collapse navbar-main-collapse">
-						<ul class="nav navbar-nav">
-							<li id="n-mainpage-description"><a href="/wiki/Main_Page" title="Visit the main page [z]" accesskey="z">Main page</a></li><li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li><li id="n-help"><a href="/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Gentoo" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Gentoo <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Projects"><a href="/wiki/Project:Gentoo">Gentoo Projects</a></li>				</ul>
-			</li>			<li class="dropdown">
-				<a href="/wiki/Gentoo_Wiki:Menu-Documentation" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Documentation <span class="caret"></span></a>
-				<ul class="dropdown-menu" role="menu"><li id="n-Gentoo-Handbook"><a href="/wiki/Handbook:Main_Page">Gentoo Handbook</a></li><li id="n-Gentoo-FAQ"><a href="/wiki/FAQ">Gentoo FAQ</a></li><li id="n-Featured-Documents"><a href="/wiki/Project:Documentation/Overview">Featured Documents</a></li><li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Topics</li><li id="n-Core-system"><a href="/wiki/Category:Core_system">Core system</a></li><li id="n-Hardware"><a href="/wiki/Category:Hardware">Hardware</a></li><li id="n-Software"><a href="/wiki/Category:Software">Software</a></li><li id="n-Desktop"><a href="/wiki/Category:Desktop">Desktop</a></li><li id="n-Server-.26-Security"><a href="/wiki/Category:Server_and_Security">Server & Security</a></li><li id="n-Project-.26-Community"><a href="/wiki/Category:Project_and_Community">Project & Community</a></li>				</ul>
-			</li>						</ul>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-									<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><i class="fa fa-cog"></i> Tools <span class="caret"></span></a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>			</ul>
-		</li>
-			<li class="dropdown">
-			<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-				<span class="fa fa-user" aria-label="Personal tools"></span>
-				User				<span class="caret"></span>
-			</a>
-			<ul class="dropdown-menu" role="menu">
-				<li id="pt-createaccount"><a href="/index.php?title=Special:CreateAccount&returnto=Sakaki%27s+EFI+Install+Guide%2FConfiguring+and+Building+the+Kernel&returntoquery=action%3Dedit" title="You are encouraged to create an account and log in; however, it is not mandatory">Create account</a></li><li id="pt-login"><a href="/index.php?title=Special:UserLogin&returnto=Sakaki%27s+EFI+Install+Guide%2FConfiguring+and+Building+the+Kernel&returntoquery=action%3Dedit" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>			</ul>
-		</li>
-								</ul>
-					</div>
-				</div>
-			</div>
-		</nav>
-		
-		<nav class="navbar navbar-grey navbar-stick" id="wiki-actions" role="navigation">
-			<div class="container"><div class="row">
-				<div class="navbar-header">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#gw-toolbar">
-						<span class="sr-only">Toggle navigation</span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-						<span class="icon-bar"></span>
-					</button>
-				</div>
-				<div class="collapse navbar-collapse" id="gw-toolbar">
-					<ul class="nav navbar-nav">
-					<li id="ca-nstab-main" class="selected new active"><a href="/index.php?title=Sakaki%27s_EFI_Install_Guide/Configuring_and_Building_the_Kernel&action=edit&redlink=1" title="View the content page (page does not exist) [c]" accesskey="c">Page</a></li><li id="ca-talk" class="new"><a href="/index.php?title=Talk:Sakaki%27s_EFI_Install_Guide/Configuring_and_Building_the_Kernel&action=edit&redlink=1" rel="discussion" title="Discussion about the content page (page does not exist) [t]" accesskey="t">Discussion</a></li>					</ul>
-							<form action="/index.php" id="searchform" class="navbar-form navbar-right" role="search">
-			<input type='hidden' name="title" value="Special:Search"/>
+<span id="config_and_build_kernel">In this section</span>, we'll be (loosely) following [[Handbook:AMD64/Installation/Kernel|Chapter 7]] of the Gentoo handbook, and building a Linux kernel for use with our new system. Accordingly, it's worth reading that handbook chapter in parallel with this guide. In addition, the Gentoo [[Kernel/Overview|kernel overview]] wiki page, and Greg Kroah-Hartman's ''Linux Kernel in a Nutshell'' are both highly recommended.<ref name="kernel_in_nutshell">Kroah-Hartman, Greg. [http://www.kroah.com/lkn/ ''Linux Kernel in a Nutshell'' (ebook)]. O'Reilly, 2006</ref>
 
-				<div class="input-group">
-					<input type="search" name="search" placeholder="Search" title="Search Gentoo Wiki [f]" accesskey="f" id="searchInput" class="form-control"/>					<div class="input-group-btn"><input type="submit" name="go" value="Go" title="Go to a page with this exact name if it exists" id="searchGoButton" class="searchButton btn btn-default"/><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton btn btn-default"/></div>
-				</div>
-		</form>
-						<ul class="nav navbar-nav navbar-right hidden-xs">
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">more <span class="caret"></span></a>
-						<ul class="dropdown-menu" role="menu">
-												</ul>
-						</li>
-					</ul>
-				</div>
-			</div></div>
-		</nav>
-		</header>
-	
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<div id="content" class="mw-body" role="main">
-						<a id="top"></a>
-						
-						<h1 id="firstHeading" class="first-header" lang="en">
-							<span dir="auto">Permission error</span>
-						</h1>
+The process we'll be following in this section is:
+# Allowing necessary licenses, then downloading kernel sources and firmware (if desired);
+# Emerging {{c|buildkernel}} (from {{c|sakaki-tools}}) and some additional required packages;
+# Checking we have a custom version of {{c|gpg}} that will work without {{c|pinentry}};
+# Setting up {{c|buildkernel}}'s configuration file ({{Path|/etc/buildkernel.conf}}); and
+# Building the kernel for the first time, using {{c|buildkernel}}.
 
-						<div id="bodyContent" class="mw-body-content">
-							<div id="siteSub">From Gentoo Wiki</div>
-							<div id="contentSub">
-															</div>
-														<div id="jump-to-nav" class="mw-jump">
-								Jump to:								<a href="#column-one">navigation</a>, 								<a href="#searchInput">search</a>
-							</div>
+However, don't worry, the process is perfectly manageable! No manual kernel configuration is necessary for the above, since the provided {{c|buildkernel}} tool will handle all the complexity for you (exactly what this script does [[#what_buildkernel_does|is also explained]] for the curious, but of course you can skip this material if you like).
 
-							<div id="mw-content-text"><p>You do not have permission to create this page, for the following reasons:
-</p>
-<ul class="permissions-errors">
-<li>The action you have requested is limited to users in the group: <a href="/index.php?title=Project:Users&action=edit&redlink=1" class="new" title="Project:Users (page does not exist)">Users</a>.</li>
-<li>You must confirm your email address before editing pages.
-Please set and validate your email address through your <a href="/wiki/Special:Preferences" title="Special:Preferences">user preferences</a>.</li>
-</ul></div><div class="printfooter">
-Retrieved from "<a dir="ltr" href="https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Configuring_and_Building_the_Kernel">https://wiki.gentoo.org/wiki/Sakaki%27s_EFI_Install_Guide/Configuring_and_Building_the_Kernel</a>"</div>
-<div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div>						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+== <span id="introduction">Introduction</span> ==
 
-			<footer>
-		<div class="container">
-			<div class="row">
-				<div class="col-xs-12 col-md-offset-2 col-md-7">
-											<div class="spacer"></div>
-						<ul id="f-list">
-							<li id="privacy>"><a href="/wiki/Gentoo_Wiki:Privacy_policy" class="mw-redirect" title="Gentoo Wiki:Privacy policy">Privacy policy</a></li><li id="about>"><a href="/wiki/Gentoo_Wiki:About" title="Gentoo Wiki:About">About Gentoo Wiki</a></li><li id="disclaimer>"><a href="/wiki/Gentoo_Wiki:General_disclaimer" title="Gentoo Wiki:General disclaimer">Disclaimers</a></li>						</ul>
-									</div>
-				<div class="col-xs-12 col-md-3">
-					<!-- No questions or comments, the Wiki has enough information on how to contact us. -->
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-xs-3 col-md-2">
-					<ul class="footerlinks three-icons">
-						<li><a href="https://twitter.com/gentoo" title="@Gentoo on Twitter"><span class="fa fa-twitter fa-fw"></span></a></li>
-						<li><a href="https://www.facebook.com/gentoo.org" title="Gentoo on Facebook"><span class="fa fa-facebook fa-fw"></span></a></li>
-						<li></li>
-					</ul>
-				</div>
-				<div class="col-xs-9 col-md-9">
-					<strong>&copy; 2001&ndash;2020 Gentoo Foundation, Inc.</strong><br />
-					<small>
-						Gentoo is a trademark of the Gentoo Foundation, Inc.
-						The contents of this document, unless otherwise expressly stated, are licensed under the
-						<a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license">CC-BY-SA-3.0</a> license.
-						The <a href="https://www.gentoo.org/inside-gentoo/foundation/name-logo-guidelines.html">Gentoo Name and Logo Usage Guidelines</a> apply.
-					</small>
-				</div>
-			</div>
-		</div>
-	</footer>
-	
-<script>
-function defer(method) {
-    if (window.jQuery) {
-        method();
-    } else {
-        setTimeout(function() { defer(method) }, 50);
-    }
-}
-defer(function() { mw.loader.load( 'https://assets.gentoo.org/tyrian/bootstrap.min.js'); });
-</script>
+So what is the [[:Wikipedia:Linux_kernel|Linux kernel]] anyway? In essence, it's a privileged, pre-emptive, multitasking resource manager. As such, it's the core element of the operating system, because all 'normal' software (including operating system programs like {{c|cat}} and {{c|ls}})  must go via the kernel to access system hardware (such as disks, screen and keyboard), to request or release system resources (such as memory), or to communicate with other [[:Wikipedia:User_space#Userland|'userland']] software (as the kernel maintains user processes in distinct virtual memory 'silos').
 
-<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgBackendResponseTime":108});});</script></body></html>
+The kernel is ''not'' built using the normal {{c|emerge}} procedure &mdash; {{c|emerge}} ''will'' fetch the necessary source files for us, but configuration, compilation and installation is separate. {{Highlight|Configuration}} here refers to the process of setting (or in some cases, commenting out) key-value pairs in a special {{c|.config}} file. This file sets vital kernel parameters (such as the kernel command line, in the case of a UEFI-bootable system), and instructs the build system which kernel components (including drivers) to omit, which to build as [[:Wikipedia:Loadable_kernel_module|loadable modules]] ('.ko' files), and which to build in to the kernel itself.
+
+Before continuing, it's worth saying a little bit about the EFI boot process here. When your PC boots up (in [[:Wikipedia:Unified_Extensible_Firmware_Interface|EFI]] mode), the UEFI BIOS loads from ROM and runs. Once it has performed initial hardware configuration, this BIOS then looks for any runnable EFI software, proceeding through a list of possible locations (which must be EFI system partitions, if they are storage devices) as specified by you via the BIOS setup screens (or the EFI boot list variable). If it finds such an executable (on 64-bit x86 machines, normally {{Path|/EFI/Boot/bootx64.efi}}, the filename is not (usually!) case sensitive), it will load this and run it.
+
+Traditionally, this program would be a [[:Wikipedia:Booting|bootloader]], whose job it would be to load and run the operating system proper. However, modern Linux kernels [[EFI_stub_kernel|can be configured]] to appear as runnable EFI programs, obviating the need for any separate bootloader, and this is the approach we're going to take.
+
+However, there is one wrinkle to overcome. When our EFI kernel is started, it needs to invoke various userland software (such as {{c|gpg}}, {{c|cryptsetup}} and various LVM programs) to activate and access the encrypted volumes we created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#setup_luks_lvm_process|earlier]]. Which would be fine &mdash; except that those programs are themselves stored... within the very encrypted volumes we wish to use them to unlock!
+
+This is <span id="initramfs_intro">worked around</span> by using an initial RAM filing system, or [[Initramfs|initramfs]], which is a simple archive (like a [[:Wikipedia:Tar_(file_format)|{{c|tar}}]] archive, but using an older format, known as [[:Wikipedia:Cpio|{{c|cpio}}]]) of a minimal Linux root filesystem. This initramfs contains only those userland programs (and the libraries and other files on which they depend) which are needed to boot the system (including a special ''init'' program, which we'll get to shortly). Although the use of an initramfs is reasonably commonplace with Linux systems (to start up LVM for example), we elect to include the archive within the kernel file itself, so it will be protected by the secure boot signature (once we add it).
+
+So, the actual boot process we'll be aiming to utilize is as follows:
+# The UEFI BIOS starts up, and initializes the hardware. It looks for, and finds, an executable .efi program (our stub-loadable kernel) on the USB key, so it loads this and passes off control to it. (If secure boot is on, it will also check that the kernel image contains a valid cryptographic signature, but we'll get to that in a later section ([[../Configuring_Secure_Boot_under_OpenRC|{{c|OpenRC}} track]]), [[../Configuring_Secure_Boot|{{c|systemd}} track]].)
+# The kernel starts up and initializes. It unpacks its bundled initramfs into memory, and activates it, which provides a root directory containing a skeleton set of system files (a bit like the contents of our stage 3 archive, but much sparser).
+# The kernel then looks for a special 'init' program in the initramfs and starts it (as the first userspace process).
+# This initscript, which is actually provided by a Gentoo utility called {{c|genkernel}} (more of which shortly), prompts the user to enter a password, unlocks the .gpg keyfile (also on the USB key), and uses the resulting binary plaintext to unlock the LUKS partition. It next activates the LVM volume group on that partition ({{c|vg1}} in our case), and mounts any logical volumes (LVs) within it, as dictated by the file {{Path|/etc/fstab}}. This mounts the swap, root and home LVs.
+# At this point the 'real' filing system is in place, and the initramfs (apart from {{Path|/proc}}, {{Path|/dev}} and {{Path|/sys}}) is discarded, using [http://man7.org/linux/man-pages/man8/switch_root.8.html {{c|switch_root}}]. The init script ends by invoking the 'proper' init system on this newly mounted root - which, depending on your [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier decision]], will be either the {{c|OpenRC}} init process, or the {{c|systemd}} daemon. In either case, this 'real' init handles the boot from that point onwards.
+
+Getting all of this to work correctly out of the box is complex, so I've provided a simple script ({{c|buildkernel}}) which automates the process, and which should enable you to create a bootable EFI kernel with minimal fuss, which we'll install from the {{c|sakaki-tools}} overlay shortly.
+
+So, let's go build ourselves a kernel!
+
+== <span id="downloading_kernel_source">Allowing Necessary Licenses and Downloading Kernel Sources and Firmware</span> ==
+Our default allowed license group ({{c|@FREE}}), which we set [[../Installing_the_Gentoo_Stage_3_Files#set_license|earlier]], does not by default cover the firmware blobs bundled with the kernel sources (nor those explicitly provided by {{Package|sys-kernel/linux-firmware}}), so we'll need to add some [[../Installing_the_Gentoo_Stage_3_Files#about_package_license|permitted license overrides]] to handle this (by creating appropriate files in the {{Path|/etc/portage/package.license}} directory).
+
+Begin by creating the necessary superstructure:
+
+{{RootCmd
+|mkdir -p -v /etc/portage/package.license
+|touch /etc/portage/package.license/zzz_via_autounmask
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+
+{{Note|As [[../Building_the_Gentoo_Base_System_Minus_Kernel#create_zzz_autounmask{{!}}earlier]], we create a {{Path|zzz_via_autounmask}} file as a convenient receptacle for changes that you may, in future, request be automatically made to your {{c|package.license}} configuration to allow an {{c|emerge}} operation to complete successfully.}}
+{{Note|For avoidance of doubt, '''even users intending to deblob should issue the above two commands''', as they only create the (generally useful) scaffolding for license overrides &mdash; the actual overrides themselves, should you require them, are yet to be added.}}
+
+Then, assuming that you are ''not'' intending to deblob your kernel (please see following note; most users will ''not'' wish to deblob), add the overrides, by issuing:
+
+{{RootCmd
+|echo "sys-kernel/linux-firmware linux-fw-redistributable no-source-code" >> /etc/portage/package.license/linux-firmware
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+
+{{Important|There's a <span id{{=}}"deblob_or_not">key choice</span> to make here. By default, the {{Package|sys-kernel/gentoo-sources}} and {{Package|sys-kernel/linux-firmware}} packages contain (opaque) compiled software for lots of different bits of hardware you may have in your system. These images are ''not'' executed directly by the CPU, but copied up to the devices in question by their kernel drivers when needed. Still, you might take the view that, since these images are not 'open-source' as such, they represent a taint and possible danger to your system. If that's your position (and this will ''not'' apply to most users of this tutorial), then you should:
+* ''not'' emerge the {{Package|sys-kernel/linux-firmware}} package when instructed to below
+* ''not'' set up (or delete, if you already have it) the {{Path|/etc/portage/package.license/gentoo-sources}} file mentioned above
+* ''not'' set up (or delete, if you already have it) the {{Path|/etc/portage/package.license/linux-firmware}} file mentioned above
+* {{c|emerge}} {{Package|sys-kernel/ck-sources}} in place of {{Package|sys-kernel/gentoo-sources}}, when instructed to below (see {{Bug|536482}}; deblob USE flag support has been dropped from {{Package|sys-kernel/gentoo-sources}}, and per [https://www.gentoo.org/support/news-items/2017-08-19-hardened-sources-removal.html this news item], the Gentoo Hardened team has masked {{Package|sys-kernel/hardened-sources}}, and will remove it from the Gentoo tree by end September 2017, leaving {{Package|sys-kernel/ck-sources}} as the only current choice (in the main Portage tree) if you wish to deblob); this will require that you:
+* ''specify'' the {{c|deblob}} USE flag for {{Package|sys-kernel/ck-sources}}, as follows:
+{{RootCmd
+|mkdir -p -v /etc/portage/package.use
+|echo "sys-kernel/ck-sources deblob" >> /etc/portage/package.use/ck-sources
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+* ''allow'' {{c|~amd64}} ('testing branch') ebuilds for {{Package|sys-kernel/ck-sources}} (since as of the time of writing, it had no versions marked stable), as follows:
+{{RootCmd
+|mkdir -p -v /etc/portage/package.accept_keywords
+|echo "sys-kernel/ck-sources ~amd64" >> /etc/portage/package.accept_keywords/ck-sources
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>}}
+'''Be aware:''' if you choose to go the full [[:Wikipedia:Linux-libre{{!}}Linux-libre]] route like this, your system will probably still boot, and chances are its wired interfaces will still work, but unless you are lucky (or are using a system, like e.g. one of the Purism Librem laptops, which has been specifically designed not to require additional firmware blobs) your wireless devices will most likely not function (since many of these devices have only static RAM and require firmware uploads every time they are connected).<ref>Wikipedia: [https://en.wikipedia.org/wiki/Linux-libre#Effects_of_removing_proprietary_firmware "Linux-libre: Effects of removing proprietary firmware"]</ref><ref>Wikipedia: [https://en.wikipedia.org/wiki/Binary_blob#Device_firmware "Binary blob: Device firmware"]</ref> In this tutorial, therefore, I have taken the pragmatic view of leaving the firmware in. If that makes you a little nervous, I'd suggest to try first building the system ''with'' firmware (i.e., per this tutorial's vanilla flow), get it to the point where it works successfully, and ''then'' try switching out the firmware (using the methods just mentioned). That way, you'll be able to roll back to the previous kernel if things go wrong. And if you are paranoid, you can always rebuild everything again from scratch, once you reach a stable configuration.}}
+{{Note|Since modern kernels (>{{=}}4.14) no longer include (explicit) in-tree firmware,<ref name{{=}}"no_more_in_tree_firmware">Kroah-Hartman, Greg [http://lkml.iu.edu/hypermail/linux/kernel/1709.1/04650.html "[GIT PULL] Firmware files removal for 4.14-rc1"]</ref> there's no need to specify additional licenses for {{Package|sys-kernel/gentoo-sources}}, as was required in earlier versions of this guide.}}
+{{Note|Per the handbook, you don't ''have'' to use {{Package|sys-kernel/gentoo-sources}}; there are a number of other alternatives within the Portage tree, which provide different spins on the kernel (e.g., for security hardened server applications).<ref>Gentoo Wiki: [http://wiki.gentoo.org/wiki/Kernel/Overview#Supported_kernel_packages "Kernel/Overview: Supported kernel packages"]</ref> However, we'll stick with {{Package|sys-kernel/gentoo-sources}} here as it's the most commonly used variant.}}
+{{Note|The {{c|freedist}} license is no longer a kernel requirement, as of [https://github.com/gentoo/gentoo/commit/38bce48ced4a3541ca86151ec83c1d286471907b#diff-20cf66a190a9ab10362efc14219c1a80 commit 38bce48].}}
+
+Right, let's fetch the kernel sources:
+{{RootCmd
+|emerge --ask --verbose sys-kernel/gentoo-sources
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+{{Note|As just mentioned, users who are deblobbing (''not'' the default in this tutorial) should use {{Package|sys-kernel/ck-sources}} in place of {{Package|sys-kernel/gentoo-sources}} in the above command.}}
+<span id="install_firmware">And the firmware</span> (assuming you are following our default options, and not deblobbing):
+{{RootCmd
+|emerge --ask --verbose sys-kernel/linux-firmware
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+Now we need to quickly double-check that the symbolic link in {{Path|/usr/src/linux}} is pointing to the correct place. Issue:
+{{RootCmd
+|readlink -v /usr/src/linux
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+and check that the output of this refers to the same kernel version as following:
+{{RootCmd
+|eselect kernel list
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+(the current default will have an asterisk marking it).
+{{Note|At the moment, there should only be one version available in the output from {{c|eselect kernel list}}. However, as time goes on, and you update your Portage tree (discussed later), new versions of the kernel sources will become available. When you wish to work with one of these newer versions, you issue:
+{{RootCmd
+|eselect kernel set N
+}}
+to choose it (where N is a number in the list output by {{c|eselect kernel list}}, such as 1, 2 etc.) prior to building. This action modifies the {{Path|/usr/src/linux}} symbolic link.}}
+
+== <span id="emerging_buildkernel">Emerging {{c|buildkernel}}, and Additional Required Packages</span> ==
+
+We now have the necessary sources downloaded but, in order to proceed, there are two additional packages we should {{c|emerge}} first. These are:
+
+* {{Package|sys-kernel/buildkernel}} This is the master build script, supplied from the {{c|sakaki-tools}} overlay (as described [[../Building_the_Gentoo_Base_System_Minus_Kernel#buildkernel_script|earlier]]). It pulls in a number of additional packages through its dependencies.
+* {{Package|app-crypt/efitools}} This contains a number of tools for working with UEFI, including commands to manipulate UEFI secure variables, which we will need when setting up secure boot.
+
+Prior to emerging these, there are a number of [[../Installing_the_Gentoo_Stage_3_Files#about_package_use|package-specific use flags]] we'll need to set (some of these are in anticipation of {{c|buildkernel}} or GNOME dependencies). Issue:
+
+{{RootCmd
+|echo -e "# ensure we can generate a bootable kernel and initramfs\nsys-kernel/genkernel-next cryptsetup gpg plymouth" >> /etc/portage/package.use/genkernel-next
+|echo -e "# for a smooth transition to GNOME\nsys-boot/plymouth gdm" >> /etc/portage/package.use/plymouth
+|echo -e "# for a smooth transition from Plymouth\ngnome-base/gdm plymouth" >> /etc/portage/package.use/gdm
+|echo -e "# required by plymouth (kernel mode setting library)\nx11-libs/libdrm libkms" >> /etc/portage/package.use/libdrm
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+
+Here are what those flags do:
+
+{| class="wikitable"
+|-
+! Package !! Use flag !! Description
+|-
+| rowspan=3|{{Package|sys-kernel/genkernel-next}} || {{c|cryptsetup}} || This enables support for LUKS disk encryption in the initramfs, via {{Package|sys-fs/cryptsetup}}.
+|-
+| {{c|gpg}} || This enables support for {{c|gpg}} in the initramfs. We will provide our own version of {{c|gpg}} but we set the use flag here for forward compatibility.
+|-
+| {{c|plymouth}} || This enables support for the {{c|plymouth}} boot splash system (but does not mandate its use).
+|-
+| {{Package|sys-boot/plymouth}} || {{c|gdm}} || This allows for a smooth transition from the plymouth splash to GNOME (incidentally, this flag may safely be set even by those targeting other graphical desktop environments, such as [[KDE]]).
+|-
+| {{Package|gnome-base/gdm}} || {{c|plymouth}} || Ditto, but from the 'receiving' side (this flag will have no effect on your system if you ''don't'' subsequently install GNOME, so it is safe to set here).
+|-
+| {{Package|x11-libs/libdrm}} || libkms || This enables the building of {{c|libkms}}, a library for applications to interact with [[:Wikipedia:Mode_setting|kernel mode setting]]. It is required by (the default use flags of) {{Package|sys-boot/plymouth}}.
+|}
+
+{{Tip|If you'd like to review ''all'' the package-specific <var>USE</var> flags you have set, you can easily display the contents of these files, together with filenames, as follows:{{RootCmd
+|tail -n +1 /etc/portage/package.use/*
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+}}
+
+There is one more issue we need to work around. In its current configuration, {{Package|app-crypt/efitools}} will sometimes fail during installation, when build parallelism is enabled (as it uses some of its own tools during installation in a manner that leads to a race condition). This is easily solved, and illustrates another feature of {{c|Portage}}, namely per-package environments. First, we'll create a custom environment file that will override our usual <var>MAKEOPTS</var> settings. Issue:
+{{RootCmd
+|mkdir -p -v /etc/portage/{env,package.env}
+|nano -w /etc/portage/env/serialize-make.conf
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+then enter the following text in that file:
+{{FileBox|filename=/etc/portage/env/serialize-make.conf|title=Create a environment file to force single-threaded make|lang=bash|1=
+# cite "serialize-make.conf" for package <foo> in
+# /etc/portage/package.env/<foo>, to suppress parallel make
+
+MAKEOPTS="-j1"
+}}
+Save, and exit {{c|nano}}. Then issue:
+{{RootCmd
+|nano -w /etc/portage/package.env/efitools
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+then enter the following text in that file:
+{{FileBox|filename=/etc/portage/package.env/efitools|title=Invoking a custom environment for app-crypt/efitools|lang=bash|1=
+app-crypt/efitools serialize-make.conf
+}}
+Save, and exit {{c|nano}}. Now, whenever the {{Package|app-crypt/efitools}} package is emerged, your custom <var>MAKEOPTS</var> will be used.
+{{Note|You can cite multiple environment configuration files for a single package, just separate them with a space, and you can use the same technique to e.g., modify {{c|Portage}} <var>FEATURES</var> on a per-package basis.}}
+
+Next, we can {{c|emerge}} the packages themselves. <span id="install_buildkernel">Issue:</span>
+{{RootCmd
+|emerge --ask --verbose app-crypt/efitools
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+
+{{Note|If the {{Package|app-crypt/efitools}} package will not {{c|emerge}}, ensure you have the necessary entry in {{Path|/etc/portage/package.accept_keywords/efitools}}, as was directed [[../Building_the_Gentoo_Base_System_Minus_Kernel#setup_accept_keywords{{!}}in the previous chapter]].}}
+
+Once this completes, ensure that the boot USB key is plugged into the target machine, then issue:
+{{RootCmd
+|emerge --ask --verbose sys-kernel/buildkernel
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+|output=<pre>
+... additional output suppressed ...
+Would you like to merge these packages? [Yes/No] <press y, then press Enter>
+... additional output suppressed ...
+</pre>
+}}
+and again, wait for the build to complete.
+{{Note|These builds may take some time, so (just as we did [[../Building_the_Gentoo_Base_System_Minus_Kernel#use_showem{{!}}in the previous chapter]]), you can temporarily switch to the second {{c|screen}} virtual console and review progress with {{c|showem}}, if you like.}}
+
+== <span id="ensure_static_gpg">Checking we have a Minimal, Static {{c|gpg}} (Without {{c|pinentry}})</span> ==
+
+The <span id="staticgpg_intro">installation of</span> {{c|buildkernel}} (which you have [[#install_buildkernel|just performed]]), should have caused a special, static version of {{c|gpg}} version 1.4.16 - called {{c|staticgpg}} - to have been installed on your system. The original (standard, v2.x) {{c|gpg}} should be present as well (since it's part of the [[System set (Portage)|@system]] set for this [[profile]]).
+
+As both versions are important to the proper functioning of your system, we need to check they are present and correct. Issue:
+{{RootCmd
+|gpg --version && echo && staticgpg --version
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+and verify that, per the messages produced, you do indeed have a v2.x and v1.x installed.
+
+You can also verify that the {{c|staticgpg}} binary is statically linked:
+{{RootCmd
+|file "$(which staticgpg)"
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+|output=<pre>
+/usr/local/bin/staticgpg: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, for GNU/Linux 3.2.0, stripped
+</pre>
+}}
+{{Note|The GNU/Linux version shown by {{c|file}} may be different for your system; in any event, it is ''not'' the version of the kernel under which the binary was compiled (per {{c|uname -r}}); rather it is the version of the kernel ''headers'' that the C library the program uses was built against.<ref>Stack Overflow Forum: [http://stackoverflow.com/questions/12236159/linux-command-file-shows-for-gnu-linux-2-6-24#answer-12236411 "linux command "file" shows "for GNU/Linux 2.6.24""]</ref>}}
+
+== <span id="setup_buildkernel_conf">Setting Up {{c|buildkernel}}'s Configuration File</span> ==
+
+Finally, before we can use the {{c|buildkernel}} utility, we have to set up its configuration file. An initial version has already been copied to {{Path|/etc/buildkernel.conf}} when you emerged {{c|buildkernel}}, [[#install_buildkernel|earlier]].  However, you must at least <span id="important_conf_vars">specify</span> the following shell variables:
+*<var>EFIPARTUUID</var> - the UUID of the first (EFI system) partition on your USB boot key.
+*<var>CRYPTPARTUUID</var> - the UUID of the LUKS partition which you created on your target machine's main drive.
+*<var>KEYMAP</var> - the keymap to be used by the console early in the boot process. This is important for the passphrase protecting your LUKS keyfile to be recognized correctly. If you leave it commented out, the {{c|us}} keymap will be used.
+{{Note|Users who have elected to target {{c|OpenRC}} init (and ''not'' the default {{c|systemd}}) [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] must also specify the <var>INITSYSTEM</var> variable.}}
+
+You made a note of these UUIDs [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#finding_blkids|earlier]] in this tutorial (where we referred to them as the partition UUIDs of {{Path|/dev/sdY1}} and {{Path|/dev/sdZn}}, respectively). If the {{c|buildkernel}} {{c|ebuild}} was able to identify them unambiguously (i.e., for <var>EFIPARTUUID</var>, only one EFI system partition on a USB device could be found, and for <var>CRYPTPARTUUID</var>, only one LUKS partition could be found), then these will already have been set for you, when you emerged {{c|buildkernel}}, [[#install_buildkernel|above]]. In any event, you '''must''' check to make sure, because if these values are wrong, you may not be able to boot your new Gentoo installation successfully.
+
+{{Note|By default, {{c|buildkernel}} assumes that your LUKS filesystem resides on a [[:Wikipedia:GUID_Partition_Table{{!}}GPT]] partition (which it will do, if you installed it in space freed up from Windows, per the earlier instructions in this tutorial). However, as of version 1.0.8 of {{c|buildkernel}}, it is also possible to specify the LUKS path directly, by setting the <var>CRYPTPATHMAP</var> variable in {{Path|/etc/buildkernel.conf}}. This may be useful for those whose LUKS filesystem is on an [[:Wikipedia:Master_boot_record{{!}}MBR]]-partitioned drive (if dual-booting with an older Windows 7, for example). Please refer to the {{c|buildkernel.conf}} manpage for more details.<br>Most users will not need to concern themselves with this option, however, and should entirely ignore the contents of this note.}}
+There are two ways to check (and, if necessary, fix) your setup: [[#manual_buildkernel_conf|manually]], or via {{c|buildkernel}}'s [[#assisted_buildkernel_conf|built-in menu-driven tool]] (recommended for new users):
+
+=== <span id="manual_buildkernel_conf">Option 1: Editing {{c|buildkernel.conf}} Manually</span> ===
+
+You can always modify the configuration manually. To do so, issue:
+{{RootCmd
+|nano -w /etc/buildkernel.conf
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+And then:
+* uncomment the line setting <var>EFIPARTUUID</var>, and make sure that it refers to the partition UUID of {{Path|/dev/sdY1}} (if {{c|buildkernel}}'s {{c|ebuild}} was able to identify only one such matching partition on a USB device, this will already have been set for you and uncommented, but you should check);
+* uncomment the line setting <var>CRYPTPARTUUID</var>, and make sure that it refers to the partition UUID of {{Path|/dev/sdZn}} (again, {{c|buildkernel}}'s {{c|ebuild}} may already have set and uncommented this for you, but you must check);
+* if not using the US keymap, uncomment the line setting <var>KEYMAP</var>, and make sure it refers to the correct keymap (in the case of the CF-AX3, for example, we'd set <code>KEYMAP="jp"</code>).
+* if you chose (as is now the default in this guide) to use {{c|OpenRC}} (rather than {{c|systemd}}) init [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]], uncomment the line setting <var>INITSYSTEM</var> (and make sure it reads <code>INITSYSTEM="openrc"</code>). If you are on the alternative ({{c|systemd}}) install track, you should leave the variable commented out (for historical reasons, {{c|buildkernel}} assumes the use of {{c|systemd}} in its configuration file).
+Save, and exit {{c|nano}} when done.
+{{Note|By {{Path|/dev/sdY1}} in the above we of course mean the USB boot key's first partition, and by {{Path|/dev/sdZn}} the LUKS partition we created.}}
+{{Important|<span id{{=}}"deal_with_different_vg_name">In the unlikely event</span> you decided ''not'' to call your LVM volume group {{c|vg1}} [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#vg_name_warning{{!}}earlier in the tutorial]], you'll also need to set the variables <var>CMDLINE_REAL_ROOT</var> and <var>CMDLINE_REAL_RESUME</var> (which are ultimately used to set the kernel command line variables [[#real_root_var{{!}}<var>real_root</var>]] and [[#real_resume_var{{!}}<var>real_resume</var>]]). For example, if you called your volume group {{c|mynewvg}}, you need to set:
+{{GenericCmd|<pre>
+CMDLINE_REAL_ROOT="/dev/mapper/mynewvg-root"
+CMDLINE_REAL_RESUME="/dev/mapper/mynewvg-swap"
+</pre>
+}}
+in {{c|buildkernel.conf}} for the system to work correctly.
+'''If you have used the recommended name ({{c|vg1}}), you do not need to worry about this point.'''
+}}
+{{Important|There is a <span id{{=}}"keymap_issue">bit of a subtlety</span> with the <var>KEYMAP</var> variable; this is processed by {{c|genkernel}}'s {{c|init}} script, ''not'' {{c|systemd}} or {{c|OpenRC}} (which the {{c|init}} script eventually hands off to), so the string you need may be slightly different from that reported by {{c|localectl list-keymaps}} (which we'll use when setting up {{c|systemd}}'s configuration later) ({{c|OpenRC}} users will use values from {{Path|/usr/share/keymaps/i386/<layout>/...}}). Have a look in the file {{Path|/usr/share/genkernel/defaults/initrd.d/00-keymaps.sh}} to see the available keypap strings for use with this variable. For example, on the Panasonic CF-AX3 laptop, we need to use <code>jp106</code> for the {{c|systemd}} console keymap, but <code>jp</code> for the init script (and hence <code>KEYMAP{{=}}"jp"</code> here).
+
+Alternatively, just use the <kbd>buildkernel --easy-setup</kbd> approach described below, and you can then simply choose your desired keymap from a menu!}}
+
+=== <span id="assisted_buildkernel_conf">Option 2: Editing {{c|buildkernel.conf}} Using {{c|buildkernel --easy-setup}}</span> ===
+
+As it is important to get these settings correct, and easy to make a slip-up when manually editing a configuration file and copying UUIDs around, the {{c|buildkernel}} program provides a menu-driven helper to conform {{Path|/etc/buildkernel.conf}}.
+
+To use it, ensure that your boot USB key is plugged into the target machine, then simply issue <kbd>buildkernel --easy-setup</kbd> and follow the prompts, making sure to save and exit when done. You can mix and match manual editing and using {{c|buildkernel --easy-setup}}; when you run {{c|buildkernel --easy-setup}}, any conflicting changes in your file will simply be automatically commented out, and any new definitions will be written to a delineated block at the end of the file.
+
+The below shows a typical configuration run; obviously your values (UUIDs etc) will differ, as may the menu selections you need to make:
+
+{{RootCmd
+|buildkernel --easy-setup
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+|output=
+... significant amounts of output suppressed in what follows ...
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              bootx64.efi                         
+   Plymouth theme:             NONE (textual boot)                 
+   Boot-time keymap:           us                         
+   Init system:                systemd                             
+         
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|1}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Please choose which EFI system partition to use (or GO BACK):
+ Num Partition UUID                       Path       USB Win Use
+ --- ------------------------------------ ---------- --- --- ---
+  1) 2498f874-ad8f-484e-8aba-81ac1c9665b6 /dev/sdb1   Y  ??? [*]
+  2) f236e16c-ca97-4c36-b0d5-4196fa1e9930 /dev/sda2   N  ??? [ ]
+  3) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">selected item is OK so press</span> {{Key|3}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf - MODIFIED):
+
+... as before ...
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|2}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Please choose which LUKS partition contains the root LVM logical volume:
+ Num Partition UUID                       Path       USB Use
+ --- ------------------------------------ ---------- --- ---
+  1) 8111286a-d24e-4ba2-b6af-d0650fab4130 /dev/sda7   N  [*]
+  2) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">selected item is OK so press</span> {{Key|2}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+... as before ...
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|3}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current LUKS key settings:
+ <span style{{=}}"color:green;">*</span> Using a GPG-encrypted keyfile for LUKS:
+ <span style{{=}}"color:green;">*</span>  KEYFILEPARTUUID unset: assuming GPG keyfile on EFI system partition
+ <span style{{=}}"color:green;">*</span> Please choose your desired LUKS key setting (or GO BACK):
+ 1) Use GPG-encrypted keyfile on EFI system partition
+ 2) Use GPG-encrypted keyfile on specific USB partition...
+ 3) Use fallback passphrase (no keyfile)
+ 4) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">selected item is OK so press</span> {{Key|4}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+... as before ...
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|4}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current EFI boot file setting:
+ <span style{{=}}"color:green;">*</span> EFI boot file path: /EFI/Boot/bootx64.efi
+ <span style{{=}}"color:green;">*</span>  (under EFI system partition mountpoint)
+ <span style{{=}}"color:green;">*</span> Please choose your desired EFI boot file setting (or GO BACK):
+ 1) Use /EFI/Boot/bootx64.efi (recommended for initial USB install)
+ 2) Use /EFI/Microsoft/Boot/bootmgfw.efi (fallback for certain systems)
+ 3) Use /EFI/Boot/gentoo.efi (recommended for post-install use)
+ 4) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">selected item is OK so press</span> {{Key|4}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+... as before ...
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|5}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current boot splash settings:
+ <span style{{=}}"color:green;">*</span> Using textual boot (no Plymouth)
+ <span style{{=}}"color:green;">*</span> Please choose your desired boot splash setting (or GO BACK):
+ 1) Use textual boot (no Plymouth)
+ 2) Use Plymouth graphical boot splash ('fade-in')
+ 3) GO BACK
+ Your choice: <span style{{=}}"color:royalblue;">selected item is OK so press</span> {{Key|3}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+... as before ...
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|6}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Please choose your desired boot-time keymap (or GO BACK):
+ <span style{{=}}"color:green;">*</span> Boot-time keymap is currently 'us'
+ 1) azerty     9) cz      17) gr       25) mk        33) sg       41) us
+ 2) be        10) de      18) hu       26) nl        34) sk-y     42) wangbe
+ 3) bg        11) dk      19) il       27) no        35) sk-z     43) sf
+ 4) br-a      12) dvorak  20) is       28) pl        36) slovene  44) GO BACK
+ 5) br-l      13) es      21) it       29) pt        37) trf
+ 6) by        14) et      22) jp       30) ro        38) trq
+ 7) cf        15) fi      23) la       31) ru        39) ua
+ 8) croat     16) fr      24) lt       32) se        40) uk
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|2}}{{Key|2}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+ <span style{{=}}"color:red;">NB - select the appropriate keymap for your system!</span>
+ <span style{{=}}"color:green;">*</span> Keymap selected to be 'jp'
+
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf - MODIFIED):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              bootx64.efi                         
+   Plymouth theme:             NONE (textual boot)                 
+   Boot-time keymap:           jp                                  
+   Init system:                systemd                             
+   
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|7}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Current init system settings:
+ <span style{{=}}"color:green;">*</span> Targeting systemd init
+ <span style{{=}}"color:green;">*</span> Please choose your desired init system setting (or GO BACK):
+ 1) systemd (select if unsure)  3) GO BACK
+ 2) OpenRC
+ Your choice: <span style{{=}}"color:royalblue;">users on default OpenRC track should press</span> {{Key|2}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}} 
+ <span style{{=}}"color:red;">NB - users wanting to use systemd should instead press </span>{{Key|3}}<span style{{=}}"color:red;"> then</span> {{Key|Enter}}<span style{{=}}"color:red;"> here</span>
+ <span style{{=}}"color:green;">*</span> Current configuration (from /etc/buildkernel.conf):
+
+   EFI system partition UUID:  2498f874-ad8f-484e-8aba-81ac1c9665b6
+   LUKS root partition UUID:   8111286a-d24e-4ba2-b6af-d0650fab4130
+   GPG keyfile partition UUID: DEFAULT (=EFI system partition UUID)
+   GPG keyfile (for LUKS):     luks-key.gpg                        
+   EFI boot directory:         /EFI/Boot                           
+   EFI boot file:              bootx64.efi                         
+   Plymouth theme:             NONE (textual boot)                 
+   Boot-time keymap:           jp                                  
+   Init system:                OpenRC  
+
+ <span style{{=}}"color:green;">*</span> Please choose an option:
+ 1) Set EFI system partition  6) Set boot-time keymap
+ 2) Set LUKS root partition   7) Set init system
+ 3) Set LUKS key options      8) Exit without saving
+ 4) Set EFI boot file path    9) Save and exit
+ 5) Set boot splash options
+ Your choice: <span style{{=}}"color:royalblue;">press</span> {{Key|9}}<span style{{=}}"color:royalblue;"> then</span> {{Key|Enter}}
+
+ <span style{{=}}"color:green;">*</span> Configuration saved to /etc/buildkernel.conf.
+ <span style{{=}}"color:green;">*</span> Be sure to run buildkernel, to rebuild the kernel with the new
+ <span style{{=}}"color:green;">*</span> settings, before rebooting.
+
+... significant amounts of output suppressed in the above ...
+}}
+
+Your configuration file should look something like the below, after running <code>buildkernel --easy-setup</code> (obviously, your values will differ, depending on the choices you make, and the UUIDs etc. on your target machine):
+
+{{FileBox|filename=/etc/buildkernel.conf|title=Example settings for {{c|buildkernel}} after <code>--easy-setup</code> run (your values will differ)|lang=bash|1=
+# Configuration file for /usr/sbin/buildkernel
+# Make sure the below are set correctly for your system!
+
+# following is the partuuid of your EFI system partition
+# (e.g., the first partition on your USB boot key)
+# replace with an appropriate value (find with lsblk and blkid) for your system
+#EFIPARTUUID="2498f874-ad8f-484e-8aba-81ac1c9665b6"
+
+# following is the partuuid of your LUKS partition (if on a GPT drive)
+# (usually, this will be a partition of a fixed drive in your machine)
+# replace with an appropriate value (find with lsblk and blkid) for your system
+#CRYPTPARTUUID="8111286a-d24e-4ba2-b6af-d0650fab4130"
+
+# if your LUKS filesystem is NOT on a GPT partition (for example, if it is
+# on an MBR partition, or if you have luksFormat-ed a top-level drive, rather
+# than a partition within it), then you must uncomment and set the following
+# variable (use "ls -l /dev/disk/by-uuid" to locate the correct path)
+# NB - most users will NOT need to do this (it is a special case), and
+# should accordingly leave the variable commented out;
+# note also that if you set CRYPTPATHMAP directly in this manner, the
+# contents of CRYPTPARTUUID will be ignored
+#CRYPTPATHMAP="/dev/disk/by-uuid/01234567-89ab-cdef-0123-456789abcdef"
+
+# if your LUKS keyfile is not on your EFI system partition (for example,
+# because you use a USB key to hold the keyfile, but have created an EFI
+# system partition on the machine's main drive), then uncomment the below
+# and replace the UUID with the appropriate value (find with lsblk and blkid)
+# for your system; if you do not, then KEYFILEPARTUUID=EFIPARTUUID is assumed
+#KEYFILEPARTUUID="8eca6e85-3f96-4117-b1f0-864576258c4f"
+
+# if you wish to rely only on the fallback passphrase (assuming you have set
+# one up) and no keyfile, uncomment the line below; otherwise
+# the value "luks-key.gpg" will be assumed (if you do set LUKSKEYFILE to the
+# empty string, KEYFILEPARTUUID is ignored)
+#LUKSKEYFILE=""
+
+# by default, buildkernel will build the kernel in /usr/src/linux. If
+# LINUXBUILDDIR is specified, buildkernel will delete the contents of
+# LINUXBUILDDIR/buildkernel, copy the contents of /usr/src/linux there,
+# then build the kernel in that directory. This can be useful for sparing write
+# cycles if /usr/src/linux is located on a SSD and the specified directory lies
+# e.g. on tmpfs.
+#LINUXBUILDDIR="/var/tmp"
+
+# add any additional kernel command line parameters here (most critical ones
+# will be set automatically by buildkernel; you can leave this commented out)
+#ADDITIONALKERNELCMDS="root_trim=yes"
+
+# by default, genkernel will be instructed to include all firmware and modules
+# into the initramfs; uncomment and change the below (for example, to specify
+# an empty string) if you do not want this, or if you want to manage these
+# options explicitly through /etc/genkernel.conf
+# (caution - may cause boot issues on some systems)
+#ADDITIONALGENKERNELOPTS="--all-ramdisk-modules --firmware"
+
+# by default, buildkernel will ensure that an EFI boot entry for any kernel
+# it creates exists at the top of the EFI boot order (in EFI NVRAM);
+# uncomment and change the below (to specify value 0) if you do not want to
+# do this (for example, because you wish to use your own EFI bootloader)
+#CREATEEFIBOOT=1
+
+# set your keymap - this is IMPORTANT to ensure your password for the GPG
+# protected keyfile gets read correctly
+# if you leave this commented out, the "us" keymap will be used
+#KEYMAP="jp"
+
+# if you want a graphical boot theme, set it here; will automatically turn
+# on the 'quiet splash' kernel options
+# leave commented out for a textual boot screen
+#PLYMOUTHTHEME="fade-in"
+
+# if you want to use OpenRC init, rather than the default systemd, uncommment
+# the below (capitalization is unimportant)
+#INITSYSTEM="openrc"
+
+# if you want to revert to the old (<=1.0.29) behaviour of _not_ compressing
+# the built-in initramfs, uncomment the line below; XZ compression is now
+# used by default; some systems will not boot large kernels that contain an
+# uncompressed ramfs, even though the enclosing kernel is itself compressed
+#COMPRESSINITRAMFS=0
+
+# you can manually set the filesystem type for your root partition here.
+# however, doing so should not be necessary.
+#CMDLINE_ROOTFSTYPE="ext4"
+
+# if you sign your kernel modules, configure the signing certificate and key
+# paths to sign external modules as well once built. Setting the variables to
+# "auto" will use the kernel's automatically generated certificate and key if
+# you have configured it to generate them. By default the variable is unset and
+# modules will not be signed.
+#KERNEL_SIGNING_CERT="auto"
+#KERNEL_SIGNING_KEY="auto"
+
+# if you need to conform the config file for some reason, uncomment this
+# hook function and fill it out to suit your requirements
+# NB you should only really need to do this to override a setting forced
+# by buildkernel itself; other changes you make during the make menuconfig step
+# are persisted, and this is the preferred way to modify the config
+# user_conform_config_file() {
+#     # call set_kernel_config / unset_kernel_config functions here as needed
+# }
+
+# if you need to modify the initramfs during the buildkernel process, 
+# uncomment this hook function and fill it out to suit your requirements
+# user_modify_initramfs() {
+#     # do stuff with ${INITRAMFSDIR} directory contents;
+#     # the cpio archive is already unpacked here upon function entry
+#     # and will be repacked again automatically for you afterwards
+# }
+
+# leave the below two lines commented out, unless running on a *very*
+# badly-behaved UEFI BIOS, that looks only at the Microsoft boot loader path
+#EFIBOOTFILE="bootmgfw.efi"
+#EFIBOOTDIR="/EFI/Microsoft/Boot"
+# Automatically added by buildkernel - edits here may be overwritten
+EFIPARTUUID="2498f874-ad8f-484e-8aba-81ac1c9665b6"
+CRYPTPARTUUID="8111286a-d24e-4ba2-b6af-d0650fab4130"
+KEYMAP="jp"
+INITSYSTEM="openrc"
+# End of automatically added section
+}}
+Note how the changes made by <code>buildkernel --easy-setup</code> have been added in a block at the end of the file (if you found you did ''not'' have to change anything during the <code>--easy-setup</code> run though, this block will be absent). You can manually edit the file now if you like, but avoid making changes ''within'' the <code>Automatically added...</code> block, as definitions within it can be overwritten next time <code>buildkernel --easy-setup</code> is run.
+{{Important|Please '''ensure''' that you have specified the correct <var>KEYMAP</var> and <var>INITSYSTEM</var> settings. In particular:
+* users of PCs with non-US keyboards (such as the CF-AX3's Japanese keyboard, as here) should ensure they have chosen an appropriate keymap from the <code>buildkernel --easy-setup</code> menu, since without this it may be impossible to type the {{c|LUKS}} keyfile password successfully at boot time; and
+* users who have elected to use {{c|OpenRC}} init (now the default for this guide) [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]] should ensure that they have <var>INITSYSTEM</var> set thus: <code>INITSYSTEM{{=}}"openrc"</code> (the variable is not case sensitive). Users wanting to use {{c|systemd}} init (now the alternative track in this guide, but fully supported in Gentoo) should ensure that the <code>INITSYSTEM</code> variable is either commented out, or set thus: <code>INITSYSTEM{{=}}"systemd"</code>.}}
+{{Note|<code>buildkernel --easy-setup</code> does not cover all possible changes you might wish to make to the configuration file, only the main variables. Therefore if, for example, you wished for example to enable TRIM support (see [[#enable_trim{{!}}below]]) for your hard drive, you'd need to set <var>ADDITIONALKERNELCMDS</var> variable in the {{Path|/etc/buildkernel.conf}} configuration file directly - there's (currently) no menu-driven way to set that flag via <code>buildkernel --easy-setup</code>. (For avoidance of doubt, you ''can'' still later use the <code>buildkernel --easy-setup</code> tool on a {{Path|/etc/buildkernel.conf}} file that has been manually edited in this manner.)}}
+
+{{Tip|It can sometimes be difficult to see the relevant content in large configuration files like {{Path|/etc/buildkernel.conf}}. To view ''only'' uncommented lines, you can use e.g. {{c|grep}}, as follows:
+{{RootCmd
+|grep "^[^#]" /etc/buildkernel.conf
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+This will display only those lines which start (the first {{c|^}}) with a character that is ''not'' (the second {{c|^}}) a {{c|#}} (the square brackets define a character set in {{c|grep}}).
+}}
+
+{{Note|As mentioned, the actual settings for at least <var>EFIPARTUUID</var>, <var>CRYPTPARTUUID</var> and possibly <var>KEYMAP</var> will be different for your system - the above is an example only.}}
+{{Note|More information about the variables and functions settable in {{Path|/etc/buildkernel.conf}} may be found in its manpage. To view this, issue:
+{{RootCmd
+|man buildkernel.conf
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+}}
+{{Important|We specify a '''textual''' boot at this stage (<var>PLYMOUTHTHEME</var> commented out in {{Path|/etc/buildkernel.conf}}), as we will try a boot without a graphical splash screen initially, for safety.}}
+
+== <span id="what_buildkernel_does">What the {{c|buildkernel}} Script Does (Background Reading)</span> ==
+
+Right, so now we're ready to build the kernel, using the {{c|buildkernel}} script to do all the heavy lifting for us.
+
+{{Note|If you're interested in what this script does, read on, otherwise you can [[#build_using_buildkernel{{!}}skip over to the next section]] and get building right away!}}
+
+The {{c|buildkernel}} script carries out the following steps in order:
+# Reads your {{c|buildkernel.conf}} file;
+# Mounts the EFI partition if not already mounted (to {{Path|/boot/efi}});
+# Enters the {{Path|/usr/src/linux}} directory;
+# Copies a {{c|.config}} file from the currently running kernel (via {{Path|/proc/config.gz}}) if no config already exists in {{Path|/usr/src/linux}}, and sanitizes/updates it with {{c|make olddefconfig}};
+# Conforms the {{c|.config}}, by setting various key parameters that are required for the kernel to boot successfully in EFI mode with {{c|systemd}} or {{c|OpenRC}} (we review these [[#kernel_opts_set_by_buildkernel|below]]), including the rather gnarly [[#kernel_cmd_line_set_by_buildkernel|kernel command line]] (which contains directives targeted both at the kernel, and at the {{c|init}} script provided by {{c|genkernel}});
+# Calls your user hook function {{c|user_conform_config_file}} if you have defined it in {{Path|/etc/genkernel.conf}} (you'll only generally want to do this to override unwanted changes made by {{c|buildkernel}} in the above step; other changes should be made via the standard {{c|make menuconfig}} route, per the step below; they will be persisted);
+# If in {{Highlight|interactive}} mode (set by the {{c|--ask}} option), allows you to <span id="make_menuconfig_step">modify the resulting configuration</span>, if you choose, using the standard [[:Wikipedia:Menuconfig|menuconfig]] tool (see [[Kernel/Configuration#Usage|this wiki entry]] for a brief set of usage instructions); (it's fine to elect not to, however, in which case the conformed {{c|.config}} will be silently sanitized/upgraded with {{c|make olddefconfig}}, as it will in non-interactive mode);
+# Cleans the kernel tree (optionally, you can force this with the {{c|--clean}}, and you will be asked in interactive mode);
+# Builds the kernel, and its modules, with the specified configuration; in this first pass, an empty initramfs is used (since it must be incorporated in the kernel, to be protected by UEFI secure boot, but we don't have everything necessary to include in it, yet!);
+# If required (via the {{c|--build-external-modules}} option) builds any external modules (such as those required for VirtualBox), using [[:Kernel/Upgrade#Reinstall_external_kernel_modules|{{c|emerge @module-rebuild}}]] ({{c|buildkernel}} can also be instructed to ''sign'' these modules, by specifying <var>KERNEL_SIGNING_CERT</var> and <var>KERNEL_SIGNING_KEY</var> in {{Path|/etc/buildkernel.conf}}, but this behaviour is disabled by default);
+# Creates a first cut of the [[initramfs]] using [[genkernel|{{c|genkernel}}]] (see [[#genkernel_opts_used_by_buildkernel|below]] for more details); this will contain {{c|genkernel}}'s {{c|init}} script, compiled modules, any necessary firmware (if you haven't [[#deblob_or_not|deblobbed]]), and a minimal set of binaries; it does ''not'' at this point contain a static copy of {{c|gpg}};
+# Unpacks the initramfs, to the {{Path|/boot/initramfs}} directory;
+# <span id="copy_static_gpg">Modifies the initramfs</span> by copying {{c|modprobe.d}} directory contents across to it, and copies the {{c|staticgpg}} binary we discussed [[#staticgpg_intro|earlier]], renaming it as {{c|gpg}} (if {{c|staticgpg}} does not exist, {{c|buildkernel}} will {{c|emerge}} it);
+# Calls your user hook function {{c|user_modify_initramfs}} if you have defined it in {{Path|/etc/genkernel.conf}} (you don't need it to make the boot work);
+# Repacks the initramfs into {{Path|/boot/initramfs.cpio}} (the unpacked copy is left at {{Path|/boot/initramfs}} too, for reference, since it's useful to be able to see what is in this archive at a glance);
+# <span id="initramfs_into_kernel">Builds the kernel</span> a second time (to incorporate this 'real' initramfs); this is a quick process as most of the components are unchanged;
+# If you have a secure boot key and certificate (we haven't, yet), signs the kernel so it will secure boot;
+# Backs up the old kernel and config on the EFI system partition (on the USB key), if any are present;
+# Copies the newly built kernel (which is configured so as to be an EFI executable), into {{Path|/boot/efi/EFI/Boot/bootx64.efi}} (the magic location expected by most UEFI BIOSes - you can change this path via {{Path|/etc/buildkernel.conf}}); and also copies the config to the same directory;
+# <span id="add_to_boot_list">If possible</span>, ensures that there is an EFI boot entry for the new kernel, and that this entry is at the top of the EFI boot list;{{Tip|You can prevent {{c|buildkernel}} modifying the EFI boot settings in NVRAM by setting <code>CREATEEFIBOOT{{=}}0</code> in {{Path|/etc/buildkernel.conf}}, although most users will ''not'' need to do this, unless wanting to e.g., specify their own EFI bootloader.}}
+# Performs a filesystem [[:Wikipedia:Sync_(Unix)|{{c|sync}}]] and then unmounts the EFI system partition (if you so specify).
+
+The default behaviour of buildkernel is to run in an non-interactive mode, unless the <code>--ask</code> option is passed. It is also possible to specify the <code>--stage-only</code> option, in which case {{c|buildkernel}} will create a new kernel in the {{Path|/boot}} staging area, but will ''not'' attempt to copy it to the USB key. This is useful in unattended contexts, when you may have the boot key removed, for security. You can then subsequently copy over the new kernel with the <code>--copy-from-staging</code> option. For more details, see the {{c|buildkernel}} manpage. Issue:
+{{RootCmd
+|man buildkernel
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+
+=== <span id="kernel_opts_set_by_buildkernel">Kernel Configuration Options Conformed by {{c|buildkernel}}</span> ===
+
+Here <span id="buildkernel_config_changes">are the {{c|.config}} values</span> conformed by {{c|buildkernel}}, what effect they have, and why they are set as they are (should you wish to find further information about any option, you can do this from within {{c|make menuconfig}} (in the {{Path|/usr/src/linux}} directory), as instructed [[Kernel/Configuration#Usage|here]]):
+
+{| class="wikitable"
+|-
+! Kernel Option !! Value Set !! Effect !! Reason
+|-
+| {{c|GENTOO_LINUX}} || {{c|y}} || Enables the various {{c|GENTOO_LINUX_...}} options (discussed below). These in turn are intended to ease configuration of a new kernel for use with Gentoo, by forcing certain other kernel options to appropriate values. || This option should be on by default anyway, and certainly will be if you are using a {{c|.config}} pulled from the running minimal-install system kernel's {{Path|/proc/config.gz}}. But for safety's sake we set it again here.
+|-
+| {{c|GENTOO_LINUX_UDEV}} || {{c|y}} || This currently causes the options {{c|DEVTMPFS}}, {{c|TMPFS}}, {{c|UNIX}}, {{c|MMU}} and {{c|SHMEM}} to be set (and their dependencies). || Necessary to have {{c|sysfs}} and {{c|udev}} functioning correctly in early boot, and for the correct functioning of {{c|systemd}}.
+|-
+| {{c|GENTOO_LINUX_PORTAGE}} || {{c|y}} || This causes options required by various {{c|Portage}} [[FEATURES|<var>FEATURES</var>]] to be set (at the time of writing, {{c|CGROUPS}}, {{c|NAMESPACES}}, {{c|IPC_NS}}, {{c|NET_NS}} and {{c|SYSVIPC}}). || As its kconfig help text states, "[it] is highly recommended that you leave this enabled as these <var>FEATURES</var> are, or will soon be, enabled by default" (the <var>FEATURES</var> in question are {{c|cgroup}}, {{c|ipc-sandbox}} and {{c|network-sandbox}}).
+|-
+| {{c|GENTOO_LINUX_INIT_SCRIPT}} || {{c|y}} || This selects {{c|BINFMT_SCRIPT}}, which in turn enables kernel support for {{c|init}} scripts starting with #!. || Needed for the kernel to run the {{c|init}} script in the initramfs (provided by {{c|genkernel}}).
+|-
+| {{c|GENTOO_LINUX_INIT_SYSTEMD}} || {{c|y}} || Switches on a group of options related to {{c|systemd}}, specifically (at the time of writing) {{c|AUTOFS4_FS}}, {{c|BLK_DEV_BSG}}, {{c|CGROUPS}}, {{c|CHECKPOINT_RESTORE}}, {{c|CRYPTO_HMAC}}, {{c|CRYPTO_SHA256}}, {{c|CRYPTO_USER_API_HASH}}, {{c|DEVPTS_MULTIPLE_INSTANCES}}, {{c|DMIID}}, {{c|EPOLL}}, {{c|FANOTIFY}}, {{c|FHANDLE}}, {{c|INOTIFY_USER}}, {{c|IPV6}}, {{c|NET}}, {{c|NET_NS}}, {{c|PROC_FS}}, {{c|SECCOMP}}, {{c|SECCOMP_FILTER}}, {{c|SIGNALFD}}, {{c|SYSFS}}, {{c|TIMERFD}}, {{c|TMPFS_POSIX_ACL}}, {{c|TMPFS_XATTR}}, {{c|ANON_INODES}}, {{c|BLOCK}}, {{c|EVENTFD}}, {{c|FSNOTIFY}}, {{c|INET}} and {{c|NLATTR}}. || These are key settings for the {{c|systemd}} init system, which the initramfs {{c|init}} script eventually hands off to in the default case. Note that we leave this option set even when {{c|OpenRC}} booting is desired, for future flexibility. 
+|-
+| {{c|SECCOMP}} || {{c|y}} || Enables the secure computation of untrusted bytecode. || rowspan=4|These are additional kernel configuration settings recommended by the Gentoo Wiki article on {{c|systemd}}, but not enabled by the {{c|GENTOO_LINUX_INIT_SYSTEMD}} option, above, in at least some earlier variants.<ref name="systemd_kernel_options">Gentoo Wiki: [[Systemd#Kernel|"systemd: Kernel"]]</ref>
+|-
+| {{c|DMIID}} || {{c|y}} || Exports DMI identification via sysfs to userspace. 
+|-
+| {{c|TMPFS_POSIX_ACL}} || {{c|y}} || Enables POSIX access control lists for {{c|tmpfs}}.
+|-
+| {{c|UEVENT_HELPER_PATH}} || "" || This specifies a path to a {{c|uevent}} helper program to be forked by the kernel after every {{c|uevent}}. It is now recommended to leave this blank, to prevent excessive system load.<ref>kernel.org [https://www.kernel.org/doc/menuconfig/drivers-base-Kconfig.html#UEVENT_HELPER_PATH "drivers/base/Kconfig: UEVENT_HELPER_PATH"]</ref> 
+|-
+| {{c|AUDIT}} || {{c|y}} || Enables the kernel auditing infrastructure (required by {{c|AUDITSYSCALL}}, below).
+|-
+| {{c|AUDITSYSCALL}} || {{c|y}} || Enables the low-overhead kernel system-call auditing infrastructure. Now a {{c|systemd}} requirement.<ref>Masters, J. freedesktop.org Archives: [http://lists.freedesktop.org/archives/systemd-devel/2013-February/009148.html "[PATCH] core: check system call auditing is enabled"]</ref> It is generally useful so we enable even when {{c|OpenRC}} init is specified.
+|-
+| {{c|CMDLINE_BOOL}} || {{c|y}} || Activates the built-in kernel command line (specified by the {{c|CMDLINE}} option, see below. || rowspan=2|When stub-loading under UEFI, the kernel's command line must be hardcoded (since we're not firing it off from a EFI shell).<ref name="efi_stub">Smith, Rod. [http://www.rodsbooks.com/efi-bootloaders/efistub.html "Managing EFI Boot Loaders for Linux: Using the Kernel's EFI Stub Loader"]</ref> Getting this right is quite difficult, but {{c|buildkernel}} will set the appropriate command line options automatically for us.
+|-
+| {{c|CMDLINE}} || ''See discussion [[#kernel_cmd_line_set_by_buildkernel|following]]'' || This is the command line string for the kernel.
+|-
+| {{c|INITRAMFS_SOURCE}} || {{Path|/boot/initramfs.cpio}} || This string specifies the path to the initramfs to incorporate ''within'' the kernel. || rowspan=3|Because our main system partitions reside within LVM hosted over LUKS, we need to use an initramfs hosted initscript, to prompt for the LUKS keyfile passphrase, and then unlock and mount all the necessary logical volumes, before handing off control to the 'real' {{c|systemd}} or {{c|OpenRC}} init on the newly established root directory. Furthermore, because this is a UEFI system (and we intend to use secure boot later), the initramfs' cpio archive must be embedded in the kernel itself, ''not'' provided as a separate file on the boot partition, and, although it ''can'' be left uncompressed (technically not really an issue, since the enclosing kernel image is ''itself'' compressed), some memory-constrained systems will refuse to boot with an uncompressed initramfs, so we elect to XZ compress it here.
+|-
+| <span id="specify_initramfs_compression">{{c|INITRAMFS_COMPRESSION_xxx}}</span> (where xxx is {{c|GZIP}}, {{c|BZIP2}}, {{c|LZMA}}, {{c|XZ}}, {{c|LZO}} or {{c|LZ4}}) || {{c|INITRAMFS_COMPRESSION_XZ{{=}}y}}<br>''others unset'' || These options specify various compression types that can be applied to the initramfs within the kernel. We choose XZ compression (this will have the side-effect of setting <code>INITRAMFS_COMPRESSION{{=}}".xz"</code>).
+|-
+| <span id="no_initramfs_compression">{{c|INITRAMFS_COMPRESSION_NONE}}</span> || ''unset'' || This specifies that the initramfs {{c|cpio}} image should be used uncompressed; so we unset it.
+|-
+| {{c|CRYPTO_SERPENT}} || {{c|y}} || Enables use of the Serpent cipher algorithm via the kernel's cryptographic API. || rowspan=5|We have made use of the [[:Wikipedia:Serpent_(cipher)|Serpent]] encryption and [[:Wikipedia:SHA512|SHA-512]] hash algorithms (and in previous versions of this guide, the [[:Wikipedia:Whirlpool_(cryptography)|Whirlpool]] hash algorithm) [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#format_luks_partition|earlier]] when creating the LUKS partition (on which the LVM logical volumes hosting our {{Path|/}}, {{Path|/home}} and swap are located). We therefore activate these options so that [[:Wikipedia:Dm-crypt|{{c|dm-crypt}}]] (invoked via its [[:Wikipedia:Dm-crypt#cryptsetup|{{c|cryptsetup}}]] interface by the initial, initramfs {{c|init}} script) can work with the LUKS partition successfully.
+|-
+| {{c|CRYPTO_WP512}} || {{c|y}} || Enables use of the Whirlpool digest algorithm via the kernel's cryptographic API.
+|-
+| {{c|CRYPTO_SHA512}} || {{c|y}} || Enables use of the SHA-512 digest algorithm via the kernel's cryptographic API.
+|-
+| {{c|BLK_DEV_DM}} || {{c|y}} || Enables device mapper support (so we can e.g., use {{Path|/dev/mapper/...}}).
+|-
+| {{c|DM_CRYPT}} || {{c|y}} || Enables cryptographic targets within the device mapper ({{c|dm-crypt}}).
+|-
+| {{c|VFAT_FS}} || {{c|y}} || Enables [[VFAT]] filesystem support. || We need to be able to access files on the EFI system partition during the early boot process (and this partition is FAT formatted).
+|-
+| {{c|PARTITION_ADVANCED}} || {{c|y}} || Enables (the display of options regarding) the use of partition types that are not native to Linux. || rowspan=2|We need to turn on GUID partition table (GPT) support for UEFI booting.
+|-
+| {{c|EFI_PARTITION}} || {{c|y}} || Enables support of EFI [[:Wikipedia:GUID_Partition_Table|GPT]] partitioned disks.
+|-
+| {{c|EFI}} || {{c|y}} || Enables the kernel to use the EFI runtime services, such as EFI variable services. || rowspan=3|These three settings enable access to EFI variables via {{Path|/sys/firmware/efi/efivars}} (this special {{c|efivarfs}} filesystem is automatically mounted under {{c|systemd}} and {{c|OpenRC}}). This is useful to modify the boot order, set the keys required for secure boot, and so on.
+|-
+| {{c|EFIVAR_FS}} || {{c|y}} || Enables the EFI variable filesystem.
+|-
+| {{c|EFI_VARS}} || {{c|y}} || Provides EFI variable support via {{c|sysfs}}.
+|-
+| {{c|EFI_STUB}} || {{c|y}} || Enables EFI stub-loader support. || This <span id="enable_efi_stub">enables</span> the kernel to boot directly as an EFI executable, without requiring a separate bootloader.<ref>Gentoo Wiki: [[EFI_stub_kernel|"EFI stub kernel"]]</ref>
+|-
+| {{c|RTC_CLASS}} || {{c|y}} || Generic real-time-clock class support. || rowspan=8|A functional RTC is important for booting successfully. These settings should be present in any sane 'inherited' kernel {{c|.config}}, but we set them here to be doubly sure.
+|-
+| {{c|RTC_HCTOSYS}} || {{c|y}} || Sets the system time from the RTC, on startup and resume.
+|-
+| {{c|RTC_SYSTOHC}} || {{c|y}} || Sets the RTC time periodically based upon the NTP time exported from userspace (where available).
+|-
+| {{c|RTC_HCTOSYS_DEVICE}} || {{c|rtc0}} || Specifies the identity of the RTC device used to set the system time.
+|-
+| {{c|RTC_INTF_SYSFS}} || {{c|y}} || Allow access to RTCs via {{c|sysfs}} interface.
+|-
+| {{c|RTC_INTF_PROC}} || {{c|y}} || Allow access to RTCs via {{c|proc}} interface.
+|-
+| {{c|RTC_INTF_DEV}} || {{c|y}} || Allow access to RTCs via {{c|dev}} interface.
+|-
+| {{c|RTC_DRV_CMOS}} || {{c|y}} || Provides support for PC-style RTCs.
+|-
+| {{c|SUSPEND}} || {{c|y}} || Enables support for suspending to RAM (a.k.a. 'sleep', 'ACPI S3' etc.) || rowspan=2|These options are ''not'' required for a bootable EFI system. However, many users will want them so they are enabled here. If you don't, you can override this by uncommenting the {{c|user_conform_config_file}} function in {{Path|/etc/buildkernel.conf}}, and adding {{c|unset_kernel_config "SUSPEND"}} and/or {{c|unset_kernel_config "HIBERNATION"}}, as you wish. 
+|-
+| {{c|HIBERNATION}} || {{c|y}} || Enables support for suspending to disk (a.k.a. 'hibernation').
+|-
+| {{c|SYSFS_DEPRECATED}} || ''unset'' || This feature enables deprecated {{c|sysfs}} features required by some older userspace tools. We turn it off. || This is unset, as recommended by the Gentoo Wiki article on {{c|systemd}}.<ref name="systemd_kernel_options"/> (We also unset when targeting {{c|OpenRC}} init.)
+|-
+| <span id="logo">{{c|LOGO}}</span> || ''unset'' if {{c|plymouth}} in use || This feature provides the 'penguins' display during early boot. || It will be forced off by {{c|buildkernel}} if the graphical {{c|plymouth}} boot splash is in use (i.e., ${PLYMOUTHTHEME} is non-empty), to avoid conflicts / flashing.
+|}
+{{Note|If you are looking in the {{c|.config}} file, the option names above will all be prefixed with {{c|CONFIG_}}; so e.g., {{c|CONFIG_GENTOO_LINUX}} and not {{c|GENTOO_LINUX}}, etc.}}
+{{Important|The {{c|buildkernel}} script assumes you are starting from a 'sane' configuration (e.g., one taken from the Gentoo minimal-install system's {{Path|/proc/config.gz}}, as we do in this tutorial). The conforming operation does ''not'' check for ''all'' necessary common options, such as support for the {{c|ext4}} filesystem. '''Therefore, you cannot issue e.g., '''<code>make allnoconfig</code>''' followed by '''<code>buildkernel</code>''', and expect the resulting kernel to boot - it will not.'''}}
+
+=== <span id="kernel_cmd_line_set_by_buildkernel">Kernel Built-In Command Line Conformed by {{c|buildkernel}}</span> ===
+
+At this initial stage, the built-in kernel command line ({{c|CMDLINE}}) will be conformed as follows (your specific values will be different, depending on what is set in <var>EFIPARTUUID</var>,  <var>CRYPTPARTUUID</var>, <var>KEYMAP</var> and <var>INITSYSTEM</var>):
+
+{{GenericCmd|root{{=}}/dev/ram0 crypt_root{{=}}/dev/disk/by-partuuid/8111286a-d24e-4ba2-b6af-d0650fab4130 dolvm real_root{{=}}/dev/mapper/vg1-root rootfstype{{=}}ext4 real_init{{=}}/usr/lib/systemd/systemd root_keydev{{=}}/dev/disk/by-partuuid/2498f874-ad8f-484e-8aba-81ac1c9665b6 root_key{{=}}luks-key.gpg real_resume{{=}}/dev/mapper/vg1-swap keymap{{=}}jp}}
+
+Note that the term 'kernel command line' can be a little misleading - some of these parameters are indeed consumed by the kernel (a reasonably complete list of which is provided by kernel.org<ref>kernel.org [https://www.kernel.org/doc/Documentation/kernel-parameters.txt "Kernel Parameters"]</ref>); however, others are really targeted at the {{c|init}} script. The Linux kernel passes the {{c|init}} script (or program) any parameters it has not already processed as arguments,<ref>[http://man7.org/linux/man-pages/man7/boot.7.html {{c|boot}} (7) manpage ("Kernel startup")]</ref> and the {{c|init}} script can also read the full command line in any event, via {{Path|/proc/cmdline}}. 
+
+The various parameters in the above are explained in the table below:
+{| class="wikitable"
+|-
+! Parameter !! Value in Example !! Value in {{c|buildkernel}} !! Consumed By !! Description
+|-
+| {{c|root}} || {{Path|/dev/ram0}} || {{c|${CMDLINE_ROOT}}} || kernel, {{c|init}} || This specifies the location of the root filesystem to the kernel. It is set to point to the device path for the initramfs, since that's what the root will be, until the LUKS partition is unlocked, the LVM volumes activated, and [http://man7.org/linux/man-pages/man8/switch_root.8.html {{c|switch_root}}] is called.
+|-
+| {{c|crypt_root}} || {{Path|/dev/disk/by-partuuid/8111286a-d24e-4ba2-b6af-d0650fab4130}} || {{c|${CRYPTPATHMAP}}} (which, unless explicitly overridden, will be {{c|/dev/disk/by-partuuid/${CRYPTPARTUUID}}}) || {{c|init}} || This tells the {{c|init}} script (provided by {{c|genkernel}}) which partition it should be attempting to unlock with {{c|cryptsetup}}. It is set to the partition UUID of the LUKS partition we created [[../Preparing_the_LUKS-LVM_Filesystem_and_Boot_USB_Key#format_luks_partition|earlier]].
+|-
+| {{c|dolvm}} || ''N/A'' || ''N/A'' || {{c|init}} || This instructs the {{c|init}} script (provided by {{c|genkernel}}) to attempt to initialize LVM volume groups at an appropriate point in the boot.
+|-
+| <span id="real_root_var">{{c|real_root}}</span> || {{Path|/dev/mapper/vg1-root}} || {{c|${CMDLINE_REAL_ROOT}}} || {{c|init}} || This specifies the device path of the device holding the actual root directory (in our case, an LVM logical volume). The {{c|init}} script will switch to this once it is available, invoking {{c|systemd}} (or {{c|OpenRC}}) as it does so. Here, it is set to the device path of the {{c|root}} logical volume, from the {{c|vg1}} volume group.
+|-
+| {{c|rootfstype}} || {{c|ext4}} || {{c|${CMDLINE_ROOTFSTYPE}}} || kernel, {{c|init}} || Specifies the filing system used for the (real) root partition; by default [[ext4]] is used.
+|-
+| {{c|real_init}} || {{Path|/lib/systemd/systemd}} || {{c|${CMDLINE_REAL_INIT}}} || {{c|init}} || The path of the 'real' init program to invoke, within the real root, once this is mounted. (By default it points to the {{c|systemd}} executable. Users who have set <code>INITSYSTEM{{=}}"openrc"</code> in {{Path|/etc/buildkernel.conf}} will have {{Path|/sbin/init}} here instead.)
+|-
+| <span id="root_keydev_var">{{c|root_keydev}}</span> || {{Path|/dev/disk/by-partuuid/2498f874-ad8f-484e-8aba-81ac1c9665b6}} || {{c|/dev/disk/by-partuuid/${KEYFILEPARTUUID}}} || {{c|init}} || This specifies the device path of the device on which the keyfile is located. Note that <var>KEYFILEPARTUUID</var> defaults to be the same as <var>EFIPARTUUID</var>, unless you override it explicitly in {{Path|/etc/buildkernel.conf}}.
+|-
+| <span id="root_key_var">{{c|root_key}}</span> || {{Path|luks-key.gpg}} || {{c|${LUKSKEYFILE}}} || {{c|init}} || This specifies the filename of the LUKS keyfile, held in the top-level directory of the {{c|root_keydev}}. If it has a {{c|.gpg}} extension (as here), the {{c|init}} script will treat it as being a {{c|gpg}} encrypted file, and prompt for a passphrase to unlock it (either textually at the console, or using the {{c|plymouth}} splash screen manager, if that has been specified).
+|-
+| <span id="real_resume_var">{{c|real_resume}}</span> || {{Path|/dev/mapper/vg1-swap}} || {{c|${CMDLINE_REAL_RESUME}}} || {{c|init}} || This specifies the device path (of a swap volume) to use for resuming (from a hibernation). We use the main LVM-based swap logical volume here. If no resume data has been written to the swap file, a normal boot will take place.
+|-
+| {{c|keymap}} || {{c|jp}} || {{c|${KEYMAP}}} || {{c|init}} || Specifies which keymap to use in early boot. This is important because it will be used when you enter your passphrase, to unlock the {{c|gpg}} LUKS keyfile. Note that the appropriate name here is the one used by {{c|genkernel}}'s {{c|init}} script, ''not'' that used by {{c|systemd}}/{{c|OpenRC}} etc. (which won't have been started up yet at the point this variable is referenced). See this [[#keymap_issue|earlier note]] for clarification of this point.
+|-
+| <span id="quiet_kernel_parameter">{{c|quiet}}</span> || ''unset'' || ''set if ${PLYMOUTHTHEME} non-empty'' || kernel, {{c|init}} || Tells the kernel to suppress most log messages, and also affects some settings within {{c|genkernel}}'s {{c|init}} script. It is currently unset, but will be set automatically when we specify a {{c|plymouth}} theme, later in the tutorial.
+|-
+| <span id="splash_kernel_parameter">{{c|splash}}</span> || ''unset'' || ''set if ${PLYMOUTHTHEME} non-empty'' || {{c|init}} || Instructs {{c|genkernel}}'s init script to use the {{c|plymouth}} boot splash system. It is currently unset, but will be set automatically when we specify a {{c|plymouth}} theme, later in the tutorial.
+|-
+| <span id="udev_kernel_parameter">{{c|udev.log-priority}}</span> || ''unset'' || ''set to 3 if ${PLYMOUTHTHEME} non-empty, and using {{c|systemd}} boot'' || {{c|init}} || Prevents {{c|systemd}} from printing a textual version number during graphical boot.<ref>Arch Linux Wiki: [https://wiki.archlinux.org/index.php/Silent_boot "Silent boot"]</ref> It is currently unset, but will be set automatically when we specify a {{c|plymouth}} theme, later in the tutorial (if you have chosen {{c|systemd}} as your init system, [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc{{!}}earlier]]).
+|}
+
+If you wish to override any of these, simply set the appropriate variable in {{Path|/etc/genkernel.conf}} (of course, per the earlier instructions, you ''must'' at least set <var>EFIPARTUUID</var> and <var>CRYPTPARTUUID</var>, and possibly <var>KEYMAP</var>, to get a bootable kernel). You can also specify additional kernel command line options, in the variable <var>ADDITIONALKERNELCMDS</var>. For example, one common additional option you may wish to set would be to <span id="enable_trim">enable passing [[:Wikipedia:Trim_(computing){{!}}TRIM]] commands down to the underlying LUKS partition (if using a solid state drive, to prevent performance degradation as the device fills up). To accomplish this, you would set <code>ADDITIONALKERNELCMDS="root_trim=yes"</code> in {{Path|/etc/buildkernel.conf}} (this is then passed on by {{c|genkernel}}'s {{c|init}} script to {{c|cryptsetup}}). You can specify multiple additional options via this variable, if you need to; simply separate them with a space.
+
+{{Note|If you do turn TRIM-passthrough on like this, make sure you are comfortable with the possible information leakage it entails (specifically, that it can reveal some disk-usage patterns, allowing filesystem fingerprinting).<ref>SuperUser Forum: [http://superuser.com/questions/302710/trim-support-via-dm-crypt-device-mapper/318847#318847 "TRIM support via dm-crypt/device-mapper"]</ref>}}
+
+=== <span id="genkernel_opts_used_by_buildkernel">{{c|genkernel}} Options Used by {{c|buildkernel}}, When Creating initramfs</span> ===
+
+The {{c|buildkernel}} script calls the Gentoo utility [[Genkernel|{{c|genkernel}}]] (from package {{Package|sys-kernel/genkernel-next}}) to create the initramfs. It does this because {{c|genkernel}} provides some very useful features, for instance:
+* a significantly evolved {{c|init}} script, which deals with e.g., the set up of a root directory using LVM over LUKS, prior to handoff to the 'real' init system ({{c|systemd}} or {{c|OpenRC}}) on the unlocked root;
+* automatic inclusion in the initramfs archive of not only (the minimal set) of necessary binaries, but also the libraries upon which they depend (if dynamically linked);
+* dealing with the installation of firmware and kernel modules to the initramfs; and
+* managing the use of the {{c|plymouth}} boot splash manager, if specified.
+
+{{c|genkernel}} is also capable of building the kernel itself, but since it does not provide the UEFI and secure-boot hooks yet, we do not use it for this, preferring our {{c|buildkernel}} script instead.
+
+When {{c|buildkernel}} invokes {{c|genkernel}}, it does so using the following command:  
+
+{{GenericCmd|<pre>
+genkernel --install --no-mountboot --luks --lvm  --no-gpg --udev \
+    --kernel-config="${TARGETCONFIG}" --busybox \
+    --no-compress-initramfs --all-ramdisk-modules --firmware \
+    ${PLYMOUTH_OPTS} initramfs</pre>
+}}
+
+These options override anything specified in {{Path|/etc/genkernel.conf}}, and have the following description and rationale for use:
+
+{| class="wikitable"
+|-
+! {{c|genkernel}} Option / Action!! Description !! Reason Used
+|-
+| {{c|--install}} || Install the initramfs into the {{Path|/boot}} directory after completion. || rowspan=2|In our configuration, {{Path|/boot}} is simply a normal directory, which we use as a convenient marshalling ground (for e.g., the generated initramfs), rather than the mountpoint of the boot partition (which it would be in an [[Partition#Master_Boot_Record_(MBR)|MBR]]-based system). Because it is just a regular directory, though, we have to use the {{c|--no-mountboot}} option to prevent {{c|genkernel}} from trying to mount it.
+|-
+| {{c|--no-mountboot}} || Do not attempt to mount {{Path|/boot}} automatically.
+|-
+| {{c|--luks}} || Includes LUKS support from  static binaries if they exist on the system. || We have a LUKS encrypted partition that {{c|genkernel}}'s {{c|init}} script must unlock, so this option is required.
+|-
+| {{c|--lvm}} || Adds LVM support from static binaries, and compiles static LVM binaries if these do not exist. || We have configured root, home and swap on LVM logical volumes (hosted on the LUKS partition), and we need the {{c|init}} script to mount these prior to a {{c|switch_root}}, so this option is needed. 
+|-
+| {{c|--no-gpg}} || Excludes {{c|gpg}} from the initramfs. || This option looks a bit surprising at first glance, as we have used {{c|gpg}} to encrypt our LUKS keyfile. We use it because it prevents {{c|genkernel}} from copying the v2.x {{c|gpg}} binary, and its many library dependencies, into the initramfs, since (as explained [[../Building_the_Gentoo_Base_System_Minus_Kernel#pinentry_problem|above]]) the v2.x {{c|gpg}} will ''not'' work properly there, given its dependency on a correctly configured {{c|pinentry}} service. This option does ''not'' prevent {{c|genkernel}}'s {{c|init}} script from attempting to use {{c|gpg}}, however, and {{c|buildkernel}} [[#copy_static_gpg|copies]] our static version of v1.x {{c|gpg}} into the initramfs once {{c|genkernel}} has built it.
+|-
+| {{c|--udev}} || Adds {{c|udev}} support to static binaries if they exist in the system. || This is necessary for correct device management (and therefore, the boot process).
+|-
+| {{c|--kernel-config{{=}}"${TARGETCONFIG}"}} || Specifies the location of the {{c|.config}} file used for the kernel build. || This currently simply points to {{Path|/usr/src/linux/.config}}. Although we don't require {{c|genkernel}} to do any kernel compilation for us, we nevertheless set it here for safety.
+|-
+| {{c|--busybox}} || Includes a [[:Wikipedia:BusyBox|{{c|busybox}}]] binary in the initramfs. This provides a number of standard Linux tools in a single executable file. || Using this ensures that {{c|genkernel}}'s {{c|init}} script has access to the necessary external programs it needs in order to run (such as {{c|echo}}, {{c|cat}} etc.). Once {{c|buildkernel}} has run, you can look in {{Path|/boot/initramfs/bin}} for example - many of the programs therein will simply be links to the {{c|busybox}} executable.
+|-
+| {{c|--no-compress-initramfs}} || Specifies that the generated initramfs should not be pre-compressed by {{c|genkernel}}. || The initramfs ''will'' however be compressed when integrated into the kernel, as stipulated by the {{c|INITRAMFS_COMPRESSION_xxx}} kernel parameter, discussed [[#specify_initramfs_compression|earlier]].
+|-
+| {{c|--all-ramdisk-modules}} || Copies <span id="copy_all_modules_to_initramfs">all kernel modules</span> to the initramfs. || This is done for safety, because if a necessary module is missing at boot, your system may not start up properly. In fact, even without this option, {{c|genkernel}} will pull what it regards as 'necessary' kernel modules into the initramfs, which will account for a good proportion of them ^-^. Once you have a properly booting system, nothing prevents you from manually disabling unnecessary modules in the [[#make_menuconfig_step|{{c|make menuconfig}} step]] of {{c|buildkernel}}, and, if you like, turning all others into built-ins, so this option does not imply that you are stuck with a 'bloated' kernel image forever. (Should you wish to override {{c|buildkernel}}'s setting of this option, modify the {{c|ADDITIONALGENKERNELOPTS}} variable in {{Path|/etc/buildkernel.conf}} (most users will not need to do this).)
+|-
+| <span id="include_firmware_in_initramfs">{{c|--firmware}}</span> || Copies the firmware (from the default directory of {{Path|/lib/firmware}} into the initramfs. || Many devices will not start up properly without firmware, and so we copy these files over so they are available during early boot. If you have [[#deblob_or_not|chosen to deblob]] your kernel, this option is a no-op. (Should you wish to override {{c|buildkernel}}'s setting of this option, modify the {{c|ADDITIONALGENKERNELOPTS}} variable in {{Path|/etc/buildkernel.conf}} (most users will not need to do this).)
+|-
+| {{c|${PLYMOUTH_OPTS}}} || Used to specify the {{c|--plymouth}} and {{c|--plymouth-theme{{=}}${PLYMOUTHTHEME}}}, iff {{c|PLYMOUTHTHEME}} has been defined to a non-blank value (in {{Path|/etc/buildkernel.conf}}). These options respectively copy support for {{c|plymouth}}, and the specified {{c|plymouth}} boot theme, into the initramfs. Subsequently, if the {{c|splash}} kernel command line parameter is set (see [[#splash_kernel_parameter|above]]), {{c|plymouth}} will be activated at boot (by {{c|genkernel}}'s {{c|init}} script). || The {{c|plymouth}} system can be used to provide a graphical boot screen, replacing the usual textual console. This will automatically be turned on by {{c|buildkernel}} if you uncomment the {{c|PLYMOUTHTHEME}} variable in {{Path|/etc/genkernel.conf}}. We ''will'' turn this on later; however, at the current point in the tutorial, it should be left commented out.
+|-
+| {{c|initramfs}} || Instructs {{c|genkernel}} to build only the initramfs. || {{c|buildkernel}} does its own kernel compilation, so the only the initramfs construction ability of {{c|genkernel}} is needed.
+|}
+
+That concludes our brief tour through some of the internals of {{c|buildkernel}}. Now we can get on and use it!
+
+== <span id="build_using_buildkernel">Building the New Kernel (Using {{c|buildkernel}})</span> ==
+
+So, without further ado, let's <span id="first_buildkernel">build the kernel</span>.
+{{Note|The kernel build system is separate from the main Gentoo {{c|emerge}} process, so the {{c|showem}} utility cannot be used here.}}
+
+{{Note|On {{c|OpenRC}} systems (such as the minimal install image), the special {{Path|/sys/firmware/efi/efivars}} filesystem is mounted read-only,<ref>Gentoo Archives: gentoo-dev: [https://archives.gentoo.org/gentoo-dev/message/35304b0db4de9e06fea322275379fa81 "newsitem: openrc-0.28 mounts efivars read only"]</ref> but {{c|buildkernel}} needs write access to it to [https://www.kernel.org/doc/Documentation/filesystems/efivarfs.txt change the boot order]. As of version 1.0.31 of {{c|buildkernel}}, this will automatically be done for you (and reverted again when {{c|buildkernel}} exits). Those using ''earlier'' versions of {{c|buildkernel}} should either upgrade, or issue:
+{{RootCmd
+|if [ -d /sys/firmware/efi/efivars ]; then mount -o remount,rw /sys/firmware/efi/efivars; fi
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+For avoidance of doubt, if you have been following along with the instructions given in this guide, you'll already be running a sufficiently modern version of {{c|buildkernel}}, and do ''not'' have to issue the above command.
+}}
+Make sure your boot USB key is plugged into the target machine, then issue:
+ 
+{{RootCmd
+|buildkernel --ask --verbose
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+|output=
+... significant amounts of output suppressed in what follows ...
+ <span style{{=}}"color:green;">*</span> There is no config file; use current (linux-<...>-gentoo) config (y/n)? <span style{{=}}"color:royalblue;">press</span> {{Key|y}}
+ <span style{{=}}"color:green;">*</span> Updating old config using make olddefconfig
+ <span style{{=}}"color:green;">*</span> Secure-bootable EFI kernel build script
+ <span style{{=}}"color:green;">*</span> Will build linux-<...>-gentoo; running kernel is linux-<...>-gentoo
+ <span style{{=}}"color:green;">*</span> Do you want to proceed (y/n)? <span style{{=}}"color:royalblue;">press</span> {{Key|y}}
+ <span style{{=}}"color:green;">*</span> The EFI boot partition is not mounted.
+ <span style{{=}}"color:green;">*</span> (If using a USB key to boot from, please ensure it is inserted)
+ <span style{{=}}"color:green;">*</span> Would you like to mount it now (y/n)? <span style{{=}}"color:royalblue;">press</span> {{Key|y}}
+ <span style{{=}}"color:green;">*</span> Proceeding - entering /usr/src/linux...
+ <span style{{=}}"color:green;">*</span> Setting Gentoo flags for systemd...
+ <span style{{=}}"color:green;">*</span> Setting additional recommended settings for systemd...
+ <span style{{=}}"color:green;">*</span> Setting kernel command line = <...>
+ <span style{{=}}"color:green;">*</span> Setting up initramfs location and type...
+ <span style{{=}}"color:green;">*</span> Using XZ compression for built-in initramfs...
+ <span style{{=}}"color:green;">*</span> Ensuring Serpent, Whirlpool and SHA-512 are included...
+ <span style{{=}}"color:green;">*</span> Ensuring VFAT file system support included...
+ <span style{{=}}"color:green;">*</span> Ensuring device mapper and crypt target support are included...
+ <span style{{=}}"color:green;">*</span> Ensuring kernel makes config available under /proc...
+ <span style{{=}}"color:green;">*</span> Setting options needed for EFI / stub loading...
+ <span style{{=}}"color:green;">*</span> Enabling real-time-clock support...
+ <span style{{=}}"color:green;">*</span> Enabling suspend and hibernation support...
+ <span style{{=}}"color:green;">*</span> Ensuring deprecated sysfs support turned off...
+ <span style{{=}}"color:green;">*</span> Would you like to modify the configuration using the editor (y/n)? <span style{{=}}"color:royalblue;">press</span> {{Key|n}}
+ <span style{{=}}"color:green;">*</span> OK, autoconforming configuration using make olddefconfig instead...
+ <span style{{=}}"color:green;">*</span> Now build a kernel with this new configuration (y/n)? <span style{{=}}"color:royalblue;">press</span> {{Key|y}}
+ <span style{{=}}"color:green;">*</span> Do a 'make clean' prior to build (y/n)? <span style{{=}}"color:royalblue;">press</span> {{Key|y}}<span style{{=}}"color:royalblue;">; this is good hygiene on a first build, can enter </span>{{Key|n}}<span style{{=}}"color:royalblue;"> on subsequent runs</span>
+ <span style{{=}}"color:green;">*</span> Cleaning up...
+ <span style{{=}}"color:green;">*</span> Building linux-<...>-gentoo (pass 1 - dummy initramfs)...
+ <span style{{=}}"color:green;">*</span> Installing modules...
+ <span style{{=}}"color:green;">*</span> Installing firmware...
+ <span style{{=}}"color:green;">*</span> Creating any necessary external modules (e.g., VirtualBox)...
+ <span style{{=}}"color:green;">*</span> Creating initramfs (uncompressed)...
+ <span style{{=}}"color:green;">*</span> Unpacking initramfs cpio archive to /boot/initramfs...
+ <span style{{=}}"color:green;">*</span> Copying static gpg program into initramfs...
+ <span style{{=}}"color:green;">*</span> Copying contents of /etc/modprobe.d directory into initramfs...
+ <span style{{=}}"color:green;">*</span> Deleting old initramfs cpio archive, and repacking...
+ <span style{{=}}"color:green;">*</span> Building linux-<...>-gentoo (pass 2, to include real initramfs)...
+ <span style{{=}}"color:green;">*</span> Installing boot files to /boot; for reference only...
+ <span style{{=}}"color:orange;">*</span> buildkernel: Warning: No key / certificate present in /root/.buildkernel/db.key
+ <span style{{=}}"color:orange;">*</span> buildkernel: Warning: This kernel will only boot in unsecured EFI mode!
+ <span style{{=}}"color:green;">*</span> Backing up old bootfile in case of failure...
+ <span style{{=}}"color:green;">*</span> Backing up old config in case of failure...
+ <span style{{=}}"color:green;">*</span> Copying EFI-bootable kernel linux-<...>-gentoo to EFI directory...
+ <span style{{=}}"color:green;">*</span> Copying .config file to EFI directory (for reference only)...
+ <span style{{=}}"color:orange;">*</span> buildkernel: Warning: Temporarily remounting efivarfs read-write
+ <span style{{=}}"color:green;">*</span> Adding ('Gentoo Linux (USB Key)') to top of the EFI boot list
+ <span style{{=}}"color:orange;">*</span> buildkernel: Warning: Remounting efivarfs read-only
+ <span style{{=}}"color:green;">*</span> Syncing filesystem...
+ <span style{{=}}"color:green;">*</span> Completed: would you like to unmount the EFI boot USB key now (y/n)? <span style{{=}}"color:royalblue;">press</span> {{Key|y}}
+ <span style{{=}}"color:green;">*</span> Unmounted, it is now safe to remove the EFI boot USB key
+ <span style{{=}}"color:green;">*</span> All done!
+... significant amounts of output suppressed in the above ...}}
+
+This will take some time to complete during the first pass, since all kernel components must be built from scratch. Subsequent runs of {{c|buildkernel}} should complete much more quickly, provided you answer {{Key|n}} when prompted if you want to {{c|make clean}} (there's generally no need to {{c|make clean}}, unless you experience some strange build problems, or are building a new version for the first time). Furthermore, the next time you run {{c|buildkernel}}, it will use the configuration now saved in the {{Path|/usr/src/linux/.config}} file, rather than the currently running kernel's configuration (read from {{Path|/proc/config.gz}}).
+
+{{Tip|The default Gentoo kernel configuration from the minimal-install system, on which this first build is based, has a ''lot'' of kernel modules specified for build. This is to ensure that the resulting system will work on a wide range of hardware. There's no need to take any action yet, but as [[../Final_Configuration_Steps#cleaning_kernel_config{{!}}discussed later on]], feel free to pare back the number of unnecessary modules created - this will reduce your build time, and decrease your attack surface for exploits. You can easily switch modules off using the standard {{c|make menuconfig}} editor - simply press {{Key|y}} when {{c|buildkernel}} prompts you
+{{GenericCmd| <span style{{=}}"color:green;">*</span> Would you like to modify the configuration using the editor (y/n)?}} A brief introduction to using the {{c|make menuconfig}} system can be found [[Kernel/Configuration#Usage|here]] and [[Kernel/Gentoo_Kernel_Configuration_Guide#Kernel_configuration_shorthand_notation|here]]. However, there is no need to perform any kernel configuration editing at this point in the tutorial.}}
+
+{{Note|If you do choose to use the graphical kernel configuration editor when running over {{c|ssh}}, be aware that you may get some pretty strange characters showing up on the display, if the locale on your helper machine (which {{c|sshd}} will try to import) is not present on the target (in the host, not the {{c|chroot}}, since the former is the context the {{c|sshd}} is running).<ref name{{=}}"set_locale_failed">ServerFault Q&A Site: [http://serverfault.com/questions/304469/setting-locale-failed-force-certain-locale-when-connecting-through-ssh "Setting locale failed: force certain locale when connecting through ssh"]</ref> You can always get around this by opening another chroot directly on the target machine (i.e. using the target's keyboard), and issuing your {{c|buildkernel}} command from there. The issue should not be present once the system is fully configured.}}
+
+{{Note|On a minor hygiene point, note that {{c|buildkernel}} performs the kernel build as root. To be fair, this is the same approach taken by the [[Handbook:AMD64/Installation/Kernel#Default:_Manual_configuration|default manual configuration]] in the Gentoo handbook, so I have left it this way for simplicity.}}
+
+{{Note|The files produced by the build differ a little from the layout you may be used to from an [[Partition#Master_Boot_Record_(MBR){{!}}MBR]]-based boot system. For example, only the stub-loadable bootable kernel image and its configuration file are copied to the system partition on the USB boot key. A {{c|System.map}} file ''is'' produced, but it is left in the {{Path|/boot}} directory (which, as has already been mentioned, in our case is just a regular directory, used as a marshalling yard, with no significance during the UEFI boot process itself). To be precise: 
+* the kernel used for boot is placed in {{Path|/boot/efi/EFI/Boot/bootx64.efi}} (this path is configurable), and a copy is kept at {{Path|/boot/vmlinuz-<version>-gentoo}}; the kernel is an x86 boot executable [[:Wikipedia:Vmlinux#bzImage{{!}}bzImage]] - it behaves like an EFI executable (as it has been built with [[#enable_efi_stub{{!}}EFI stub loader]] support), but it is still a regular kernel that we could load with a normal bootloader outside of EFI, if we chose);<ref>Ask Ubuntu: [http://askubuntu.com/questions/330541/what-is-vmlinuz-efi#330615 What is vmlinuz.efi?]</ref><ref name="efi_stub"/>
+* the configuration file for that kernel is at {{Path|/boot/efi/EFI/Boot/config}} (for reference only, it isn't needed to boot), and a copy is at {{Path|/boot/config-<version>-gentoo}}; when booted a live version is available at {{Path|/proc/config.gz}};
+* the system map is at {{Path|/boot/System.map-<version>-gentoo}} (and {{Path|/usr/src/linux/System.map}}); also, when booted, a live version is available at {{Path|/proc/kallsyms}};
+* <span id{{=}}"initramfs_copy_location">for UEFI (secure) booting</span>, the initramfs is encapsulated inside the kernel, but:
+** a copy of the ''initial'' (pre-modification) initramfs is kept at {{Path|/boot/initramfs-genkernel-x86_64-<version>-gentoo}}; 
+** a copy of the ''final'', post-modification initramfs is kept at {{Path|/boot/initramfs.cpio}}, and
+** an unpacked copy of the latter is maintained at {{Path|/boot/initramfs}}, for ease of reference.
+Note that the {{Path|/boot/efi}} path is a mountpoint for the EFI system partition on the boot USB key, and this should generally be kept unmounted when not building ({{c|buildkernel}}, as above, will automatically mount it for you, and offer to unmount at the end of the build). You can of course manually mount the EFI system partition if desired.}}
+
+{{Tip|If <span id{{=}}use_previous_kernel>a previous kernel</span> and config are present in the {{Path|/boot/efi/EFI/Boot}} directory when {{c|buildkernel}} is run, they will be renamed with an {{c|.old}} suffix (so, to {{Path|/boot/efi/EFI/Boot/boox64.efi.old}} and {{Path|/boot/efi/EFI/Boot/config.old}}, respectively). We haven't booted off this new kernel yet, but once we have, this allows us to revert back to the previous version, in case changes made have caused a boot problem. The EFI partition is simply {{c|fat32}} and so can be accessed from most machines, including Windows boxes. Simply rename or remove the problematic kernel and config, rename the {{Path|/boot/efi/EFI/Boot/boox64.efi.old}} to {{Path|/boot/efi/EFI/Boot/boox64.efi}} (and rename the config too, if you wish), and reboot. Of course, this is simply a hint for use in the future - you don't need to do anything like that at this point in the tutorial!}}
+
+{{Note|In the default kernel command line produced by {{c|buildkernel}}, [[:Wikipedia:Trim_(computing){{!}}TRIM]] has not been activated for the LUKS partition (this is a feature which can prevent performance degradation when using solid-state drives). If you wish to enable it, see these instructions [[#enable_trim{{!}}above]].}}
+
+{{Tip|When you upgrade your portage tree (discussed later), if you find that a new version of {{Package|sys-kernel/gentoo-sources}} has become available, then you can very easily use {{c|buildkernel}} to upgrade your kernel (the instructions below will work off your running kernel's configuration as a basis to start with). Simply issue:
+{{RootCmd
+|eselect kernel list
+}}
+to view the available kernel versions, followed by:
+{{RootCmd
+|eselect kernel set N
+}}
+to choose the new one (remember to substitute the appropriate number for {{c|N}} here, generally it will be the number for the last item in the list just displayed), followed by:
+{{RootCmd
+|buildkernel --verbose
+}}
+which will run the process in non-interactive mode. See the {{c|buildkernel}} manpage for more details. Alternatively, you could use the {{c|genup}} script, which will handle updating all packages ''and'' your kernel automatically (we will introduce this utility later in the tutorial ([[../Configuring_systemd_and_Installing_Necessary_Tools#ensure_system_up_to_date|{{c|systemd}} track]], [[../Completing_OpenRC_Configuration_and_Installing_Necessary_Tools#ensure_system_up_to_date|{{c|OpenRC}} track]])).
+
+However, there is no action you need to take at this point.
+}}
+{{Tip|To run {{c|buildkernel}} in {{Highlight|non-interactive mode}}, simply omit the {{c|--ask}} option. For example, to achieve the same effect as the interactive command [[#first_buildkernel{{!}}above]], you could instead have issued:
+{{RootCmd
+|buildkernel --verbose --clean --unmount-at-end
+|prompt=<span style{{=}}"color:gray;">(chroot)</span> livecd <span style{{=}}"color:royalblue;">/ #</span>
+}}
+See the {{c|buildkernel}} manpage for more details.
+}}
+{{Note|Even if you have previously chosen to target {{c|OpenRC}} (rather than the default {{c|systemd}}) as your init system [[../Building_the_Gentoo_Base_System_Minus_Kernel#choose_systemd_or_openrc|earlier]], you will still see {{c|buildkernel}} output regarding setting {{c|systemd}} kernel options etc. This is by design, since these settings do not prevent an {{c|OpenRC}} boot, but do provide future flexibility.}}
+
+== <span id="next_steps">Next Steps</span> ==
+
+Assuming that completed successfully, congratulations, you have just built a UEFI-bootable kernel! Just a few more minor configuration steps to perform, and we'll be ready to try it out. [[../Final_Preparations_and_Reboot_into_EFI|Click here]] to go to the next chapter, "Final Preparations and Reboot into EFI".
+
+== <span id="notes">Notes</span> ==
+{{reflist}}
+
+{| class="wikitable" style="margin: 1em auto 1em auto;"
+|-
+| [[../Building_the_Gentoo_Base_System_Minus_Kernel|< Previous]]
+| [[../|Home]]
+| [[../Final_Preparations_and_Reboot_into_EFI|Next >]]
+|}
+
+[[Category:Bootloaders]]
+[[Category:Core system]]
+[[Category:Initramfs]]
+[[Category:Kernel]]
+
