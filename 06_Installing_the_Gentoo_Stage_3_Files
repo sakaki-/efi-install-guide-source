@@ -41,7 +41,7 @@ Change to the Gentoo filesystem root mountpoint:
 Now <span id="download_stage_3">download the files</span>. As before, substitute for YYYYMMDDThhmmssZ in the below with the current release file timestamp (open the link http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64.txt in a browser to determine the current name).
 {{RootCmd
 |wget -c http://distfiles.gentoo.org/releases/amd64/autobuilds/YYYYMMDDThhmmssZ/stage3-amd64-YYYYMMDDThhmmssZ.tar.xz
-|wget -c http://distfiles.gentoo.org/releases/amd64/autobuilds/YYYYMMDDThhmmssZ/stage3-amd64-YYYYMMDDThhmmssZ.tar.xz.CONTENTS
+|wget -c http://distfiles.gentoo.org/releases/amd64/autobuilds/YYYYMMDDThhmmssZ/stage3-amd64-YYYYMMDDThhmmssZ.tar.xz.CONTENTS.gz
 |wget -c http://distfiles.gentoo.org/releases/amd64/autobuilds/YYYYMMDDThhmmssZ/stage3-amd64-YYYYMMDDThhmmssZ.tar.xz.DIGESTS.asc
 |prompt=livecd <span style{{=}}"color:royalblue;">/mnt/gentoo #</span>
 }}
@@ -353,7 +353,7 @@ It <span id="per_package_config">is also possible</span> to specify overrides fo
 
 === <span id="atoms_and_friends">Atoms, Packages, Categories, Versions, Sets and SLOTs</span> ===
 
-Finally for this background overview, there are a few Portage <span id="atoms_etc">package mangement terms</span> that are worth a brief recap:
+Finally for this background overview, there are a few Portage <span id="atoms_etc">package management terms</span> that are worth a brief recap:
 * As mentioned, a '''package''' refers to a homogeneous block of software which has a single provided ebuild per installable version, whether third-party (e.g., {{c|openvpn}}) or internal to Gentoo itself (e.g., {{c|gentoolkit}}).
 * Packages are grouped (as leaves of a tree) into '''categories''', which describe broad classes of functionality. For example, {{c|openvpn}} is in the {{c|net-vpn}} category (along with other similar tools like {{c|tor}} and {{c|strongswan}}); {{c|gentoolkit}} is in the {{c|app-portage}} category (along with other Portage applications, like {{c|mirrorselect}} and {{c|elogviewer}}).
 * A package '''base atom''' simply refers to the name made up of the full category, followed by the package, without version information or other qualifiers. So for example {{Package|net-misc/openvpn}}, {{Package|app-portage/gentoolkit}} etc. You can find all the ebuilds in the currently sync'd tree for a given <category>/<packagename> base atom in the directory {{Path|/var/db/repos/gentoo/<category>/<packagename>}} (so, for example, {{Path|/var/db/repos/gentoo/dev-util/diffstat/}}), and find more information about that base atom online at {{c|https://packages.gentoo.org/package/<category>/<packagename>}} (so, for example, [https://packages.gentoo.org/package/app-portage/gentoolkit https://packages.gentoo.org/package/app-portage/gentoolkit]). While it is often possible to drop the category name and simply use the package itself, it's generally safer to use the base atom, since two different packages of the same name may exist in different categories (e.g. {{c|axiom}} could refer to either {{Package|dev-python/axiom}}, an object database over SQLite, or {{Package|sci-mathematics/axiom}}, a computer algebra system).
