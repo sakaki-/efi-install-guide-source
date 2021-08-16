@@ -393,7 +393,7 @@ Start up your favourite editor: in this tutorial we'll be assuming {{c|nano}}:
 }}
 {{Note|The {{c|-w}} option tells the nano editor ''not'' to auto-wrap long lines (auto-wrapping can really mess up config files!).}}
 
-{{c|nano}} is a pretty simple editor to use: move around using the arrow keys, type to edit as you would in any text processing program, and exit with {{Key|Ctrl}}{{Key|x}} when done: you'll be prompted whether to save changes if you have modified the file. At this point, enter {{Key|y}} and {{Key|Enter}} to exit, saving changes, or {{Key|n}} to exit without making changes. For some more information on the {{c|nano}} editor, see [[Nano/Basics_Guide|this Wiki entry]].
+{{c|nano}} is a pretty simple editor to use: move around using the arrow keys, type to edit as you would in any text processing program, and exit with {{Key|Ctrl}}{{Key|x}} when done: you'll be prompted whether to save changes if you have modified the file. At this point, enter {{Key|y}} and {{Key|Enter}} to exit, saving changes, or {{Key|n}} to exit without making changes. For some more information on the {{c|nano}} editor, see [[Nano/Basics guide|this Wiki entry]].
 
 Add the following text to the file:
 
