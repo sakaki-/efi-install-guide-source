@@ -527,5 +527,5 @@ Now that you have successfully booted into Gentoo from UEFI, we can proceed to c
 | [[../Configuring_systemd_and_Installing_Necessary_Tools|Next ({{c|systemd}}) >]]
 |}
 
-[[Category:Core system]]
+[[Category:Sakaki's EFI Install Guide]]
 

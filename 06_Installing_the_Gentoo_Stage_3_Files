@@ -540,6 +540,6 @@ Now we have these options configured, we're ready to {{c|chroot}} into our 'stag
 | [[../Building_the_Gentoo_Base_System_Minus_Kernel|Next >]]
 |}
 
-[[Category:Core system]]
+[[Category:Sakaki's EFI Install Guide]]
 [[Category:Portage]]
 
