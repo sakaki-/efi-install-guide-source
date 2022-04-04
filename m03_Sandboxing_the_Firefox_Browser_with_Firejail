@@ -322,7 +322,7 @@ That concludes our high-level tour of {{c|firejail}}. We will now turn to consid
 To proceed, you will require a target system running Gentoo Linux (either the stable or testing branch is fine), with:
 
 * a kernel that has at least the baseline configuration used on the Gentoo 'minimal install' media, with the necessary additional configuration changes made to enable an X11-based graphical desktop to run;
-** although most relatively modern kernels should work, given the threat model we are trying to protect against here, a version patched against the Meltdown and (so far as possible) Spectre [https://meltdownattack.com vulnerabilities]<ref name="unmelted_pi">Raspberry Pi Blog: Upton, E. [https://www.raspberrypi.org/blog/why-raspberry-pi-isnt-vulnerable-to-spectre-or-meltdown/ "Why Raspberry Pi Isn't Vulnerable to Spectre or Meltdown"] &mdash; a very readable architectural description of the 'speculation' family of attacks, even though written from a non-x86_64 perspective.</ref> is highly recommended (see [https://wiki.gentoo.org/wiki/Project:Security/Vulnerabilities/Meltdown_and_Spectre this page] for a list of patched kernels, required microcode updates etc.);
+** although most relatively modern kernels should work, given the threat model we are trying to protect against here, a version patched against the Meltdown and (so far as possible) Spectre [https://meltdownattack.com vulnerabilities]<ref name="unmelted_pi">Raspberry Pi Blog: Upton, E. [https://www.raspberrypi.org/blog/why-raspberry-pi-isnt-vulnerable-to-spectre-or-meltdown/ "Why Raspberry Pi Isn't Vulnerable to Spectre or Meltdown"] &mdash; a very readable architectural description of the 'speculation' family of attacks, even though written from a non-x86_64 perspective.</ref> is highly recommended (see [[Project:Security/Vulnerabilities/Meltdown_and_Spectre|this page]] for a list of patched kernels, required microcode updates etc.);
 ** additionally, {{c|CONFIG_GENTOO_LINUX}} and {{c|CONFIG_GENTOO_LINUX_PORTAGE}} should be set;
 * a working X11-based desktop (I assume GNOME 3 in what follows, but the instructions may be easily adapted for other desktops, for example Xfce4, with some minimal configuration changes);
 ** a Wayland-based system is also usable, provided it uses the rootless XWayland X11 server to host unported applications such as {{c|firefox}} (see [[#xwayland_note|note]] above);
@@ -739,7 +739,7 @@ Congratulations, your persistent bridge setup is now complete! Continue reading 
 
 ==== <span id="setup_bridge_openrc">Creating a Persistent Bridge under OpenRC</span> ====
 
-To run the script at system startup under {{c|OpenRC}}, we need to write a simple [https://wiki.gentoo.org/wiki/Handbook:AMD64/Working/Initscripts#Writing_initscripts init script].<ref name="writing_openrc_init_scripts">Big Elephants Blog: [http://big-elephants.com/2013-01/writing-your-own-init-scripts/ "Writing Your Own Init Scripts"]</ref> To do so, issue:
+To run the script at system startup under {{c|OpenRC}}, we need to write a simple [[Handbook:AMD64/Working/Initscripts#Writing_initscripts|init script]].<ref name="writing_openrc_init_scripts">Big Elephants Blog: [http://big-elephants.com/2013-01/writing-your-own-init-scripts/ "Writing Your Own Init Scripts"]</ref> To do so, issue:
 
 {{RootCmd
 |touch /etc/init.d/firejail-bridge

@@ -6,7 +6,7 @@ If you have a Windows 10 (or 8) machine that you'd like to dual-boot with Gentoo
 {{Warning|31 Oct 2020: sadly, due to legal obligations arising from a recent change in my 'real world' job, I must announce I am '''standing down as maintainer of this guide with immediate effect''' (for more background, please see my post [https://forums.gentoo.org/viewtopic-p-8522963.html#8522963 here]).
 
 
-While I will be leaving this guide up for now (for historical interest, and because it may still be of use to others), I can no longer recommend that you install a new Gentoo system using it. Instead, please follow the standard [https://wiki.gentoo.org/wiki/Handbook:AMD64 Gentoo Handbook] flow.
+While I will be leaving this guide up for now (for historical interest, and because it may still be of use to others), I can no longer recommend that you install a new Gentoo system using it. Instead, please follow the standard [[Handbook:AMD64|Gentoo Handbook]] flow.
 
 
 Similarly, if you are already running a system installed via these instructions, while it ''should'' continue to work for some time, you should now take steps to migrate to a standard, Handbook-based approach, since the underlying {{c|sakaki-tools}} repo, and provided tools such as {{c|buildkernel}}, will also no longer be actively supported.

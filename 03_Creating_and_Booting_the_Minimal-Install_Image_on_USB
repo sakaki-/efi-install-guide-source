@@ -37,7 +37,7 @@ As such, to verify the ISO we must:
 
 {{Note|For a brief primer on digital signatures, see the [[../Configuring_Secure_Boot#digital_signatures_primer{{!}}"Configuring Secure Boot"]] chapter of this tutorial.}}
 
-The fingerprint of the automated weekly release public key may be found on the [https://wiki.gentoo.org/wiki/Project:RelEng Gentoo Release Engineering] page. When requesting the key from a keyserver, you don't need to cite the whole fingerprint, just enough of it to be unambiguous. For example, at the time of writing, the automated release key fingerprint was {{c|13EB BDBE DE7A 1277 5DFD B1BA BB57 2E0E 2D18 2910}}, so to download it (step 1 in the above list), issue:
+The fingerprint of the automated weekly release public key may be found on the [[Project:RelEng|Gentoo Release Engineering]] page. When requesting the key from a keyserver, you don't need to cite the whole fingerprint, just enough of it to be unambiguous. For example, at the time of writing, the automated release key fingerprint was {{c|13EB BDBE DE7A 1277 5DFD B1BA BB57 2E0E 2D18 2910}}, so to download it (step 1 in the above list), issue:
 
 {{Cmd
 |gpg --keyserver pool.sks-keyservers.net --recv-key 2D182910
