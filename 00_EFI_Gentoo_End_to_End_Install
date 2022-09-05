@@ -101,7 +101,7 @@ Ready? Then [[/Installation_Prerequisites|click here]] to go to the first chapte
 * [[EFI_stub_kernel|EFI stub kernel]]
 * [[systemd|systemd]]
 * [[systemd/Installing_Gnome3_from_scratch{{!}}systemd/Installing Gnome3 from scratch]]
-* [[GNOME/GNOME_Without_systemd{{!}}GNOME/GNOME without systemd]]}}
+* [[GNOME/GNOME_without_systemd{{!}}GNOME/GNOME without systemd]]}}
 
 {{Note|If you have recently upgraded {{Package|dev-libs/libgcrypt}} to version >{{=}} 1.6, and found yourself thereby locked out of your (Whirlpool-hashed) LUKS partition, please see [[/Migrating_from_Whirlpool_Hash_on_LUKS|this short guide]] on how to recover.}}
 

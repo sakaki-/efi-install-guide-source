@@ -1074,7 +1074,7 @@ When you have decided, continue as below:
 
 {{Note|Remember: if you want to use {{c|systemd}} as your init system, please do ''not'' carry out the instructions in this section, but read [[#choose_systemd_profile{{!}}"Option 2"]] instead.}}
 
-{{Note|You '''no longer''' require Dantrell B.'s excellent [https://github.com/dantrell/gentoo-project-gnome-without-systemd patchset for GNOME] in order to use it under {{c|OpenRC}}, as this option is now officially supported in the main tree.<ref name="elogind_gnome"/> Some users may still wish to use this patchset, as it provides e.g. additional aesthetic enhancements; should you wish to do so, please refer to [[GNOME/GNOME_Without_systemd{{!}}these notes]] for further details.}}
+{{Note|You '''no longer''' require Dantrell B.'s excellent [https://github.com/dantrell/gentoo-project-gnome-without-systemd patchset for GNOME] in order to use it under {{c|OpenRC}}, as this option is now officially supported in the main tree.<ref name="elogind_gnome"/> Some users may still wish to use this patchset, as it provides e.g. additional aesthetic enhancements; should you wish to do so, please refer to [[GNOME/GNOME_without_systemd{{!}}these notes]] for further details.}}
 
 Accordingly, we next <span id="set_openrc_profile">set our profile</span> to the version we actually want to use going forward (we avoided doing so earlier, to minimize the scope of the bootstrap).
 
