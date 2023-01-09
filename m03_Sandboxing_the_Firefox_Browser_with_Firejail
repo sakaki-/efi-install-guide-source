@@ -298,8 +298,6 @@ This is then further modified by relevant directives in the active security prof
 
 For example, in the below screenshot, an {{c|xterm}} is started within a {{c|firejail}} sandbox, using the default {{c|firefox}} security profile:
 
-[[File:Firejail_mount_tmpfs.png|thumb|none|800px|Note the Large Number of Mounts to the Sandbox (Click to Zoom)]]
-
 As may be seen, starting the sandbox does ''not'' change the mount table ({{Path|/proc/mounts}}) as visible from the 'outer' context; these remain relatively limited: '''17''' entries, of which 7 are mounts of, or bind-mounts of locations from, {{c|tmpfs}} filesystems. ''Within'' the sandbox, however, it is quite a different story &mdash; there are '''200''' mount table entries, of which 170 are marked as {{c|tmpfs}}.
 
 {{Note|This does ''not'' mean that {{c|firejail}} has created 163 ''new'' {{c|tmpfs}} filesystems; the vast majority are simply 'occluding' bind mounts (using the special ''dummy file'' and ''dummy directory'' located at {{Path|/run/firejail/firejail.ro.file}} and {{Path|/run/firejail/firejail.ro.dir}} respectively) to 'mask out' sensitive locations in the root tree. Because {{Path|/run}} is ''itself'' a {{c|tmpfs}} (you can use <code>findmnt</code> without any arguments to easily see this), the filesystem type propagates and is displayed for each such bind mount in {{c|/proc/mounts}}, adding one to the count each time.}}
